@@ -28,7 +28,8 @@ decreasing_by
   · simp
     linarith
 
-def mergeWith' : List α :=
+-- for reduction in kernel
+def mergeWithByFuel : List α :=
   go (l₁.lengthTR + l₂.lengthTR) l₁ l₂
 where
   go (fuel : Nat) (l₁ l₂ : List α) :=
@@ -47,12 +48,12 @@ where
         | none => go fuel l₁' l₂'
         | some a => a :: go fuel l₁' l₂'
 
-lemma mergeWith'_go_eq {fuel : Nat}
+lemma mergeWithByFuel_go_eq {fuel : Nat}
     (l₁ l₂ : List α) (cmp : α → α → Ordering)
     (mergeFn : α → α → Option α)
     (h : l₁.length + l₂.length <= fuel) :
-    mergeWith'.go cmp mergeFn fuel l₁ l₂ = mergeWith l₁ l₂ cmp mergeFn := by
-  unfold mergeWith'.go mergeWith
+    mergeWithByFuel.go cmp mergeFn fuel l₁ l₂ = mergeWith l₁ l₂ cmp mergeFn := by
+  unfold mergeWithByFuel.go mergeWith
   split
   · simp at h
     simp [h]
@@ -60,15 +61,16 @@ lemma mergeWith'_go_eq {fuel : Nat}
     · rfl
     · rfl
     simp at h
-    rw [mergeWith'_go_eq, mergeWith'_go_eq, mergeWith'_go_eq]
+    rw [mergeWithByFuel_go_eq, mergeWithByFuel_go_eq, mergeWithByFuel_go_eq]
     · linarith
     · simp; linarith
     · simp; linarith
 
-lemma mergeWith'_eq : mergeWith' l₁ l₂ cmp mergeFn = mergeWith l₁ l₂ cmp mergeFn := by
-  unfold mergeWith'
+lemma mergeWithByFuel_eq : @mergeWithByFuel = @mergeWith := by
+  funext
+  unfold mergeWithByFuel
   simp [← length_eq_lengthTR]
-  exact mergeWith'_go_eq _ _ _ _ (le_refl _)
+  exact mergeWithByFuel_go_eq _ _ _ _ (le_refl _)
 
 @[simp]
 lemma mergeWith_left_nil : mergeWith [] l cmp mergeFn = l := by
@@ -205,9 +207,6 @@ lemma exists_mem_mergeWith_cmp_eq' {a} {l₁ l₂ : List α} {cmp : α → α �
 --   -- rw [Option.forall_m]
 --   -- simp? at h₁' h₂'
 
-
-
-
 lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
     (mergeFn : α → α → Option α)
@@ -221,58 +220,82 @@ lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → 
   · exact h₂
   split
   · expose_names
-    rw [← List.chain'_iff_pairwise, chain'_cons']
+    rw [← List.chain'_iff_pairwise, chain'_cons', List.chain'_iff_pairwise]
     split_ands
     · intro y hy
       apply mem_of_mem_head? at hy
       apply exists_mem_mergeWith_cmp_eq' at hy
-      rcases hy with ⟨a₁, hy⟩ | ⟨a₂, hy⟩
-      ·
-        sorry
-      ·
-        sorry
-    sorry
-    -- -- rw [List.chain_iff]
-    -- have := mergeWith_sorted_of_sorted (List.sorted_cons.mp h₁).2 h₂ mergeFn
-    -- refine ⟨?_, this⟩
-    -- · intro b hb
-    --   have := List.rel_of_sorted_cons h₁
-
-    --   sorry
-
-  sorry
-  ·
-    -- rw [← List.chain'_iff_pairwise, List.chain'_cons', List.chain'_iff_pairwise] at h₁ h₂
-    rw [pairwise_cons] at h₁ h₂
+      simp [Std.OrientedCmp.eq_comm (a:=y)] at hy
+      rcases hy with ⟨a₁, hy⟩ | hy | ⟨a₂, hy⟩
+      · refine Std.TransCmp.lt_of_lt_of_eq ?_ hy.2
+        exact (pairwise_cons.mp h₁).1 _ hy.1
+      · exact Std.TransCmp.lt_of_lt_of_eq heq hy
+      · refine Std.TransCmp.lt_of_lt_of_eq ?_ hy.2
+        apply Std.TransCmp.lt_trans heq
+        exact (pairwise_cons.mp h₂).1 _ hy.1
+    · rw [pairwise_cons] at h₁
+      exact mergeWith_pairwise_of_pairwise h₁.2 h₂ ..
+  · expose_names
+    rw [← List.chain'_iff_pairwise, chain'_cons', List.chain'_iff_pairwise]
+    split_ands
+    · intro y hy
+      apply mem_of_mem_head? at hy
+      apply exists_mem_mergeWith_cmp_eq' at hy
+      simp [Std.OrientedCmp.eq_comm (a:=y)] at hy
+      rw [Std.OrientedCmp.gt_iff_lt] at heq
+      rcases hy with (hy | ⟨a₁, hy⟩) | ⟨a₂, hy⟩
+      · exact Std.TransCmp.lt_of_lt_of_eq heq hy
+      · refine Std.TransCmp.lt_of_lt_of_eq ?_ hy.2
+        apply Std.TransCmp.lt_trans heq
+        exact (pairwise_cons.mp h₁).1 _ hy.1
+      · refine Std.TransCmp.lt_of_lt_of_eq ?_ hy.2
+        exact (pairwise_cons.mp h₂).1 _ hy.1
+    · rw [pairwise_cons] at h₂
+      exact mergeWith_pairwise_of_pairwise h₁ h₂.2 ..
+  · rw [pairwise_cons] at h₁ h₂
     have := mergeWith_pairwise_of_pairwise h₁.2 h₂.2 mergeFn
     split
     · exact this
     · rw [← List.chain'_iff_pairwise, List.chain'_cons', List.chain'_iff_pairwise]
       refine ⟨?_, this⟩
       intro y hy
+      apply mem_of_mem_head? at hy
+      apply exists_mem_mergeWith_cmp_eq' at hy
       expose_names
       specialize hfn h₁_1 h₂_1 heq a heq_1
-      -- obtain h := exists_mem_mergeWith_cmp_eq mergeFn
-      sorry
+      simp [Std.OrientedCmp.eq_comm (a := y)] at hy
+      rcases hy with ⟨a₁, hy⟩ | ⟨a₂, hy⟩
+      · refine Std.TransCmp.lt_of_lt_of_eq ?_ hy.2
+        rw [Std.OrientedCmp.eq_comm] at hfn
+        apply Std.TransCmp.lt_of_eq_of_lt hfn
+        exact h₁.1 _ hy.1
+      · refine Std.TransCmp.lt_of_lt_of_eq ?_ hy.2
+        rw [Std.OrientedCmp.eq_comm] at hfn
+        apply Std.TransCmp.lt_of_eq_of_lt hfn
+        apply Std.TransCmp.lt_of_eq_of_lt heq
+        exact h₂.1 _ hy.1
+termination_by l₁.length + l₂.length
 
+lemma mergeWith_sorted_of_sorted {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+    (h₁ : l₁.Sorted (cmp · · = .lt)) (h₂ : l₂.Sorted (cmp · · = .lt))
+    (mergeFn : α → α → Option α)
+    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+    mergeWith l₁ l₂ cmp mergeFn |>.Sorted (cmp · · = .lt) :=
+  mergeWith_pairwise_of_pairwise h₁ h₂ mergeFn
 
-      -- exact Std.TransCmp.lt_of_eq_of_lt (Std.TransCmp.eq_trans this) h₁ a
-      -- simp at this
-
+-- open Classical in
 lemma mem_mergeWith_iff {a} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
     (mergeFn : α → α → Option α)
     [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
-    (a ∈ l₁ ↔ ¬ a ∈ l₂) ∨
-      ∃ a₁ ∈ l₁, ∃ a₂ ∈ l₂, cmp a₁ a₂ = .eq ∧ a = mergeFn a₁ a₂
-  := sorry
-
-  -- sorry
+      some a = match l₁.find? (cmp · a == .eq), l₂.find? (cmp · a == .eq) with
+      | some a', none => a'
+      | none, some a' => a'
+      | some a'₁, some a'₂ => mergeFn a'₁ a'₂
+      | _, _ => none := by
+  sorry
 
 end
-
-#reduce [1, 2, 4, 5].mergeWith' [1, 3, 9] cmp fun _ _ => none
-
 
 end List
