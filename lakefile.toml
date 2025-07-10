@@ -15,5 +15,10 @@ scope = "leanprover-community"
 name = "lean4export"
 scope = "leanprover"
 
+[[require]]
+name = "groebner"
+scope = "WuProver"
+
 [[lean_lib]]
 name = "LeanExperiments"
+

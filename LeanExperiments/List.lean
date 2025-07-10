@@ -298,4 +298,136 @@ lemma mem_mergeWith_iff {a} {l₁ l₂ : List α} {cmp : α → α → Ordering}
 
 end
 
+#check Int.mul
+#check Int
+
+-- #check List.find
+#check Finset.filter_singleton
+
+#loogle List.find?, List.filter
+
+#reduce [1, 2, 4, 5].mergeWithByFuel [1, 3, 9] cmp fun _ _ => none
+
+
+
 end List
+
+#check Int.add
+
+structure Int' where
+  isNeg : Bool
+  abs : Int
+-- deriving Decidable
+
+instance inst : BEq Int' where
+  beq a b := or (and (a.abs == 0) (b.abs == 0)) (and (a.isNeg == b.isNeg) (a.abs == b.abs))
+
+
+
+#print inst
+
+def Int'.mul (a b : Int') : Int' where
+  isNeg := xor a.isNeg b.isNeg
+  abs := a.abs * b.abs
+
+def Int'.add (a b : Int') : Int' :=
+  match xor a.isNeg b.isNeg with
+  | true =>
+    bif a.abs < b.abs then
+      ⟨b.isNeg, b.abs - a.abs⟩
+    else
+      ⟨a.isNeg, a.abs - b.abs⟩
+  | false =>
+    ⟨a.isNeg, a.abs + b.abs⟩
+
+def Int'.sub (a b : Int') : Int' :=
+  match xor a.isNeg b.isNeg with
+  | true =>
+    ⟨a.isNeg, a.abs + b.abs⟩
+  | false =>
+    bif a.abs < b.abs then
+      ⟨not a.isNeg, b.abs - a.abs⟩
+    else
+      ⟨a.isNeg, a.abs - b.abs⟩
+
+def Int.pow' (m : Int) (n : Nat) : Int :=
+  match m with
+  | .ofNat m => ((m : Nat) ^ n : Nat)
+  | .negSucc m => if n % 2 = 0 then
+      ((m + 1) ^ n : Nat)
+    else - ((m + 1) ^ n : Nat)
+
+def Int'.pow (m : Int') (n : Nat) : Int' :=
+  ⟨match m.isNeg with | true => n % 2 != 0 | false => false, m.abs ^ n⟩
+
+def Int'.neg (m : Int') : Int' := ⟨not m.isNeg, m.abs⟩
+
+-- #check or
+
+abbrev test (n : Nat) :=
+    let x (m : Nat) : Nat := (min (1 ^ (2 * n) * 2 ^ (2 * n - 1)) (2 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
+    (- ((1 : Int) * x 1 - 1)).pow' (2 * n) =
+    ((1 : Int) * x 2 - (2 : Int) * x 1 + 1 ).pow' n
+
+abbrev test' (n : Nat) :=
+  (List.range (2 * n + 1)).all <|
+    fun x =>
+      (- ((1 : Int) * x - 1)).pow' (2 * n) = ((1 : Int) * x ^ 2 - (2 : Int) * x + 1 ).pow' n
+
+-- abbrev test' (n : Nat) :=
+--     let x (m : Nat) : Nat := (min (1 ^ (2 * n) * 2 ^ (2 * n - 1)) (2 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
+--     ((⟨false, 1⟩ : Int') |>.mul ⟨false, x 1⟩ |>.sub ⟨false, 1⟩ |>.neg.pow (2 * n)) =
+--     ((⟨false, 1⟩ : Int').mul ⟨false, x 2⟩ |>.sub (⟨false, 2⟩ : Int) x 1 + 1 ).pow' n
+
+abbrev test2 (n : Nat) :=
+    let x (m : Nat) : Nat := (max (5 ^ (2 * n) * 2 ^ (2 * n - 1)) (9 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
+    (- ((1 : Int) * x 1 - 2)).pow' (2 * n) =
+    ((1 : Int) * x 2 - (4 : Int) * x 1 + 4 ).pow' n
+
+abbrev test3 (n : Nat) :=
+    let x (m : Nat) : Nat := (min (2 ^ (2 * n) * 2 ^ (2 * n - 1)) (4 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
+    (- ((1 : Int) * x 1 - 2)).pow' (2 * n) =
+    ((1 : Int) * x 2 - (4 : Int) * x 1 + 4 ).pow' n
+
+-- #check Int.pow
+
+#print test
+#check Nat.lcm
+
+#reduce test 100
+#check Int.add
+set_option profiler true
+
+set_option maxRecDepth 10000
+example : test 10000 := by
+  -- native_decide
+  decide +kernel
+
+example : test2 8000 := by
+  decide +kernel
+
+-- example : test' 10000 := by
+--   decide +kernel
+
+#reduce Nat.primesBelow 10
+
+#check Float
+#check 1 + 2 + 3
+
+-- ex  ample : test2 10000 := by
+--   -- native_decide
+--   decide +kernel
+
+-- 2000 180
+-- 4000 659
+-- 8000 2.71
+-- 16000 11.8
+-- 32000 58.1
+
+-- 20000 19.9 0.30
+
+#reduce 0 / 0
+
+#check RatFunc
+
+#reduce (100024 : Int) ^ 100024 - 1  = (100024 : Int) ^ 100024 - 1
