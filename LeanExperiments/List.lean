@@ -181,8 +181,7 @@ lemma exists_mem_mergeWith_cmp_eq' {a} {l₁ l₂ : List α} {cmp : α → α �
     exact ⟨a, h, Std.ReflCmp.compare_self⟩
   · right
     exact ⟨a, h, Std.ReflCmp.compare_self⟩
-  ·
-    expose_names
+  · expose_names
     have := inst_1.elim a₁ a₂ h
     simp at this
     specialize this a h'.symm
@@ -213,7 +212,7 @@ lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → 
     [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
     mergeWith l₁ l₂ cmp mergeFn |>.Pairwise (cmp · · = .lt) := by
   expose_names
-  have hfn:= inst_1.elim
+  have hfn := inst_1.elim
   unfold mergeWith
   split
   · exact h₁
@@ -283,23 +282,265 @@ lemma mergeWith_sorted_of_sorted {l₁ l₂ : List α} {cmp : α → α → Orde
     mergeWith l₁ l₂ cmp mergeFn |>.Sorted (cmp · · = .lt) :=
   mergeWith_pairwise_of_pairwise h₁ h₂ mergeFn
 
--- open Classical in
-lemma mem_mergeWith_iff {a} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+theorem Pairwise.eq_or_rel_of_mem {α} {l : List α} {R : α → α → Prop} {a b : α} (h : l.Pairwise R) (h1 : a ∈ l)
+    (h2 : b ∈ l) : a = b ∨ R a b ∨ R b a := by
+  match l with
+  | [] => simp at h1
+  | x :: l' =>
+    simp at h1 h2 h
+    rcases h1 with h1eq | h1mem <;> rcases h2 with h2eq | h2mem
+    · simp [h1eq, h2eq]
+    · simp [h1eq ▸ h.1 b h2mem]
+    · simp [h2eq ▸ h.1 a h1mem]
+    · exact Pairwise.eq_or_rel_of_mem h.2 h1mem h2mem
+
+theorem _root_.iff_of_imp_of_imp_of_imp_iff {p q r : Prop} (hp : p → r) (hq : q → r) (h : r → (p ↔ q)) : p ↔ q :=
+  ⟨fun p' ↦ h (hp p') |>.mp p', fun q' ↦ h (hq q') |>.mpr q'⟩
+
+lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
     (mergeFn : α → α → Option α)
     [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
-      some a = match l₁.find? (cmp · a == .eq), l₂.find? (cmp · a == .eq) with
-      | some a', none => a'
-      | none, some a' => a'
-      | some a'₁, some a'₂ => mergeFn a'₁ a'₂
-      | _, _ => none := by
-  sorry
+      if ∃ x₁ ∈ l₁, cmp a x₁ = .eq then
+        ∀ x₁ ∈ l₁, cmp a x₁ = .eq →
+          if ∃ x₂ ∈ l₂, cmp a x₂ = .eq then
+            ∀ x₂ ∈ l₂, cmp a x₂ = .eq → a = mergeFn x₁ x₂
+          else
+            a = x₁
+      else
+        (∃ x₂ ∈ l₂, cmp a x₂ = .eq) ∧ ∀ x₂ ∈ l₂, cmp a x₂ = .eq → a = x₂
+    := by
+  match l₁, l₂ with
+  | nil, nil => simp
+  | nil, l₂ =>
+    simp
+    constructor
+    · intro h
+      refine ⟨⟨a, ?_⟩, ?_⟩
+      · simp [h, Std.ReflCmp.cmp_eq_of_eq rfl]
+      · intro a' h' haa'
+        apply (Pairwise.eq_or_rel_of_mem · h h') at h₂
+        rcases h₂ with h₂ | h₂ | h₂
+        · exact h₂
+        · simp [h₂] at haa'
+        · simp [Std.OrientedCmp.gt_of_lt h₂] at haa'
+    · intro ⟨⟨a', ha', haa'⟩, h''⟩
+      exact h'' a' ha' haa' ▸ ha'
+  | l₁, nil =>
+    simp
+    constructor
+    · intro h
+      refine ⟨⟨a, ?_⟩, ?_⟩
+      · simp [h, Std.ReflCmp.cmp_eq_of_eq rfl]
+      · intro a' h' haa'
+        apply (Pairwise.eq_or_rel_of_mem · h h') at h₁
+        rcases h₁ with h₁ | h₁ | h₁
+        · exact h₁
+        · simp [h₁] at haa'
+        · simp [Std.OrientedCmp.gt_of_lt h₁] at haa'
+    · intro ⟨⟨a', ha', haa'⟩, h''⟩
+      exact h'' a' ha' haa' ▸ ha'
+  | a₁ :: l₁', a₂ :: l₂' =>
+    unfold mergeWith
+    split
+    · by_cases h : a = a₁
+      · expose_names
+        simp at h₁ h₂
+        have : ¬ ∃ a ∈ l₂', cmp a₁ a = Ordering.eq := by
+          push_neg
+          intro a' ha'
+          simp [Std.TransCmp.lt_trans heq <| h₂.1 a' ha']
+        simp [*, Std.ReflCmp.compare_self]
+        intro a' ha' haa'
+        simp [h₁.1 a' ha'] at haa'
+      · expose_names
+        apply iff_of_imp_of_imp_of_imp_iff (r := cmp a a₁ ≠ .eq)
+        · intro ha
+          simp at h₁ h₂
+          simp [h] at ha
+          apply exists_mem_mergeWith_cmp_eq' at ha
+          simp at ha
+          rcases ha with ⟨a', ha', haa'⟩ | haa₁ | ⟨a', ha', haa'⟩
+          · simp [Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₁.1 a' ha']
+          · simp [Std.TransCmp.gt_of_eq_of_gt haa₁ <| Std.OrientedCmp.gt_of_lt heq]
+          · have := Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₂.1 a' ha'
+            simp [Std.TransCmp.gt_of_gt_of_gt this <| Std.OrientedCmp.gt_of_lt heq]
+        · intro h'
+          by_contra haa₁
+          simp [*, Std.TransCmp.lt_of_eq_of_lt haa₁ heq] at h'
+          obtain ⟨a', ha', haa'⟩ := h'.1.1
+          simp at h₂
+          have := Std.OrientedCmp.gt_of_lt <| Std.TransCmp.lt_trans heq <| h₂.1 a' ha'
+          simp [Std.TransCmp.gt_of_eq_of_gt haa' this] at haa₁
+        · simp at h₁
+          intro r
+          simp [mem_mergeWith_iff h₁.2 h₂, *]
+    · expose_names
+      apply Std.OrientedCmp.lt_of_gt at heq
+      by_cases h : a = a₂
+      · simp at h₁ h₂
+        have : ¬ ∃ a ∈ l₁', cmp a₂ a = Ordering.eq := by
+          push_neg
+          intro a' ha'
+          simp [Std.TransCmp.lt_trans heq <| h₁.1 a' ha']
+        simp [*, Std.ReflCmp.compare_self]
+        intro a' ha' haa'
+        simp [h₂.1 a' ha'] at haa'
+      · apply iff_of_imp_of_imp_of_imp_iff (r := cmp a a₂ ≠ .eq)
+        · intro ha
+          simp at h₁ h₂
+          simp [h] at ha
+          apply exists_mem_mergeWith_cmp_eq' at ha
+          simp at ha
+          rcases ha with (haa₁ | ⟨a', ha', haa'⟩) | ⟨a', ha', haa'⟩
+          · simp [Std.TransCmp.gt_of_eq_of_gt haa₁ <| Std.OrientedCmp.gt_of_lt heq]
+          · have := Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₁.1 a' ha'
+            simp [Std.TransCmp.gt_of_gt_of_gt this <| Std.OrientedCmp.gt_of_lt heq]
+          · simp [Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₂.1 a' ha']
+        · intro h'
+          by_contra haa₂
+          simp [*, Std.TransCmp.lt_of_eq_of_lt haa₂ heq] at h'
+          obtain ⟨a', ha', haa'⟩ := h'.1
+          simp at h₁
+          have := Std.OrientedCmp.gt_of_lt <| Std.TransCmp.lt_trans heq <| h₁.1 a' ha'
+          simp [Std.TransCmp.gt_of_eq_of_gt haa' this] at haa₂
+        · simp at h₂
+          intro r
+          simp [mem_mergeWith_iff h₁ h₂.2, *]
+    · expose_names
+      simp at h₁ h₂
+      by_cases h : cmp a a₁ = .eq
+      · simp [h, Std.TransCmp.eq_trans h heq]
+        have ha : ¬ a ∈ l₁'.mergeWith l₂' cmp mergeFn := by
+          by_contra ha
+          rcases exists_mem_mergeWith_cmp_eq' _ ha with ⟨a', ha', haa'⟩ | ⟨a', ha', haa'⟩
+          · simp [Std.TransCmp.lt_of_eq_of_lt h <| h₁.1 a' ha'] at haa'
+          · simp [Std.TransCmp.lt_of_eq_of_lt (Std.TransCmp.eq_trans h heq) <| h₂.1 a' ha'] at haa'
+        split
+        · expose_names
+          simp [heq_1, ha]
+        · expose_names
+          simp [heq_1, ha]
+          apply iff_of_imp_of_imp_of_imp_iff (r := a_1 = a) eq_comm.mp
+          · simp
+            exact fun p _ _ ↦ p.symm
+          · intro this
+            simp [this] at *
+            split_ands
+            · intro a' ha' haa'
+              apply Std.TransCmp.eq_trans <| Std.OrientedCmp.eq_symm <| Std.TransCmp.eq_trans h heq
+                at haa'
+              simp [h₂.1 a' ha'] at haa'
+            · intro a' ha' haa'
+              apply Std.TransCmp.eq_trans <| Std.OrientedCmp.eq_symm h at haa'
+              simp [h₁.1 a' ha'] at haa'
+      · simp
+        have ha {a_1} (ha_1 : mergeFn a₁ a₂ = some a_1) : a ≠ a_1 := by
+          by_contra! ha
+          rw [ha.symm] at ha_1
+          simp at inst_1
+          apply inst_1.elim _ _ heq _ at ha_1
+          exact h <| Std.OrientedCmp.eq_symm ha_1
+        apply iff_of_imp_of_imp_of_imp_iff (r := cmp a a₁ = .gt)
+        · suffices a ∈ l₁'.mergeWith l₂' cmp mergeFn → cmp a a₁ = Ordering.gt by aesop
+          intro h'
+          apply Std.OrientedCmp.gt_of_lt
+          apply exists_mem_mergeWith_cmp_eq' at h'
+          rcases h' with ⟨a', ha', haa'⟩ | ⟨a', ha', haa'⟩
+          · exact Std.TransCmp.lt_of_lt_of_eq (h₁.1 a' ha') <| Std.OrientedCmp.eq_symm haa'
+          · exact Std.TransCmp.lt_of_lt_of_eq (Std.TransCmp.lt_of_eq_of_lt heq <| h₂.1 a' ha')
+              <| Std.OrientedCmp.eq_symm haa'
+        · have h2 : ¬cmp a a₂ = Ordering.eq := by
+            contrapose! h
+            exact Std.TransCmp.eq_trans h <| Std.OrientedCmp.eq_comm.mp heq
+          simp [*]
+          by_cases ha : ∃ a_1 ∈ l₁', cmp a a_1 = Ordering.eq
+          · rintro -
+            obtain ⟨a', ha', haa'⟩ := ha
+            exact Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₁.1 a' ha'
+          · simp [ha, -forall_exists_index]
+            rintro ⟨a', ha', haa'⟩ -
+            refine Std.TransCmp.gt_of_gt_of_eq ?_ (Std.OrientedCmp.eq_symm heq)
+            exact Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₂.1 a' ha'
+        intro h'
+        simp [h', Std.TransCmp.gt_of_gt_of_eq h' heq]
+        split
+        · simp [mem_mergeWith_iff h₁.2 h₂.2]
+        · expose_names
+          simp [ha heq_1, mem_mergeWith_iff h₁.2 h₂.2]
+
+-- lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+--     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
+--     (mergeFn : α → α → Option α)
+--     [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+--     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
+--       if h₁' : ∃ x₁ ∈ l₁, cmp x₁ a = .eq then
+--         if h₂' : ∃ x₂ ∈ l₂, cmp x₂ a = .eq then
+--           a = mergeFn h₁'.choose h₂'.choose
+--         else
+--           a = h₁'.choose
+--       else
+--         if h₂' : ∃ x₂ ∈ l₂, cmp x₂ a = .eq then
+--           a = h₂'.choose
+--         else
+--           False
+--     := by
+--       -- some a = match l₁.find? (cmp · a = .eq), l₂.find? (cmp · a = .eq) with
+--       -- | some a', none => a'
+--       -- | none, some a' => a'
+--       -- | some a'₁, some a'₂ => mergeFn a'₁ a'₂
+--       -- | none, none => none := by
+--   match l₁, l₂ with
+--   | nil, nil => simp
+--   | nil, l₂ =>
+--     simp
+--     constructor
+--     · intro h
+--       refine ⟨⟨a, ?_⟩, ?_⟩
+--       · simp [h, Std.ReflCmp.cmp_eq_of_eq rfl]
+--       · generalize_proofs h'
+--         apply Exists.choose_spec at h'
+--         apply (Pairwise.or_of_mem · h h'.1) at h₂
+--         rcases h₂ with h₂ | h₂ | h₂
+--         · exact h₂
+--         · simp [Std.OrientedCmp.gt_of_lt h₂] at h'
+--         · simp [h₂] at h'
+--     · intro ⟨h', h''⟩
+--       exact h'' ▸ h'.choose_spec.1
+--   | l₁, nil =>
+--     simp
+--     constructor
+--     · intro h
+--       refine ⟨⟨a, ?_⟩, ?_⟩
+--       · simp [h, Std.ReflCmp.cmp_eq_of_eq rfl]
+--       · generalize_proofs h'
+--         apply Exists.choose_spec at h'
+--         apply (Pairwise.or_of_mem · h h'.1) at h₁
+--         rcases h₁ with h₁ | h₁ | h₁
+--         · exact h₁
+--         · simp [Std.OrientedCmp.gt_of_lt h₁] at h'
+--         · simp [h₁] at h'
+--     · intro ⟨h', h''⟩
+--       exact h'' ▸ h'.choose_spec.1
+--   | a₁ :: l₁', a₂ :: l₂' =>
+--     unfold mergeWith
+--     split
+--     · simp
+--       rw [mem_mergeWith_iff]
+--       simp
+--       sorry
+--     · sorry
+--     · sorry
+
+  -- constructor
+  -- ·
+  -- · sorry
 
 end
 
-#check Int.mul
-#check Int
+#check Nodup
+-- #check Std.TransCmp.gt_
 
 -- #check List.find
 #check Finset.filter_singleton
