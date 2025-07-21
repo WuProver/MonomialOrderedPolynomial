@@ -282,7 +282,7 @@ lemma mergeWith_sorted_of_sorted {l₁ l₂ : List α} {cmp : α → α → Orde
     mergeWith l₁ l₂ cmp mergeFn |>.Sorted (cmp · · = .lt) :=
   mergeWith_pairwise_of_pairwise h₁ h₂ mergeFn
 
-theorem Pairwise.eq_or_rel_of_mem {α} {l : List α} {R : α → α → Prop} {a b : α} (h : l.Pairwise R) (h1 : a ∈ l)
+theorem Pairwise.eq_or_rel_of_mem {α} {l : List α} {R : α → α → Prop} (h : l.Pairwise R) {a b : α} (h1 : a ∈ l)
     (h2 : b ∈ l) : a = b ∨ R a b ∨ R b a := by
   match l with
   | [] => simp at h1
@@ -470,72 +470,102 @@ lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Orde
         · expose_names
           simp [ha heq_1, mem_mergeWith_iff h₁.2 h₂.2]
 
--- lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
---     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
---     (mergeFn : α → α → Option α)
---     [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
---     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
---       if h₁' : ∃ x₁ ∈ l₁, cmp x₁ a = .eq then
---         if h₂' : ∃ x₂ ∈ l₂, cmp x₂ a = .eq then
---           a = mergeFn h₁'.choose h₂'.choose
---         else
---           a = h₁'.choose
---       else
---         if h₂' : ∃ x₂ ∈ l₂, cmp x₂ a = .eq then
---           a = h₂'.choose
---         else
---           False
---     := by
---       -- some a = match l₁.find? (cmp · a = .eq), l₂.find? (cmp · a = .eq) with
---       -- | some a', none => a'
---       -- | none, some a' => a'
---       -- | some a'₁, some a'₂ => mergeFn a'₁ a'₂
---       -- | none, none => none := by
---   match l₁, l₂ with
---   | nil, nil => simp
---   | nil, l₂ =>
---     simp
---     constructor
---     · intro h
---       refine ⟨⟨a, ?_⟩, ?_⟩
---       · simp [h, Std.ReflCmp.cmp_eq_of_eq rfl]
---       · generalize_proofs h'
---         apply Exists.choose_spec at h'
---         apply (Pairwise.or_of_mem · h h'.1) at h₂
---         rcases h₂ with h₂ | h₂ | h₂
---         · exact h₂
---         · simp [Std.OrientedCmp.gt_of_lt h₂] at h'
---         · simp [h₂] at h'
---     · intro ⟨h', h''⟩
---       exact h'' ▸ h'.choose_spec.1
---   | l₁, nil =>
---     simp
---     constructor
---     · intro h
---       refine ⟨⟨a, ?_⟩, ?_⟩
---       · simp [h, Std.ReflCmp.cmp_eq_of_eq rfl]
---       · generalize_proofs h'
---         apply Exists.choose_spec at h'
---         apply (Pairwise.or_of_mem · h h'.1) at h₁
---         rcases h₁ with h₁ | h₁ | h₁
---         · exact h₁
---         · simp [Std.OrientedCmp.gt_of_lt h₁] at h'
---         · simp [h₁] at h'
---     · intro ⟨h', h''⟩
---       exact h'' ▸ h'.choose_spec.1
---   | a₁ :: l₁', a₂ :: l₂' =>
---     unfold mergeWith
---     split
---     · simp
---       rw [mem_mergeWith_iff]
---       simp
---       sorry
---     · sorry
---     · sorry
+lemma _root_.Transitive.ofTransCmp (cmp : α → α → Ordering) [Std.TransCmp cmp] :
+    Transitive (cmp · · = .eq) := fun _ _ _ => Std.TransCmp.eq_trans
 
-  -- constructor
-  -- ·
-  -- · sorry
+lemma _root_.Equivalence.ofTransCmp (cmp : α → α → Ordering) [Std.TransCmp cmp] :
+    Equivalence (cmp · · = .eq) where
+  refl := fun _ ↦ Std.ReflCmp.compare_self
+  symm := Std.OrientedCmp.eq_symm
+  trans := Std.TransCmp.eq_trans
+
+lemma not_exists_and {α : Sort*} {q p : α → Prop} :
+    (¬∃ x, q x ∧ p x) ↔ ∀ (x : α), q x → ¬ p x := by
+  simp
+
+lemma find?_right_isSome_iff_of_pairwise {p : α → α → Prop} {l : List α}
+    (h : l.Pairwise (¬ p · ·)) (a b : α) [∀ x : α, Decidable (p a x)]
+    (hp : ∀ a₁ ∈ l, ∀ a₂ ∈ l, p a a₁ → p a a₂ → p a₁ a₂) :
+    (l.find? (p a ·)) = some b ↔ b ∈ l ∧ p a b := by
+  constructor
+  · intro h
+    have := find?_some h
+    -- why `exact ⟨mem_of_find?_eq_some h, of_decide_eq_true (find?_some h)⟩` doesn't work??
+    exact ⟨mem_of_find?_eq_some h, of_decide_eq_true this⟩
+  intro ⟨hb, hab⟩
+  have := List.find?_isSome (p := fun x ↦ decide (p a x)) |>.mpr ⟨b, ⟨hb, decide_eq_true hab⟩⟩
+  match h' : (l.find? (p a ·)) with
+  | none => simp [h'] at this
+  | some b' =>
+      congr
+      have hb' := mem_of_find?_eq_some h'
+      -- why `have hab' := of_decide_eq_true <| find?_some h'` doesn't work?
+      have := find?_some h'
+      have hab' := of_decide_eq_true this
+      apply (Pairwise.eq_or_rel_of_mem · hb' hb) at h
+      simp [hp _ hb' _ hb hab' hab, hp _ hb _ hb' hab hab'] at h
+      exact h
+
+lemma find?_right_isSome_iff_of_pairwise_equivalence {p : α → α → Prop} (hp : Equivalence p)
+    {l : List α} (h : l.Pairwise (¬ p · ·)) (a b : α) [∀ x : α, Decidable (p a x)] :
+    (l.find? (p a ·)) = some b ↔ b ∈ l ∧ p a b :=
+  find?_right_isSome_iff_of_pairwise h a b (fun _ _ _ _ h h' ↦ hp.trans (hp.symm h) h')
+
+lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+    (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
+    (mergeFn : α → α → Option α)
+    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+    a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
+      some a = match l₁.find? (cmp a · = .eq), l₂.find? (cmp a · = .eq) with
+      | some a', none => a'
+      | none, some a' => a'
+      | some a'₁, some a'₂ => mergeFn a'₁ a'₂
+      | none, none => none := by
+  rw [mem_mergeWith_iff h₁ h₂ mergeFn]
+  apply Pairwise.imp (S := (¬ cmp · · = .eq)) (by simp_intro ..) at h₁
+  apply Pairwise.imp (S := (¬ cmp · · = .eq)) (by simp_intro ..) at h₂
+  rw [Iff.comm]
+  split <;> expose_names
+  · simp at heq_1
+    rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₁] at heq
+    simp [not_exists_and.mpr heq_1, show ∃ x₁ ∈ l₁, cmp a x₁ = Ordering.eq from ⟨_, heq⟩]
+    constructor
+    · simp_intro _ _ h h'
+      apply (Pairwise.eq_or_rel_of_mem · heq.1 h) at h₁
+      simp [h', Std.OrientedCmp.eq_symm h'] at h₁
+      exact h₁
+    · intro h
+      exact h _ heq.1 heq.2
+  · simp at heq
+    rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₂] at heq_1
+    simp [not_exists_and.mpr heq, show ∃ x₂ ∈ l₂, cmp a x₂ = Ordering.eq from ⟨_, heq_1⟩]
+    constructor
+    · simp_intro _ _ h h'
+      apply (Pairwise.eq_or_rel_of_mem · heq_1.1 h) at h₂
+      simp [h', Std.OrientedCmp.eq_symm h'] at h₂
+      exact h₂
+    · intro h
+      exact h _ heq_1.1 heq_1.2
+  · rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₁] at heq
+    rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₂] at heq_1
+    simp [show ∃ x₁ ∈ l₁, cmp a x₁ = Ordering.eq from ⟨_, heq⟩,
+      show ∃ x₂ ∈ l₂, cmp a x₂ = Ordering.eq from ⟨_, heq_1⟩]
+    constructor
+    · simp_intro h x₁ hx₁ hax₁ x₂ hx₂ hax₂
+      apply (Pairwise.eq_or_rel_of_mem · heq.1 hx₁) at h₁
+      apply (Pairwise.eq_or_rel_of_mem · heq_1.1 hx₂) at h₂
+      simp at inst_1
+      apply Fact.elim at inst_1
+      have := Std.TransCmp.eq_trans (Std.OrientedCmp.eq_symm heq.2) heq_1.2
+      specialize inst_1 _ _ this _ h.symm
+      simp [Std.TransCmp.eq_trans inst_1 hax₁, Std.OrientedCmp.eq_comm] at h₁
+      replace this := (Std.TransCmp.congr_left this).symm ▸ Std.TransCmp.eq_trans inst_1 hax₂
+      simp [this, Std.OrientedCmp.eq_comm] at h₂
+      simp [h₁, h₂]
+    · intro h
+      exact h _ heq.1 heq.2 _ heq_1.1 heq_1.2
+  · simp at heq heq_1
+    simp [not_exists_and.mpr heq, not_exists_and.mpr heq_1]
 
 end
 
