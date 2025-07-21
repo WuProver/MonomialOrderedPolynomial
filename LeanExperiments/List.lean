@@ -493,18 +493,16 @@ lemma find?_right_isSome_iff_of_pairwise {p : α → α → Prop} {l : List α}
     -- why `exact ⟨mem_of_find?_eq_some h, of_decide_eq_true (find?_some h)⟩` doesn't work??
     exact ⟨mem_of_find?_eq_some h, of_decide_eq_true this⟩
   intro ⟨hb, hab⟩
-  have := List.find?_isSome (p := fun x ↦ decide (p a x)) |>.mpr ⟨b, ⟨hb, decide_eq_true hab⟩⟩
   match h' : (l.find? (p a ·)) with
-  | none => simp [h'] at this
+  | none =>
+    simp at h'
+    simp [h' _ hb] at hab
   | some b' =>
-      congr
       have hb' := mem_of_find?_eq_some h'
-      -- why `have hab' := of_decide_eq_true <| find?_some h'` doesn't work?
-      have := find?_some h'
-      have hab' := of_decide_eq_true this
+      have hab' := of_decide_eq_true (p := p a b') <| find?_some (p := fun x ↦ decide (p a x)) h'
       apply (Pairwise.eq_or_rel_of_mem · hb' hb) at h
       simp [hp _ hb' _ hb hab' hab, hp _ hb _ hb' hab hab'] at h
-      exact h
+      simp [h]
 
 lemma find?_right_isSome_iff_of_pairwise_equivalence {p : α → α → Prop} (hp : Equivalence p)
     {l : List α} (h : l.Pairwise (¬ p · ·)) (a b : α) [∀ x : α, Decidable (p a x)] :
