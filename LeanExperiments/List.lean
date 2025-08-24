@@ -483,15 +483,13 @@ lemma not_exists_and {α : Sort*} {q p : α → Prop} :
     (¬∃ x, q x ∧ p x) ↔ ∀ (x : α), q x → ¬ p x := by
   simp
 
-lemma find?_right_isSome_iff_of_pairwise {p : α → α → Prop} {l : List α}
+lemma find?_right_eq_some_iff_of_pairwise {p : α → α → Prop} {l : List α}
     (h : l.Pairwise (¬ p · ·)) (a b : α) [∀ x : α, Decidable (p a x)]
     (hp : ∀ a₁ ∈ l, ∀ a₂ ∈ l, p a a₁ → p a a₂ → p a₁ a₂) :
     (l.find? (p a ·)) = some b ↔ b ∈ l ∧ p a b := by
   constructor
   · intro h
-    have := find?_some h
-    -- why `exact ⟨mem_of_find?_eq_some h, of_decide_eq_true (find?_some h)⟩` doesn't work??
-    exact ⟨mem_of_find?_eq_some h, of_decide_eq_true this⟩
+    exact ⟨mem_of_find?_eq_some h, of_decide_eq_true <| find?_some (p := fun x ↦ decide (p a x)) h⟩
   intro ⟨hb, hab⟩
   match h' : (l.find? (p a ·)) with
   | none =>
@@ -504,10 +502,27 @@ lemma find?_right_isSome_iff_of_pairwise {p : α → α → Prop} {l : List α}
       simp [hp _ hb' _ hb hab' hab, hp _ hb _ hb' hab hab'] at h
       simp [h]
 
-lemma find?_right_isSome_iff_of_pairwise_equivalence {p : α → α → Prop} (hp : Equivalence p)
+lemma find?_right_eq_some_iff_of_pairwise_equivalence {p : α → α → Prop} (hp : Equivalence p)
     {l : List α} (h : l.Pairwise (¬ p · ·)) (a b : α) [∀ x : α, Decidable (p a x)] :
     (l.find? (p a ·)) = some b ↔ b ∈ l ∧ p a b :=
-  find?_right_isSome_iff_of_pairwise h a b (fun _ _ _ _ h h' ↦ hp.trans (hp.symm h) h')
+  find?_right_eq_some_iff_of_pairwise h a b (fun _ _ _ _ h h' ↦ hp.trans (hp.symm h) h')
+
+lemma find?_right_eq_some_iff_of_pairwise' {l : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+    (h : l.Pairwise (cmp · · = .lt)) (a b : α) :
+    (l.find? (cmp a · = .eq)) = some b ↔ b ∈ l ∧ cmp a b = .eq := by
+  apply find?_right_eq_some_iff_of_pairwise_equivalence (p := (cmp · · = .eq))
+  · constructor
+    · exact fun a ↦ Std.ReflCmp.compare_self (a := a)
+    · exact Std.OrientedCmp.eq_symm
+    · exact Std.TransCmp.eq_trans
+  · exact Pairwise.imp_of_mem (by simp_intro ..) h
+
+lemma find?_left_is_some_iff_of_pairwise' {l : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+    (h : l.Pairwise (cmp · · = .lt)) (a b : α) :
+    (l.find? (cmp · a = .eq)) = some b ↔ b ∈ l ∧ cmp a b = .eq := by
+  convert find?_right_eq_some_iff_of_pairwise' h a b using 5
+  exact Std.OrientedCmp.eq_comm
+
 
 lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
@@ -525,7 +540,7 @@ lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ord
   rw [Iff.comm]
   split <;> expose_names
   · simp at heq_1
-    rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₁] at heq
+    rw [find?_right_eq_some_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₁] at heq
     simp [not_exists_and.mpr heq_1, show ∃ x₁ ∈ l₁, cmp a x₁ = Ordering.eq from ⟨_, heq⟩]
     constructor
     · simp_intro _ _ h h'
@@ -535,7 +550,7 @@ lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ord
     · intro h
       exact h _ heq.1 heq.2
   · simp at heq
-    rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₂] at heq_1
+    rw [find?_right_eq_some_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₂] at heq_1
     simp [not_exists_and.mpr heq, show ∃ x₂ ∈ l₂, cmp a x₂ = Ordering.eq from ⟨_, heq_1⟩]
     constructor
     · simp_intro _ _ h h'
@@ -544,8 +559,8 @@ lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ord
       exact h₂
     · intro h
       exact h _ heq_1.1 heq_1.2
-  · rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₁] at heq
-    rw [find?_right_isSome_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₂] at heq_1
+  · rw [find?_right_eq_some_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₁] at heq
+    rw [find?_right_eq_some_iff_of_pairwise_equivalence (Equivalence.ofTransCmp cmp) h₂] at heq_1
     simp [show ∃ x₁ ∈ l₁, cmp a x₁ = Ordering.eq from ⟨_, heq⟩,
       show ∃ x₂ ∈ l₂, cmp a x₂ = Ordering.eq from ⟨_, heq_1⟩]
     constructor
