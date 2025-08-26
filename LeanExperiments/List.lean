@@ -6,19 +6,19 @@ namespace List
 section
 
 variable {α : Type*} (l l₁ l₂ : List α) (cmp : α → α → Ordering)
-  (mergeFn : α → α → Option α)
+  (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
 
 def mergeWith (l₁ l₂ : List α) (cmp : α → α → Ordering)
-    (mergeFn : α → α → Option α) : List α :=
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α) : List α :=
   match l₁, l₂ with
   | _, [] => l₁
   | [], _ => l₂
   | h₁ :: l₁', h₂ :: l₂' =>
-    match cmp h₁ h₂ with
+    match h : cmp h₁ h₂ with
     | .lt => h₁ :: mergeWith l₁' (.cons h₂ l₂') cmp mergeFn
     | .gt => h₂ :: mergeWith (.cons h₁ l₁') l₂' cmp mergeFn
     | .eq =>
-      match mergeFn h₁ h₂ with
+      match mergeFn h₁ h₂ h with
       | none => mergeWith l₁' l₂' cmp mergeFn
       | some a => a :: mergeWith l₁' l₂' cmp mergeFn
 termination_by l₁.length + l₂.length
@@ -40,17 +40,17 @@ where
     | _, [] => l₁
     | [], _ => l₂
     | h₁ :: l₁', h₂ :: l₂' =>
-      match cmp h₁ h₂ with
+      match h : cmp h₁ h₂ with
       | .lt => h₁ :: go fuel l₁' l₂
       | .gt => h₂ :: go fuel l₁ l₂'
       | .eq =>
-        match mergeFn h₁ h₂ with
+        match mergeFn h₁ h₂ h with
         | none => go fuel l₁' l₂'
         | some a => a :: go fuel l₁' l₂'
 
 lemma mergeWithByFuel_go_eq {fuel : Nat}
     (l₁ l₂ : List α) (cmp : α → α → Ordering)
-    (mergeFn : α → α → Option α)
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
     (h : l₁.length + l₂.length <= fuel) :
     mergeWithByFuel.go cmp mergeFn fuel l₁ l₂ = mergeWith l₁ l₂ cmp mergeFn := by
   unfold mergeWithByFuel.go mergeWith
@@ -82,29 +82,29 @@ lemma mergeWith_right_nil : mergeWith l [] cmp mergeFn = l := by
   unfold mergeWith
   split; rfl; rfl; simp at *
 
-lemma mergeWith_symm (l₁ l₂ : List α) (cmp : α → α → Ordering)
-    (mergeFn : α → α → Option α)
-    [Std.OrientedCmp cmp] [IsSymmOp mergeFn] :
-    mergeWith l₁ l₂ cmp mergeFn = mergeWith l₂ l₁ cmp mergeFn := by
-  cases' l₁ with _ l₁'
-  · simp
-  cases' l₂ with _ l₂'
-  · simp
-  simp [mergeWith]
-  rw [mergeWith_symm l₁' (_ :: _), mergeWith_symm l₂' (_ :: _),
-    Std.OrientedCmp.eq_swap (cmp := cmp)]
-  split
-  · expose_names
-    simp at heq
-    simp [heq]
-  · expose_names
-    simp at heq
-    simp [heq]
-  · expose_names
-    simp at heq
-    simp [heq]
-    rw [mergeWith_symm l₁', IsSymmOp.symm_op (op := mergeFn)]
-termination_by l₁.length + l₂.length
+-- lemma mergeWith_symm (l₁ l₂ : List α) (cmp : α → α → Ordering)
+--     (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
+--     [Std.OrientedCmp cmp] [IsSymmOp mergeFn] :
+--     mergeWith l₁ l₂ cmp mergeFn = mergeWith l₂ l₁ cmp mergeFn := by
+--   cases' l₁ with _ l₁'
+--   · simp
+--   cases' l₂ with _ l₂'
+--   · simp
+--   simp [mergeWith]
+--   rw [mergeWith_symm l₁' (_ :: _), mergeWith_symm l₂' (_ :: _),
+--     Std.OrientedCmp.eq_swap (cmp := cmp)]
+--   split
+--   · expose_names
+--     simp at heq
+--     simp [heq]
+--   · expose_names
+--     simp at heq
+--     simp [heq]
+--   · expose_names
+--     simp at heq
+--     simp [heq]
+--     rw [mergeWith_symm l₁', IsSymmOp.symm_op (op := mergeFn)]
+-- termination_by l₁.length + l₂.length
 
 instance [Std.TransCmp cmp] : IsTrans _ (cmp · · = .lt) where
   trans := fun _ _ _ => Std.TransCmp.lt_trans
@@ -113,10 +113,10 @@ instance [Std.TransCmp cmp] : IsTrans _ (cmp · · = .gt) where
   trans := fun _ _ _ => Std.TransCmp.gt_trans
 
 lemma exists_mem_mergeWith_cmp_eq {a} {l₁ l₂ : List α} {cmp : α → α → Ordering}
-    (mergeFn : α → α → Option α)
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
     (h : a ∈ mergeWith l₁ l₂ cmp mergeFn) :
     a ∈ l₁ ∨ a ∈ l₂ ∨
-      ∃ a₁ ∈ l₁, ∃ a₂ ∈ l₂, cmp a₁ a₂ = .eq ∧ a = mergeFn a₁ a₂ := by
+      ∃ a₁ ∈ l₁, ∃ a₂ ∈ l₂, ∃ (h : cmp a₁ a₂ = .eq), a = mergeFn a₁ a₂ h := by
   -- https://leanprover.zulipchat.com/#narrow/channel/113489-new-members/topic/Non-structural.20recursivity.2C.20termination_by.20arguments/with/523811369
   match l₁, l₂ with
   | nil, _ => simp at h; simp [h]
@@ -172,8 +172,8 @@ decreasing_by
     linarith
 
 lemma exists_mem_mergeWith_cmp_eq' {a} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
-    (mergeFn : α → α → Option α)
-    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq]
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
+    [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h, cmp a a' = .eq]
     (h : a ∈ mergeWith l₁ l₂ cmp mergeFn) :
     (∃ a' ∈ l₁, cmp a a' = .eq) ∨ ∃ a' ∈ l₂, cmp a a' = .eq := by
   obtain h | h | ⟨a₁, h₁, a₂, h₂, h, h'⟩ := exists_mem_mergeWith_cmp_eq mergeFn h
@@ -208,8 +208,8 @@ lemma exists_mem_mergeWith_cmp_eq' {a} {l₁ l₂ : List α} {cmp : α → α �
 
 lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
-    (mergeFn : α → α → Option α)
-    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
+    [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h, cmp a a' = .eq] :
     mergeWith l₁ l₂ cmp mergeFn |>.Pairwise (cmp · · = .lt) := by
   expose_names
   have hfn := inst_1.elim
@@ -277,8 +277,8 @@ termination_by l₁.length + l₂.length
 
 lemma mergeWith_sorted_of_sorted {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Sorted (cmp · · = .lt)) (h₂ : l₂.Sorted (cmp · · = .lt))
-    (mergeFn : α → α → Option α)
-    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
+    [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h , cmp a a' = .eq] :
     mergeWith l₁ l₂ cmp mergeFn |>.Sorted (cmp · · = .lt) :=
   mergeWith_pairwise_of_pairwise h₁ h₂ mergeFn
 
@@ -299,13 +299,14 @@ theorem _root_.iff_of_imp_of_imp_of_imp_iff {p q r : Prop} (hp : p → r) (hq : 
 
 lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
-    (mergeFn : α → α → Option α)
-    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
+    [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h, cmp a a' = .eq] :
     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
       if ∃ x₁ ∈ l₁, cmp a x₁ = .eq then
-        ∀ x₁ ∈ l₁, cmp a x₁ = .eq →
+        ∀ x₁ ∈ l₁, (h1 : cmp a x₁ = .eq) →
           if ∃ x₂ ∈ l₂, cmp a x₂ = .eq then
-            ∀ x₂ ∈ l₂, cmp a x₂ = .eq → a = mergeFn x₁ x₂
+            ∀ x₂ ∈ l₂, (h2 : cmp a x₂ = .eq) →
+              a = mergeFn x₁ x₂ (Std.TransCmp.eq_trans (Std.OrientedCmp.eq_symm h1) h2)
           else
             a = x₁
       else
@@ -436,7 +437,7 @@ lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Orde
               apply Std.TransCmp.eq_trans <| Std.OrientedCmp.eq_symm h at haa'
               simp [h₁.1 a' ha'] at haa'
       · simp
-        have ha {a_1} (ha_1 : mergeFn a₁ a₂ = some a_1) : a ≠ a_1 := by
+        have ha {a_1} (ha_1 : mergeFn a₁ a₂ heq = some a_1) : a ≠ a_1 := by
           by_contra! ha
           rw [ha.symm] at ha_1
           simp at inst_1
@@ -517,22 +518,26 @@ lemma find?_right_eq_some_iff_of_pairwise' {l : List α} {cmp : α → α → Or
     · exact Std.TransCmp.eq_trans
   · exact Pairwise.imp_of_mem (by simp_intro ..) h
 
-lemma find?_left_is_some_iff_of_pairwise' {l : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
+lemma find?_left_eq_some_iff_of_pairwise' {l : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h : l.Pairwise (cmp · · = .lt)) (a b : α) :
     (l.find? (cmp · a = .eq)) = some b ↔ b ∈ l ∧ cmp a b = .eq := by
   convert find?_right_eq_some_iff_of_pairwise' h a b using 5
   exact Std.OrientedCmp.eq_comm
 
-
 lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
-    (mergeFn : α → α → Option α)
-    [Fact <| ∀ a b : α, cmp a b = Ordering.eq → ∀ a' ∈ mergeFn a b, cmp a a' = .eq] :
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
+    [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h, cmp a a' = .eq] :
     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
-      some a = match l₁.find? (cmp a · = .eq), l₂.find? (cmp a · = .eq) with
+      some a = match h1 : l₁.find? (cmp a · = .eq), h2 : l₂.find? (cmp a · = .eq) with
       | some a', none => a'
       | none, some a' => a'
-      | some a'₁, some a'₂ => mergeFn a'₁ a'₂
+      | some a'₁, some a'₂ =>
+        mergeFn a'₁ a'₂ (by
+          rw [find?_right_eq_some_iff_of_pairwise' h₁] at h1
+          rw [find?_right_eq_some_iff_of_pairwise' h₂] at h2
+          exact Std.TransCmp.eq_trans (Std.OrientedCmp.eq_symm h1.2) h2.2
+        )
       | none, none => none := by
   rw [mem_mergeWith_iff h₁ h₂ mergeFn]
   apply Pairwise.imp (S := (¬ cmp · · = .eq)) (by simp_intro ..) at h₁
@@ -581,137 +586,3 @@ lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ord
     simp [not_exists_and.mpr heq, not_exists_and.mpr heq_1]
 
 end
-
-#check Nodup
--- #check Std.TransCmp.gt_
-
--- #check List.find
-#check Finset.filter_singleton
-
-#loogle List.find?, List.filter
-
-#reduce [1, 2, 4, 5].mergeWithByFuel [1, 3, 9] cmp fun _ _ => none
-
-
-
-end List
-
-#check Int.add
-
-structure Int' where
-  isNeg : Bool
-  abs : Int
--- deriving Decidable
-
-instance inst : BEq Int' where
-  beq a b := or (and (a.abs == 0) (b.abs == 0)) (and (a.isNeg == b.isNeg) (a.abs == b.abs))
-
-
-
-#print inst
-
-def Int'.mul (a b : Int') : Int' where
-  isNeg := xor a.isNeg b.isNeg
-  abs := a.abs * b.abs
-
-def Int'.add (a b : Int') : Int' :=
-  match xor a.isNeg b.isNeg with
-  | true =>
-    bif a.abs < b.abs then
-      ⟨b.isNeg, b.abs - a.abs⟩
-    else
-      ⟨a.isNeg, a.abs - b.abs⟩
-  | false =>
-    ⟨a.isNeg, a.abs + b.abs⟩
-
-def Int'.sub (a b : Int') : Int' :=
-  match xor a.isNeg b.isNeg with
-  | true =>
-    ⟨a.isNeg, a.abs + b.abs⟩
-  | false =>
-    bif a.abs < b.abs then
-      ⟨not a.isNeg, b.abs - a.abs⟩
-    else
-      ⟨a.isNeg, a.abs - b.abs⟩
-
-def Int.pow' (m : Int) (n : Nat) : Int :=
-  match m with
-  | .ofNat m => ((m : Nat) ^ n : Nat)
-  | .negSucc m => if n % 2 = 0 then
-      ((m + 1) ^ n : Nat)
-    else - ((m + 1) ^ n : Nat)
-
-def Int'.pow (m : Int') (n : Nat) : Int' :=
-  ⟨match m.isNeg with | true => n % 2 != 0 | false => false, m.abs ^ n⟩
-
-def Int'.neg (m : Int') : Int' := ⟨not m.isNeg, m.abs⟩
-
--- #check or
-
-abbrev test (n : Nat) :=
-    let x (m : Nat) : Nat := (min (1 ^ (2 * n) * 2 ^ (2 * n - 1)) (2 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
-    (- ((1 : Int) * x 1 - 1)).pow' (2 * n) =
-    ((1 : Int) * x 2 - (2 : Int) * x 1 + 1 ).pow' n
-
-abbrev test' (n : Nat) :=
-  (List.range (2 * n + 1)).all <|
-    fun x =>
-      (- ((1 : Int) * x - 1)).pow' (2 * n) = ((1 : Int) * x ^ 2 - (2 : Int) * x + 1 ).pow' n
-
--- abbrev test' (n : Nat) :=
---     let x (m : Nat) : Nat := (min (1 ^ (2 * n) * 2 ^ (2 * n - 1)) (2 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
---     ((⟨false, 1⟩ : Int') |>.mul ⟨false, x 1⟩ |>.sub ⟨false, 1⟩ |>.neg.pow (2 * n)) =
---     ((⟨false, 1⟩ : Int').mul ⟨false, x 2⟩ |>.sub (⟨false, 2⟩ : Int) x 1 + 1 ).pow' n
-
-abbrev test2 (n : Nat) :=
-    let x (m : Nat) : Nat := (max (5 ^ (2 * n) * 2 ^ (2 * n - 1)) (9 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
-    (- ((1 : Int) * x 1 - 2)).pow' (2 * n) =
-    ((1 : Int) * x 2 - (4 : Int) * x 1 + 4 ).pow' n
-
-abbrev test3 (n : Nat) :=
-    let x (m : Nat) : Nat := (min (2 ^ (2 * n) * 2 ^ (2 * n - 1)) (4 ^ (n) * 3 ^ (n - 1)) + 1) ^ m
-    (- ((1 : Int) * x 1 - 2)).pow' (2 * n) =
-    ((1 : Int) * x 2 - (4 : Int) * x 1 + 4 ).pow' n
-
--- #check Int.pow
-
-#print test
-#check Nat.lcm
-
-#reduce test 100
-#check Int.add
-set_option profiler true
-
-set_option maxRecDepth 10000
-example : test 10000 := by
-  -- native_decide
-  decide +kernel
-
-example : test2 8000 := by
-  decide +kernel
-
--- example : test' 10000 := by
---   decide +kernel
-
-#reduce Nat.primesBelow 10
-
-#check Float
-#check 1 + 2 + 3
-
--- ex  ample : test2 10000 := by
---   -- native_decide
---   decide +kernel
-
--- 2000 180
--- 4000 659
--- 8000 2.71
--- 16000 11.8
--- 32000 58.1
-
--- 20000 19.9 0.30
-
-#reduce 0 / 0
-
-#check RatFunc
-
-#reduce (100024 : Int) ^ 100024 - 1  = (100024 : Int) ^ 100024 - 1
