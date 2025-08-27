@@ -1,64 +1,64 @@
 import LeanExperiments.List
 
-def DSortedListMap σ (R : σ → Type*)
-    (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
-  { l : List ((k : σ) × R k) // l.Chain' (cmp ·.1 ·.1 = .lt) }
+def DSortedListMap α (β : α → Type*)
+    (cmp : α → α → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
+  { l : List ((k : α) × β k) // l.Chain' (cmp ·.1 ·.1 = .lt) }
 
 namespace DSortedListMap
 
-variable {σ : Type*} {R : σ → Type*} {cmp : σ → σ → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+variable {α : Type*} {β : α → Type*} {cmp : α → α → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
 
 section Basic
 
-abbrev toList (l : DSortedListMap σ R cmp) := l.val
+abbrev toList (l : DSortedListMap α β cmp) := l.val
 
-instance : Std.TransCmp (α := (k : σ) × R k) (cmp ·.1 ·.1) where
+instance : Std.TransCmp (α := (k : α) × β k) (cmp ·.1 ·.1) where
   eq_swap := Std.OrientedCmp.eq_swap
   isLE_trans := Std.TransCmp.isLE_trans
 
-instance : IsAntisymm (α := (k : σ) × R k) (cmp ·.1 ·.1 = .lt) where
+instance : IsAntisymm (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
   antisymm _ _ h h' := by
     rw [Std.OrientedCmp.eq_swap (cmp := cmp)] at h
     simp [h'] at h
 
-instance : IsIrrefl (α := (k : σ) × R k) (cmp ·.1 ·.1 = .lt) where
+instance : IsIrrefl (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
   irrefl a := by
     simp [Std.ReflCmp.compare_self]
 
-lemma chain' (l : DSortedListMap σ R cmp) : l.val.Chain' (cmp ·.1 ·.1 = .lt) := l.property
+lemma chain' (l : DSortedListMap α β cmp) : l.val.Chain' (cmp ·.1 ·.1 = .lt) := l.property
 
-lemma pairwise (l : DSortedListMap σ R cmp) : l.val.Pairwise (cmp ·.1 ·.1 = .lt) :=
+lemma pairwise (l : DSortedListMap α β cmp) : l.val.Pairwise (cmp ·.1 ·.1 = .lt) :=
   List.chain'_iff_pairwise.mp l.chain'
 
-lemma eq_iff (l₁ l₂ : DSortedListMap σ R cmp) : l₁ = l₂ ↔ l₁.val = l₂.val := Subtype.eq_iff
+lemma eq_iff (l₁ l₂ : DSortedListMap α β cmp) : l₁ = l₂ ↔ l₁.val = l₂.val := Subtype.eq_iff
 
-instance : EmptyCollection <| DSortedListMap σ R cmp := ⟨[], List.chain'_nil⟩
+instance : EmptyCollection <| DSortedListMap α β cmp := ⟨[], List.chain'_nil⟩
 
-lemma empty_def : (∅ : DSortedListMap σ R cmp) = ⟨[], List.chain'_nil⟩ := rfl
+lemma empty_def : (∅ : DSortedListMap α β cmp) = ⟨[], List.chain'_nil⟩ := rfl
 
 @[simp]
-lemma empty_val : (∅ : DSortedListMap σ R cmp).val = [] := rfl
+lemma empty_val : (∅ : DSortedListMap α β cmp).val = [] := rfl
 
-lemma eq_empty_iff (l : DSortedListMap σ R cmp) : l = ∅ ↔ l.val = [] := by
-  rw [empty_def, show l = ⟨l.val, l.2⟩ from rfl]
+lemma eq_empty_iff (l : DSortedListMap α β cmp) : l = ∅ ↔ l.val = [] := by
+  rw [empty_def, show l = ⟨l.val, l.chain'⟩ from rfl]
   constructor <;> simp_intro ..
 
 @[elab_as_elim]
-theorem induction {motive : DSortedListMap σ R cmp → Prop} (empty : motive ∅)
-    (cons : ∀ (a : (k : σ) × R k) (s : DSortedListMap σ R cmp)
+theorem induction {motive : DSortedListMap α β cmp → Prop} (empty : motive ∅)
+    (cons : ∀ (a : (k : α) × β k) (s : DSortedListMap α β cmp)
       (h : ∀ a', a' ∈ s.val → cmp a.1 a'.1 = .lt),
         motive s →
         motive ⟨a :: s.val, by
           simpa [List.chain'_iff_pairwise, s.pairwise]⟩)
-    (s : DSortedListMap σ R cmp) : motive s := by
+    (s : DSortedListMap α β cmp) : motive s := by
   match h : s.val with
   | .nil => rw [← eq_empty_iff] at h; rwa [h]
   | .cons a l' =>
-    have := s.2
+    have := s.chain'
     simp [h, List.chain'_iff_pairwise] at this
-    rw [show s = ⟨s.1, s.2⟩ from rfl]
+    rw [show s = ⟨s.val, s.chain'⟩ from rfl]
     simp_rw [h]
-    letI s' : DSortedListMap σ R cmp :=
+    letI s' : DSortedListMap α β cmp :=
       ⟨l', by simp [List.chain'_iff_pairwise, this]⟩
     apply cons a s' this.1
     apply induction empty cons
@@ -66,17 +66,17 @@ termination_by s.val.length
 decreasing_by simp [h]
 
 @[elab_as_elim]
-theorem induction' {motive : DSortedListMap σ R cmp → Prop} (empty : motive ∅)
-    (cons : ∀ (a : σ) (b : R a) (s : DSortedListMap σ R cmp)
+theorem induction' {motive : DSortedListMap α β cmp → Prop} (empty : motive ∅)
+    (cons : ∀ (a : α) (b : β a) (s : DSortedListMap α β cmp)
       (h : ∀ a' b', ⟨a', b'⟩ ∈ s.val → cmp a a' = .lt),
         motive s →
         motive ⟨⟨a, b⟩ :: s.val, by
           simpa [List.chain'_iff_pairwise, s.pairwise, Sigma.forall]⟩)
-    (s : DSortedListMap σ R cmp) : motive s :=
+    (s : DSortedListMap α β cmp) : motive s :=
   induction empty (by simpa [Sigma.forall]) s
 
-lemma find?_left_eq_some_iff (l : DSortedListMap σ R cmp) (a : σ) [∀ x, Decidable (x = a)]
-    (b : (k : σ) × (R k)) : l.val.find? (·.1 = a) = some b ↔ b ∈ l.val ∧ a = b.1 := by
+lemma find?_left_eq_some_iff (l : DSortedListMap α β cmp) (a : α) [∀ x, Decidable (x = a)]
+    (b : (k : α) × (β k)) : l.val.find? (·.1 = a) = some b ↔ b ∈ l.val ∧ a = b.1 := by
   constructor
   · intro h
     have := List.find?_some h
@@ -89,31 +89,31 @@ lemma find?_left_eq_some_iff (l : DSortedListMap σ R cmp) (a : σ) [∀ x, Deci
     have := List.find?_left_eq_some_iff_of_pairwise' l.pairwise ⟨a, h.2.symm ▸ b.2⟩ b
     simpa [Std.LawfulEqCmp.compare_eq_iff_eq (cmp:=cmp), ← h.2, h.1]
 
-lemma find?_left_eq_some_iff' (l : DSortedListMap σ R cmp) (a : (k : σ) × (R k))
+lemma find?_left_eq_some_iff' (l : DSortedListMap α β cmp) (a : (k : α) × (β k))
     [∀ x, Decidable (x = a.1)] : l.val.find? (·.1 = a.1) = some a ↔ a ∈ l.val := by
   have := l.find?_left_eq_some_iff a.1 a
   simpa
 
-lemma find?_left_eq_some_iff'' (l : DSortedListMap σ R cmp) (a : σ) (b : R a)
+lemma find?_left_eq_some_iff'' (l : DSortedListMap α β cmp) (a : α) (b : β a)
     [∀ x, Decidable (x = a)] :
     l.val.find? (·.1 = a) = some ⟨a, b⟩ ↔ ⟨a, b⟩ ∈ l.val :=
   l.find?_left_eq_some_iff' ⟨a, b⟩
 
-lemma mem_iff (l : DSortedListMap σ R cmp) (a : (k : σ) × (R k)) [∀ x, Decidable (x = a.1)] :
+lemma mem_iff (l : DSortedListMap α β cmp) (a : (k : α) × (β k)) [∀ x, Decidable (x = a.1)] :
     a ∈ l.val ↔ l.val.find? (·.1 = a.1) = some a := l.find?_left_eq_some_iff' a |>.symm
 
-lemma mem_iff' (l : DSortedListMap σ R cmp) (a : σ) (b : R a) [∀ x, Decidable (x = a)] :
+lemma mem_iff' (l : DSortedListMap α β cmp) (a : α) (b : β a) [∀ x, Decidable (x = a)] :
     ⟨a, b⟩ ∈ l.val ↔ l.val.find? (·.1 = a) = some ⟨a, b⟩ :=
   l.find?_left_eq_some_iff' ⟨a, b⟩ |>.symm
 
-lemma eq_of_mem' {l : DSortedListMap σ R cmp} {a b1 b2}
+lemma eq_of_mem' {l : DSortedListMap α β cmp} {a b1 b2}
     (h1 : ⟨a, b1⟩ ∈ l.val) (h2 : ⟨a, b2⟩ ∈ l.val) : b1 = b2 := by
   classical
   rw [mem_iff] at h1 h2
   simp [h1] at h2
   exact h2
 
-lemma eq_of_mem {l : DSortedListMap σ R cmp} {a1 a2} (h : a1.1 = a2.1)
+lemma eq_of_mem {l : DSortedListMap α β cmp} {a1 a2} (h : a1.1 = a2.1)
     (h1 : a1 ∈ l.val) (h2 : a2 ∈ l.val) : a1 = a2 := by
   classical
   rw [Sigma.eq h]
@@ -123,10 +123,10 @@ lemma eq_of_mem {l : DSortedListMap σ R cmp} {a1 a2} (h : a1.1 = a2.1)
   · exact h.symm
   · simp
 
-def get? [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) : Option (R a) :=
-    (List.findSome? (fun i ↦ if h : i.1 = a then some (h ▸ i.2 : R a) else none) l.val)
+def get? [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) : Option (β a) :=
+    (List.findSome? (fun i ↦ if h : i.1 = a then some (h ▸ i.2 : β a) else none) l.val)
 
-lemma find?_eq_get?_map [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) :
+lemma find?_eq_get?_map [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     l.val.find? (·.fst = a) = (l.get? a).map (⟨a, ·⟩) := by
   induction l using induction with
   | empty => simp [get?]
@@ -142,7 +142,7 @@ lemma find?_eq_get?_map [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) 
       simp at heq
       simpa [heq]
 
-def instFunLike [DecidableEq σ] : DFunLike (DSortedListMap σ R cmp) σ (Option <| R ·) where
+def instFunLike [DecidableEq α] : DFunLike (DSortedListMap α β cmp) α (Option <| β ·) where
   coe := get?
   coe_injective' := by
     intro a b h
@@ -161,22 +161,22 @@ def instFunLike [DecidableEq σ] : DFunLike (DSortedListMap σ R cmp) σ (Option
       use a'
       simp [h'.2, h]
 
-lemma ext_iff [DecidableEq σ] {l1 l2 : DSortedListMap σ R cmp} :
-    l1 = l2 ↔ ∀ s : σ, l1.get? s = l2.get? s := instFunLike.ext_iff
+lemma ext_iff [DecidableEq α] {l1 l2 : DSortedListMap α β cmp} :
+    l1 = l2 ↔ ∀ s : α, l1.get? s = l2.get? s := instFunLike.ext_iff
 
 @[ext]
-lemma ext [DecidableEq σ] {l1 l2 : DSortedListMap σ R cmp} (h : ∀ s : σ, l1.get? s = l2.get? s) :
+lemma ext [DecidableEq α] {l1 l2 : DSortedListMap α β cmp} (h : ∀ s : α, l1.get? s = l2.get? s) :
     l1 = l2 := ext_iff.mpr h
 
 @[simp]
-def empty_get? [DecidableEq σ] :
-    (∅ : DSortedListMap σ R cmp).get? = (fun _ ↦ none : (k : σ) → Option <| R k) :=
+def empty_get? [DecidableEq α] :
+    (∅ : DSortedListMap α β cmp).get? = (fun _ ↦ none : (k : α) → Option <| β k) :=
   funext (fun _ ↦ rfl)
 
-theorem get?_eq_none_iff' [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) :
+theorem get?_eq_none_iff' [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     l.get? a = none ↔ l.val.find? (·.1 = a) = .none := by simp [get?]
 
-theorem get?_eq_none_iff [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) :
+theorem get?_eq_none_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     l.get? a = none ↔ ∀ b, ⟨a, b⟩ ∉ l.val := by
   simp [get?_eq_none_iff']
   constructor
@@ -188,18 +188,18 @@ theorem get?_eq_none_iff [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ)
     · exact h''.symm
     · simp
 
-theorem get?_eq_some_iff_mem_val' [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) (b : R a) :
+theorem get?_eq_some_iff_mem_val' [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (b : β a) :
     l.get? a = some b ↔ ⟨a, b⟩ ∈ l.val := by
   simp [← find?_left_eq_some_iff', find?_eq_get?_map]
 
-theorem get?_eq_some_iff_mem_val [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : (k : σ) × R k) :
+theorem get?_eq_some_iff_mem_val [DecidableEq α] (l : DSortedListMap α β cmp) (a : (k : α) × β k) :
     l.get? a.1 = some a.2 ↔ a ∈ l.val := get?_eq_some_iff_mem_val' l a.1 a.2
 
-theorem get?_eq_some_iff_find?_eq_some [DecidableEq σ] (l : DSortedListMap σ R cmp)
-    (a : σ) (b : R a) : l.get? a = some b ↔ l.val.find? (·.1 = a) = some ⟨a, b⟩ := by
+theorem get?_eq_some_iff_find?_eq_some [DecidableEq α] (l : DSortedListMap α β cmp)
+    (a : α) (b : β a) : l.get? a = some b ↔ l.val.find? (·.1 = a) = some ⟨a, b⟩ := by
   simp [find?_eq_get?_map]
 
-theorem get?_eq_of_mem [DecidableEq σ] {l : DSortedListMap σ R cmp} {i} (h : i ∈ l.val) :
+theorem get?_eq_of_mem [DecidableEq α] {l : DSortedListMap α β cmp} {i} (h : i ∈ l.val) :
     l.get? i.1 = i.2 := by
   simp [← l.find?_left_eq_some_iff', find?_eq_get?_map] at h
   obtain ⟨a, h⟩ := h
@@ -216,54 +216,54 @@ private def example1 : DSortedListMap Int (fun _ ↦ Int) compare := ⟨[⟨1, 3
 -- instance : Zero (ListMap σ R cmp) where
 --   zero := ∅
 
-def keys (l : DSortedListMap σ R cmp) : List σ := l.val.map (·.1)
+def keys (l : DSortedListMap α β cmp) : List α := l.val.map (·.1)
 
 @[simp]
-def keys_zero : (∅ : DSortedListMap σ R cmp).keys = ∅ := rfl
+def keys_zero : (∅ : DSortedListMap α β cmp).keys = ∅ := rfl
 
-lemma keys_pairwise (l : DSortedListMap σ R cmp) : l.keys.Pairwise (cmp · · = .lt) :=
+lemma keys_pairwise (l : DSortedListMap α β cmp) : l.keys.Pairwise (cmp · · = .lt) :=
   List.pairwise_map.mpr l.pairwise
 
-lemma mem_support_iff [DecidableEq σ] (l : DSortedListMap σ R cmp) (a : σ) :
+lemma mem_support_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     a ∈ l.keys ↔ l.get? a ≠ none := by
   simp [← get?_eq_some_iff_mem_val, keys, ← Option.isSome_iff_ne_none, Option.isSome_iff_exists]
 
-instance : IsAntisymm (α := σ) (cmp · · |>.isLE) where
+instance : IsAntisymm (α := α) (cmp · · |>.isLE) where
   antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
 
-instance : IsAntisymm (α := σ) (cmp · · ≠ .gt) := by
+instance : IsAntisymm (α := α) (cmp · · ≠ .gt) := by
   simp [Ordering.ne_gt_iff_isLE]
   exact inferInstance
 
-instance : IsTrans (α := σ) (cmp · · |>.isLE) where
+instance : IsTrans (α := α) (cmp · · |>.isLE) where
   trans _ _ _ := Std.TransCmp.isLE_trans
 
-instance : IsTrans (α := σ) (cmp · · ≠ .gt) := by
+instance : IsTrans (α := α) (cmp · · ≠ .gt) := by
   simp [Ordering.ne_gt_iff_isLE]
   exact inferInstance
 
-instance : IsTotal (α := σ) (cmp · · |>.isLE) where
+instance : IsTotal (α := α) (cmp · · |>.isLE) where
   total a b := by
     rw [or_iff_not_imp_left]
     intro h
     simp [Std.OrientedCmp.lt_of_not_isLE h]
 
-instance : IsTotal (α := σ) (cmp · · ≠ .gt) := by
+instance : IsTotal (α := α) (cmp · · ≠ .gt) := by
   simp [Ordering.ne_gt_iff_isLE]
   exact inferInstance
 
 variable (cmp) in
-def linearOrder [DecidableRel (cmp · · |>.isLE)] : LinearOrder σ where
+def linearOrder [DecidableRel (cmp · · |>.isLE)] : LinearOrder α where
   le := (cmp · · |>.isLE)
   le_refl _ := Std.ReflCmp.isLE_rfl
   le_trans _ _ _ a b := Std.TransCmp.isLE_trans a b
   le_antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
-  le_total := (inferInstanceAs <| IsTotal (α := σ) (cmp · · |>.isLE)).total
+  le_total := (inferInstanceAs <| IsTotal (α := α) (cmp · · |>.isLE)).total
   toDecidableLE := inferInstance
 
 variable (cmp) in
-def onKeys (f : (k : σ) → Option <| R k) (s : Finset σ) (h : ∀ x, x ∈ s ↔ f x ≠ none) :
-    DSortedListMap σ R cmp :=
+def onKeys (f : (k : α) → Option <| β k) (s : Finset α) (h : ∀ x, x ∈ s ↔ f x ≠ none) :
+    DSortedListMap α β cmp :=
   ⟨s.sort (cmp · · |>.isLE) |>.attach.map fun x ↦ ⟨x.1,
       (f x.1).get <| Option.isSome_iff_ne_none.mpr <| (h x.1).mp <| (Finset.mem_sort _).mp x.2⟩,
     by
@@ -277,7 +277,7 @@ def onKeys (f : (k : σ) → Option <| R k) (s : Finset σ) (h : ∀ x, x ∈ s 
       simp_intro ..
   ⟩
 
-def get?_onKeys [DecidableEq σ] {f : (k : σ) → Option <| R k} {s h} :
+def get?_onKeys [DecidableEq α] {f : (k : α) → Option <| β k} {s h} :
     (onKeys cmp f s h).get? = f := by
   funext x
   have h' := h x
@@ -292,14 +292,14 @@ end Basic
 
 section mergeWith
 
-variable (mergeFn : (a : σ) → R a → R a → Option (R a))
+variable (mergeFn : (a : α) → β a → β a → Option (β a))
 
-def mergeFn' (a : (k : σ) × R k) (b : (k : σ) × R k) (h : cmp a.1 b.1 = .eq) :
-    Option ((k : σ) × R k) :=
+def mergeFn' (a : (k : α) × β k) (b : (k : α) × β k) (h : cmp a.1 b.1 = .eq) :
+    Option ((k : α) × β k) :=
   mergeFn a.1 a.2 ((Std.LawfulEqCmp.eq_of_compare h).symm ▸ b.2) |>.map (⟨a.1, ·⟩)
 
 instance : Fact <|
-    ∀ a b : (k : σ) × R k,
+    ∀ a b : (k : α) × β k,
       (h : cmp a.1 b.1 = Ordering.eq) → ∀ a' ∈ mergeFn' mergeFn a b h, cmp a.1 a'.1 = .eq where
   out a b h a' ha' := by
     simp [mergeFn'] at ha'
@@ -308,14 +308,14 @@ instance : Fact <|
     simp [- Sigma.eta] at ha'
     exact Std.ReflCmp.cmp_eq_of_eq ha'.2.1
 
-def mergeWith (l₁ l₂ : DSortedListMap σ R cmp) : DSortedListMap σ R cmp :=
+def mergeWith (l₁ l₂ : DSortedListMap α β cmp) : DSortedListMap α β cmp :=
   ⟨List.mergeWithByFuel l₁.val l₂.val (cmp ·.1 ·.1) (mergeFn' mergeFn), by
     rw [List.chain'_iff_pairwise, List.mergeWithByFuel_eq]
     apply List.mergeWith_pairwise_of_pairwise
     · rw [← List.chain'_iff_pairwise]; exact l₁.property
     · rw [← List.chain'_iff_pairwise]; exact l₂.property⟩
 
-lemma mergeWith_def (l₁ l₂ : DSortedListMap σ R cmp) :
+lemma mergeWith_def (l₁ l₂ : DSortedListMap α β cmp) :
     (l₁.mergeWith mergeFn l₂).val =
       List.mergeWith l₁.val l₂.val (cmp ·.1 ·.1) (mergeFn' mergeFn) := by
   rw [← List.mergeWithByFuel_eq]
@@ -327,7 +327,7 @@ theorem _root_.Sigma.eq_of_eq {α : Type*} {β : α → Type*} {p : Σ a, β a} 
   rfl
 
 set_option maxHeartbeats 4000000 in
-lemma mergeWith_get? [DecidableEq σ] (l₁ l₂ : DSortedListMap σ R cmp) (x : σ) :
+lemma mergeWith_get? [DecidableEq α] (l₁ l₂ : DSortedListMap α β cmp) (x : α) :
     (l₁.mergeWith mergeFn l₂).get? x =
       match l₁.get? x, l₂.get? x with
       | some y, none => some y
@@ -364,8 +364,8 @@ lemma mergeWith_get? [DecidableEq σ] (l₁ l₂ : DSortedListMap σ R cmp) (x :
         Std.LawfulEqCmp.compare_eq_iff_eq]
       simp [imp_not_comm]
       intro x' hx'
-      have := fun (y : R x'.1) ↦ Sigma.eq_of_eq (show (⟨x'.1, y⟩ : Sigma R).1 = x from hx')
-      simp [this, Eq.rec_eq_cast, (cast_bijective (congrArg R hx'.symm)).surjective.exists, hx']
+      have := fun (y : β x'.1) ↦ Sigma.eq_of_eq (show (⟨x'.1, y⟩ : Sigma β).1 = x from hx')
+      simp [this, Eq.rec_eq_cast, (cast_bijective (congrArg β hx'.symm)).surjective.exists, hx']
       simp [show ∃ y, ⟨x, y⟩ ∈ l₁.val from ⟨y₁, heq⟩,
         show ∃ y, ⟨x, y⟩ ∈ l₂.val from ⟨y₂, heq_1⟩]
       use x, y₁
@@ -388,8 +388,8 @@ lemma mergeWith_get? [DecidableEq σ] (l₁ l₂ : DSortedListMap σ R cmp) (x :
       Std.LawfulEqCmp.compare_eq_iff_eq]
     simp [imp_not_comm]
     intro x' hx'
-    have := fun (y : R x'.1) ↦ Sigma.eq_of_eq (show (⟨x'.1, y⟩ : Sigma R).1 = x from hx')
-    simp [this, Eq.rec_eq_cast, (cast_bijective (congrArg R hx'.symm)).surjective.exists]
+    have := fun (y : β x'.1) ↦ Sigma.eq_of_eq (show (⟨x'.1, y⟩ : Sigma β).1 = x from hx')
+    simp [this, Eq.rec_eq_cast, (cast_bijective (congrArg β hx'.symm)).surjective.exists]
     simp [show ¬ ∃ y, ⟨x, y⟩ ∈ l₁.val by simp [heq],
       show ¬ ∃ y, ⟨x, y⟩ ∈ l₂.val by simp [heq_1]]
 
