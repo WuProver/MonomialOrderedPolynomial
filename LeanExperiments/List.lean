@@ -28,50 +28,6 @@ decreasing_by
   · simp
     linarith
 
--- for reduction in kernel
-def mergeWithByFuel : List α :=
-  go (l₁.lengthTR + l₂.lengthTR) l₁ l₂
-where
-  go (fuel : Nat) (l₁ l₂ : List α) :=
-  match fuel with
-  | 0 => []
-  | .succ fuel =>
-    match l₁, l₂ with
-    | _, [] => l₁
-    | [], _ => l₂
-    | h₁ :: l₁', h₂ :: l₂' =>
-      match h : cmp h₁ h₂ with
-      | .lt => h₁ :: go fuel l₁' l₂
-      | .gt => h₂ :: go fuel l₁ l₂'
-      | .eq =>
-        match mergeFn h₁ h₂ h with
-        | none => go fuel l₁' l₂'
-        | some a => a :: go fuel l₁' l₂'
-
-lemma mergeWithByFuel_go_eq {fuel : Nat}
-    (l₁ l₂ : List α) (cmp : α → α → Ordering)
-    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
-    (h : l₁.length + l₂.length <= fuel) :
-    mergeWithByFuel.go cmp mergeFn fuel l₁ l₂ = mergeWith l₁ l₂ cmp mergeFn := by
-  unfold mergeWithByFuel.go mergeWith
-  split
-  · simp at h
-    simp [h]
-  · split
-    · rfl
-    · rfl
-    simp at h
-    rw [mergeWithByFuel_go_eq, mergeWithByFuel_go_eq, mergeWithByFuel_go_eq]
-    · linarith
-    · simp; linarith
-    · simp; linarith
-
-lemma mergeWithByFuel_eq : @mergeWithByFuel = @mergeWith := by
-  funext
-  unfold mergeWithByFuel
-  simp [← length_eq_lengthTR]
-  exact mergeWithByFuel_go_eq _ _ _ _ (le_refl _)
-
 @[simp]
 lemma mergeWith_left_nil : mergeWith [] l cmp mergeFn = l := by
   unfold mergeWith
@@ -81,6 +37,49 @@ lemma mergeWith_left_nil : mergeWith [] l cmp mergeFn = l := by
 lemma mergeWith_right_nil : mergeWith l [] cmp mergeFn = l := by
   unfold mergeWith
   split; rfl; rfl; simp at *
+
+-- for reduction in kernel
+def mergeWithByFuel (l₁ l₂ : List α) (cmp : α → α → Ordering)
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α) (fuel := 2 ^ 62) : List α :=
+  match fuel with
+  | 0 => match l₁, l₂ with
+    | [], l₁ => l₁
+    | l₁, [] => l₁
+    | l₁, l₂ =>
+      -- it is actually unreachable with default fuel
+      mergeWith l₁ l₂ cmp mergeFn
+  | .succ fuel =>
+    match l₁, l₂ with
+    | _, [] => l₁
+    | [], _ => l₂
+    | h₁ :: l₁', h₂ :: l₂' =>
+      match h : cmp h₁ h₂ with
+      | .lt => h₁ :: mergeWithByFuel l₁' l₂ cmp mergeFn fuel
+      | .gt => h₂ :: mergeWithByFuel l₁ l₂' cmp mergeFn fuel
+      | .eq =>
+        match mergeFn h₁ h₂ h with
+        | none => mergeWithByFuel l₁' l₂' cmp mergeFn fuel
+        | some a => a :: mergeWithByFuel l₁' l₂' cmp mergeFn fuel
+
+lemma mergeWithByFuel_eq {fuel : Nat}
+    (l₁ l₂ : List α) (cmp : α → α → Ordering)
+    (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α) :
+    mergeWithByFuel l₁ l₂ cmp mergeFn fuel = mergeWith l₁ l₂ cmp mergeFn := by
+  unfold mergeWithByFuel
+  split
+  · split <;> simp
+  · rw [mergeWith.eq_def l₁ l₂ cmp mergeFn]
+    rcases h₁ : l₁ <;> rcases h₂ : l₂
+    · simp
+    · simp
+    · simp
+    · expose_names
+      simp
+      rw [mergeWithByFuel_eq, mergeWithByFuel_eq, mergeWithByFuel_eq]
+
+lemma mergeWithByFuel_eq' (fuel : Nat := 2 ^ 62) : @mergeWithByFuel (fuel := fuel) = @mergeWith := by
+  funext
+  simp [mergeWithByFuel_eq]
 
 -- lemma mergeWith_symm (l₁ l₂ : List α) (cmp : α → α → Ordering)
 --     (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
@@ -527,7 +526,7 @@ lemma find?_left_eq_some_iff_of_pairwise' {l : List α} {cmp : α → α → Ord
 lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
     (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
-    [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h, cmp a a' = .eq] :
+    [fact : Fact (∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h, cmp a a' = .eq)] :
     a ∈ mergeWith l₁ l₂ cmp mergeFn ↔
       some a = match h1 : l₁.find? (cmp a · = .eq), h2 : l₂.find? (cmp a · = .eq) with
       | some a', none => a'
@@ -572,12 +571,12 @@ lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ord
     · simp_intro h x₁ hx₁ hax₁ x₂ hx₂ hax₂
       apply (Pairwise.eq_or_rel_of_mem · heq.1 hx₁) at h₁
       apply (Pairwise.eq_or_rel_of_mem · heq_1.1 hx₂) at h₂
-      simp at inst_1
-      apply Fact.elim at inst_1
+      simp at fact
+      apply Fact.elim at fact
       have := Std.TransCmp.eq_trans (Std.OrientedCmp.eq_symm heq.2) heq_1.2
-      specialize inst_1 _ _ this _ h.symm
-      simp [Std.TransCmp.eq_trans inst_1 hax₁, Std.OrientedCmp.eq_comm] at h₁
-      replace this := (Std.TransCmp.congr_left this).symm ▸ Std.TransCmp.eq_trans inst_1 hax₂
+      specialize fact _ _ this _ h.symm
+      simp [Std.TransCmp.eq_trans fact hax₁, Std.OrientedCmp.eq_comm] at h₁
+      replace this := (Std.TransCmp.congr_left this).symm ▸ Std.TransCmp.eq_trans fact hax₂
       simp [this, Std.OrientedCmp.eq_comm] at h₂
       simp [h₁, h₂]
     · intro h

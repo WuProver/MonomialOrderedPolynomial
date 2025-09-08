@@ -1,290 +1,376 @@
-import LeanExperiments.MvPolynomial
-import LeanExperiments.List
+import LeanExperiments.DSortedFinsupp
 
 def SortedFinsupp σ R
     [Zero R] (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
-  { l : List (σ × R) // l.Chain' (cmp ·.1 ·.1 = .lt) ∧ ∀ i ∈ l, i.2 ≠ 0 }
+  DSortedFinsupp σ (fun _ ↦ R) cmp
 
 namespace SortedFinsupp
 
-section
+variable {σ : Type*} {cmp : σ → σ → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+
+section Finsupp
 
 variable {R : Type*} [Zero R]
 
-variable {σ : Type*} {cmp : σ → σ → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+instance [DecidableEq σ] [DecidableEq R] : DecidableEq (SortedFinsupp σ R cmp) :=
+  inferInstanceAs <| DecidableEq <| DSortedFinsupp σ (fun _ ↦ R) cmp
 
-instance : Std.TransCmp (α := σ × R) (cmp ·.1 ·.1) where
-  eq_swap := Std.OrientedCmp.eq_swap
-  isLE_trans := Std.TransCmp.isLE_trans
+instance : Zero (SortedFinsupp σ R cmp) :=
+  inferInstanceAs <| Zero <| DSortedFinsupp σ (fun _ ↦ R) cmp
 
-instance : IsAntisymm (α := (σ × R)) (cmp ·.1 ·.1 = .lt) where
-  antisymm _ _ h h' := by
-    rw [Std.OrientedCmp.eq_swap (cmp := cmp)] at h
-    simp [h'] at h
+instance instFunLike [DecidableEq σ] : FunLike (SortedFinsupp σ R cmp) σ R :=
+  inferInstanceAs <| FunLike (DSortedFinsupp σ (fun _ ↦ R) cmp) σ R
 
-instance : IsIrrefl (α := (σ × R)) (cmp ·.1 ·.1 = .lt) where
-  irrefl a := by
-    simp [Std.ReflCmp.compare_self]
+lemma ext_iff [DecidableEq σ] {l1 l2 : SortedFinsupp σ R cmp} :
+    l1 = l2 ↔ ∀ s : σ, l1 s = l2 s := DSortedFinsupp.ext_iff
 
-lemma ne_zero {l : SortedFinsupp σ R cmp} {i : (σ × R)} (h : i ∈ l.val) : i.2 ≠ 0 := l.2.2 i h
-
-lemma ne_zero' {l : SortedFinsupp σ R cmp} {a : σ} {b : R} (h : (a, b) ∈ l.val) : b ≠ 0 := ne_zero h
-
-lemma chain' (l : SortedFinsupp σ R cmp) : l.val.Chain' (cmp ·.1 ·.1 = .lt) := l.2.1
-
-lemma pairwise (l : SortedFinsupp σ R cmp) : l.val.Pairwise (cmp ·.1 ·.1 = .lt) :=
-  List.chain'_iff_pairwise.mp l.chain'
-
-
-instance : EmptyCollection (SortedFinsupp σ R cmp) where
-  emptyCollection := ⟨[], ⟨List.chain'_nil, by simp⟩⟩
-
-lemma empty_eq : (∅ : SortedFinsupp σ R cmp) = ⟨[], ⟨List.chain'_nil, by simp⟩⟩ := rfl
-
-lemma empty_iff (l : SortedFinsupp σ R cmp) : l = ∅ ↔ l.val = [] := by
-  rw [empty_eq, show l = ⟨l.val, l.2⟩ from rfl]
-  constructor <;> simp_intro ..
-
-@[elab_as_elim]
-theorem induction {motive : SortedFinsupp σ R cmp → Prop} (empty : motive ∅)
-    (cons : ∀ (a : σ) (b : R) (s : SortedFinsupp σ R cmp)
-      (h : ∀ a' b', (a', b') ∈ s.val → cmp a a' = .lt) (h' : b ≠ 0),
-        motive s →
-        motive ⟨(a, b) :: s.val, by
-          simp [List.chain'_iff_pairwise, s.pairwise, h']; exact ⟨h, fun _ _ ↦ ne_zero'⟩⟩)
-    (s : SortedFinsupp σ R cmp) : motive s := by
-  match h : s.val with
-  | .nil => rw [← empty_iff] at h; rwa [h]
-  | .cons (a, b) l' =>
-    have := s.2
-    simp [h, List.chain'_iff_pairwise] at this
-    rw [show s = ⟨s.1, s.2⟩ from rfl]
-    simp_rw [h]
-    letI s' : SortedFinsupp σ R cmp :=
-      ⟨l', by simp! [List.chain'_iff_pairwise, this]; exact this.2.2⟩
-    apply cons a b s' this.1.1 this.2.1
-    apply induction empty cons
-termination_by s.val.length
-decreasing_by simp [h]
-
-lemma find?_left_eq_some_iff (l : SortedFinsupp σ R cmp) (a : σ) [∀ x, Decidable (x = a)] (b : σ × R) :
-    (l.val.find? (·.1 = a)) = some b ↔ b ∈ l.val ∧ a = b.1 := by
-  have := (List.find?_left_is_some_iff_of_pairwise' l.pairwise (a, b.2) b)
-  simpa [Std.LawfulEqCmp.compare_eq_iff_eq (cmp:=cmp)]
-
-lemma find?_left_eq_some_iff' (l : SortedFinsupp σ R cmp) (a : σ × R) [∀ x, Decidable (x = a.1)] :
-    (l.val.find? (·.1 = a.1)) = some a ↔ a ∈ l.val := by
-  have := l.find?_left_eq_some_iff a.1 a
-  simpa
-
-lemma find?_left_eq_some_iff'' (l : SortedFinsupp σ R cmp) (a : σ) (b : R) [∀ x, Decidable (x = a)] :
-    (l.val.find? (·.1 = a)) = some (a, b) ↔ (a, b) ∈ l.val := l.find?_left_eq_some_iff' (a, b)
-
-instance instFunLike [DecidableEq σ] : FunLike (SortedFinsupp σ R cmp) σ R where
-  coe l a := (List.find? (·.1 = a) l.val).elim 0 (·.2)
-  coe_injective' := by
-    intro a b h
-    rw [a.eq_iff]
-    simp [funext_iff] at h
-    contrapose! h
-    apply mt <| List.Sorted.eq_of_mem_iff a.pairwise b.pairwise at h
-    simp at h
-    obtain ⟨x, y, h⟩ := h
-    use x
-    by_cases h' : ⟨x, y⟩ ∈ a.val
-    · simp [h'] at h
-      intro h''
-      simp [a.find?_left_eq_some_iff x (x, y) |>.mpr ⟨h', rfl⟩, Option.elim] at h''
-      split at h''
-      rotate_left
-      · exact a.ne_zero h' h''
-      expose_names
-      simp [b.find?_left_eq_some_iff x x_4] at heq
-      rw [h'', heq.2] at h
-      exact h heq.1
-    · simp [h'] at h
-      intro h''
-      simp [b.find?_left_eq_some_iff x (x, y) |>.mpr ⟨h, rfl⟩, Option.elim] at h''
-      split at h''
-      rotate_left
-      · exact b.ne_zero h h''.symm
-      expose_names
-      simp [a.find?_left_eq_some_iff x x_4] at heq
-      rw [← h'', heq.2] at h'
-      exact h' heq.1
+@[ext]
+lemma ext [DecidableEq σ] {l1 l2 : SortedFinsupp σ R cmp} (h : ∀ s : σ, l1 s = l2 s) :
+    l1 = l2 := ext_iff.mpr h
 
 @[simp]
-def empty_coe_eq [DecidableEq σ] :
-    (∅ : SortedFinsupp σ R cmp) = (fun _ ↦ 0 : σ → R) := funext (fun _ ↦ rfl)
-
-lemma apply_def [DecidableEq σ] (l : SortedFinsupp σ R cmp) (a : σ) :
-    l a = (List.find? (·.1 = a) l.val).elim 0 (·.2) := rfl
-
-lemma _root_.Option.elim_ne_d {α β} {b : β} {p : α → β} {a : Option α} (h : a.elim b p ≠ b) :
-    a ≠ none := by
-  aesop
-
-lemma _root_.Option.elim_ne_d' {α β} {b : β} {p : α → β} {a : Option α} (h : a.elim b p ≠ b) :
-    ∃ a' : α, a = some a' := by
-  simp [← Option.ne_none_iff_exists', a.elim_ne_d h]
-
-theorem apply_eq_zero_iff' [DecidableEq σ] (l : SortedFinsupp σ R cmp) (a : σ) :
-    l a = 0 ↔ (a, l a) ∉ l.val := by
-  rw [apply_def]
-  constructor
-  · simp_intro _ h
-    exact l.ne_zero h rfl
-  · intro h
-    contrapose! h
-    obtain ⟨a', ha'⟩ := Option.elim_ne_d' h
-    simp [ha']
-    simp [l.find?_left_eq_some_iff] at ha'
-    simp [ha']
-
-theorem apply_eq_zero_iff [DecidableEq σ] (l : SortedFinsupp σ R cmp) (a : σ) :
-    l a = 0 ↔ ∀ b, (a, b) ∉ l.val := by
-  constructor
-  · intro h b h'
-    have := l.ne_zero h'
-    rw [← l.find?_left_eq_some_iff'] at h'
-    simp [apply_def, h'] at h
-    exact this h
-  · intro h
-    exact l.apply_eq_zero_iff' a |>.mpr <| h (l a)
-
-theorem apply_ne_zero_iff [DecidableEq σ] (l : SortedFinsupp σ R cmp) (a : σ) :
-    l a ≠ 0 ↔ ∃ b, (a, b) ∈ l.val := by simp [l.apply_eq_zero_iff a]
-
-theorem apply_ne_zero_iff' [DecidableEq σ] (l : SortedFinsupp σ R cmp) (a : σ) :
-    l a ≠ 0 ↔ (a, l a) ∈ l.val := (l.apply_eq_zero_iff' a).not_left
-
-private def example1 : SortedFinsupp Int Rat compare := ⟨[(1, 3), (2, 4)], by decide⟩
-
-#check AddEquivClass
-
-#eval ((example1 : Int → Rat) 2) + 2
-
-#eval example1 1
-
-#eval example1 3
-
--- instance : Zero (SortedFinsupp σ R cmp) where
---   zero := ∅
-
-def support (l : SortedFinsupp σ R cmp) : List σ := l.val.map (·.1)
+lemma zero_apply [DecidableEq σ] (x : σ) : (0 : SortedFinsupp σ R cmp) x = 0 := rfl
 
 @[simp]
-def support_empty : (∅ : SortedFinsupp σ R cmp).support = ∅ := rfl
+lemma coe_zero  [DecidableEq σ] : ⇑(0 : SortedFinsupp σ R cmp) = 0 := rfl
+
+variable (cmp) in
+def single (x : σ) (y : R) [Decidable (y = 0)] : SortedFinsupp σ R cmp :=
+  DSortedFinsupp.single cmp x y
+
+@[simp]
+lemma single_apply [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] (c : σ) :
+    (single cmp a b) c = if a = c then b else 0 := by
+  simp [single]
+  -- why `simp [DSortedFinsupp.single_apply]` doesn't work???
+  rw [DSortedFinsupp.single_apply]
+  simp
+
+lemma eq_zero_iff_apply_eq_zero [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    l = 0 ↔ ∀ x : σ, l x = 0 := DSortedFinsupp.eq_zero_iff_apply_eq_zero l
+
+private def example1 : SortedFinsupp Int Int compare := ⟨⟨[⟨1, 3⟩, ⟨2, 4⟩], by decide⟩, by decide⟩
+
+#reduce ((example1 : Int → Int) 2) + 2
+
+#reduce example1 1
+
+#reduce example1 3
+
+def support (l : SortedFinsupp σ R cmp) : List σ := DSortedFinsupp.support l
+
+@[simp]
+def support_zero : (0 : SortedFinsupp σ R cmp).support = ∅ := rfl
 
 lemma support_pairwise (l : SortedFinsupp σ R cmp) : l.support.Pairwise (cmp · · = .lt) :=
   List.pairwise_map.mpr l.pairwise
 
 lemma mem_support_iff [DecidableEq σ] (l : SortedFinsupp σ R cmp) (a : σ) :
-    a ∈ l.support ↔ l a ≠ 0 := by
-  simp [apply_ne_zero_iff, support]
+    a ∈ l.support ↔ l a ≠ 0 := DSortedFinsupp.mem_support_iff ..
 
 lemma toFinset_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     l.support.toFinset = Function.support l := by
-  induction l using induction with
-  | empty => simp [empty_coe_eq]
-  | cons a b s h h' h'' =>
-    simp [support]
-    sorry
+  ext x
+  simp [mem_support_iff]
 
 lemma support_finite [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     (Function.support l).Finite := by simp [← toFinset_support]
 
-#check Finsupp.instFunLike
--- def ofFun [DecidableEq σ] (s : ) :
--- #check Finsupp.mem_support
+instance : IsAntisymm (α := σ) (cmp · · |>.isLE) where
+  antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
 
-def equiv_finsupp [DecidableEq σ] : Equiv (SortedFinsupp σ R cmp) (σ →₀ R) where
-  toFun f := Finsupp.ofSupportFinite f f.support_finite
-  invFun f :=
+instance : IsAntisymm (α := σ) (cmp · · ≠ .gt) := by
+  simp [Ordering.ne_gt_iff_isLE]
+  exact inferInstance
 
-end
+instance : IsTrans (α := σ) (cmp · · |>.isLE) where
+  trans _ _ _ := Std.TransCmp.isLE_trans
 
-def mergeAdd (a₁ a₂ : σ × R) := let a := a₁.2 + a₂.2; if a = 0 then Option.none else Option.some (a₁.1, a)
+instance : IsTrans (α := σ) (cmp · · ≠ .gt) := by
+  simp [Ordering.ne_gt_iff_isLE]
+  exact inferInstance
 
-instance : Fact <| ∀ a b : σ × R, cmp a.1 b.1 = Ordering.eq → ∀ a' ∈ mergeAdd a b, cmp a.1 a'.1 = .eq where
-  out := by
-    intro a b h a' ha'
-    simp [mergeAdd] at ha'
-    simp [← ha'.2, Std.ReflCmp.cmp_eq_of_eq]
+instance : IsTotal (α := σ) (cmp · · |>.isLE) where
+  total a b := by
+    rw [or_iff_not_imp_left]
+    intro h
+    simp [Std.OrientedCmp.lt_of_not_isLE h]
+
+instance : IsTotal (α := σ) (cmp · · ≠ .gt) := by
+  simp [Ordering.ne_gt_iff_isLE]
+  exact inferInstance
 
 variable (cmp) in
-def add' (l₁ : List (σ × R)) (l₂ : List (σ × R)) := List.mergeWithByFuel l₁ l₂ (cmp ·.1 ·.1) mergeAdd
+def onSupport (f : σ → R) (s : Finset σ)
+    (h : ∀ x, x ∈ s ↔ f x ≠ 0) :
+    SortedFinsupp σ R cmp := DSortedFinsupp.onSupport cmp f s h
 
-instance instAdd : Add (SortedFinsupp σ R cmp) where
-  add l₁ l₂ := ⟨
-    add' cmp l₁.val l₂.val,
-    by
-      constructor
-      · rw [add', List.chain'_iff_pairwise, List.mergeWithByFuel_eq]
-        apply List.mergeWith_pairwise_of_pairwise
-        · rw [← List.chain'_iff_pairwise]; exact l₁.property.1
-        · rw [← List.chain'_iff_pairwise]; exact l₂.property.1
-      · simp [add']
-        intro a b h hb
-        simp [List.mergeWithByFuel_eq,
-          List.mem_mergeWith_iff l₁.pairwise l₂.pairwise mergeAdd,
-          hb, mergeAdd, Std.LawfulEqCmp.compare_eq_iff_eq] at h
-        split_ifs at h with h' h''
-        · obtain ⟨x', hx', h'⟩ := h'
-          obtain ⟨x'', hx'', h''⟩ := h''
-          specialize h x'.1 x'.2 hx' (Std.LawfulEqCmp.eq_of_compare h') x''.1 x''.2 hx''
-            (Std.LawfulEqCmp.eq_of_compare h'')
-          aesop
-        · obtain ⟨x', hx', h'⟩ := h'
-          specialize h x'.1 x'.2 hx' (Std.LawfulEqCmp.eq_of_compare h')
-          exact l₁.ne_zero hx' h.2.symm
-        · obtain ⟨⟨b, hb⟩, h⟩ := h
-          specialize h a b hb rfl
-          exact l₂.ne_zero hb h.2.symm
-    ⟩
+def apply_onSupport [DecidableEq σ] {f : σ → R} {s h} :
+    onSupport cmp f s h = f := DSortedFinsupp.apply_onSupport h
 
--- instance : AddEquivClass
+def equivDFinsupp [DecidableEq σ] [∀ y : R, Decidable (y = 0)] :
+    Equiv (SortedFinsupp σ R cmp) (Π₀ _ : σ, R) :=
+  DSortedFinsupp.equivDFinsupp
 
-def addEquiv : SortedFinsupp σ R cmp ≃+ (σ →₀ R) where
-  toFun := Finsupp.ofSupportFinite
+def equivDFinsupp_apply [DecidableEq σ] [∀ y : R, Decidable (y = 0)]
+    (x : σ) (l : SortedFinsupp σ R cmp) :
+    l.equivDFinsupp x = l x := DSortedFinsupp.equivDFinsupp_apply ..
 
-private def example2 : SortedFinsupp Nat Rat compare := ⟨[(1, 5), (3, 4)], by decide⟩
+def equivFinsupp [DecidableEq σ] :
+    Equiv (SortedFinsupp σ R cmp) (σ →₀ R) where
+  toFun l := Finsupp.mk l.support.toFinset l (by simp [l.mem_support_iff])
+  invFun f := onSupport cmp f f.support (fun _ ↦ f.mem_support_iff)
+  left_inv l := by ext x; simp [apply_onSupport]
+  right_inv f := by ext x; simp [apply_onSupport]
 
-#eval example1 + example2
+lemma equivFinsupp_coe [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    Eq (α := σ → R) (equivFinsupp l) l := rfl
 
-def mulMon' [Add σ] (n : σ) (k : R) (l : List (σ × R)) : List (σ × R) :=
-  l.filterMap (fun a ↦ let a' := k * a.2; if a' = 0 then .none else .some (a.1 + n, a'))
+lemma equivFinsupp_symm_coe [DecidableEq σ] (f : σ →₀ R) :
+    Eq (α := σ → R) (equivFinsupp (cmp := cmp) |>.symm f) f := by
+  simp [equivFinsupp, apply_onSupport]
+
+lemma equivFinsupp_coe_zero [DecidableEq σ] :
+    equivFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
+
+lemma equivFinsupp_symm_coe_zero [DecidableEq σ] :
+    (equivFinsupp.symm (0 : σ →₀ R)) = (0 : SortedFinsupp σ R cmp) := by
+  ext x
+  simp [equivFinsupp, apply_onSupport]
+
+@[simp]
+lemma equivFinsupp_apply [DecidableEq σ] (x : σ) (l : SortedFinsupp σ R cmp) :
+    l.equivFinsupp x = l x := by
+  simp [equivFinsupp]
+
+lemma support_eq_equivFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    l.support.toFinset = (equivFinsupp l).support := by
+  ext x
+  simp [mem_support_iff]
+
+end Finsupp
+
+section mergeWith
+
+variable {R : Type*} [Zero R] [∀ a : R, Decidable (a = 0)]
+variable (mergeFn : (k : σ) → R → R → R)
+variable (l₁ l₂ : SortedFinsupp σ R cmp)
+
+def mergeWith : SortedFinsupp σ R cmp := DSortedFinsupp.mergeWith mergeFn l₁ l₂
+
+@[simp]
+lemma mergeWith_apply [DecidableEq σ] (a : σ)
+    (hzero : ∀ b : R, mergeFn a b 0 = b)
+    (hzero' : ∀ b : R, mergeFn a 0 b = b) :
+    (l₁.mergeWith mergeFn l₂ a) = mergeFn a (l₁ a) (l₂ a) :=
+  DSortedFinsupp.mergeWith_apply mergeFn l₁ l₂ a hzero hzero'
+
+variable (mergeFn : R → R → R) in
+lemma mergeWith_eq_equivFinsupp_zipWith [DecidableEq σ] (a : σ)
+    (hzero : ∀ b : R, mergeFn b 0 = b)
+    (hzero' : ∀ b : R, mergeFn 0 b = b) :
+    l₁.mergeWith (fun _ ↦ mergeFn) l₂ a =
+      (equivFinsupp l₁).zipWith mergeFn (hzero 0) (equivFinsupp l₂) a := by
+  classical
+  simp [Finsupp.zipWith_apply, mergeWith_apply (fun _ ↦ mergeFn) l₁ l₂ a hzero hzero']
+
+#check Finsupp.zipWith
+
+end mergeWith
+
+section Add
+
+variable {R : Type*} [AddZeroClass R] [∀ a : R, Decidable (a = 0)]
+
+instance instAdd : Add (SortedFinsupp σ R cmp) := DSortedFinsupp.instAdd
+
+@[simp]
+lemma add_apply [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) (x : σ) :
+    (l₁ + l₂) x = l₁ x + l₂ x := DSortedFinsupp.add_apply ..
+
+@[simp]
+lemma coe_add [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
+    ⇑(l₁ + l₂) = ⇑l₁ + ⇑l₂ := by
+  ext
+  exact add_apply ..
+
+def addEquivDFinsupp [DecidableEq σ] : SortedFinsupp σ R cmp ≃+ (Π₀ _ : σ, R) :=
+  DSortedFinsupp.addEquivDFinsupp
+
+def addEquivFinsupp [DecidableEq σ] : SortedFinsupp σ R cmp ≃+ (σ →₀ R) :=
+{ equivFinsupp with
+  map_add' l₁ l₂ := by
+    ext x
+    simp [equivFinsupp_coe, add_apply]}
+
+instance instAddZeroClass [DecidableEq σ] : AddZeroClass (SortedFinsupp σ R cmp) :=
+  fast_instance% DFunLike.coe_injective.addZeroClass _ (by ext; simp) (by intro _ _; ext; simp)
+
+private def example2 : SortedFinsupp Int Int compare := ⟨⟨[⟨1, 5⟩, ⟨3, 4⟩], by decide⟩, by decide⟩
+
+#reduce example1 + example2
+
+end Add
+
+section mapRange
+
+variable {β₁ β₂ : Type*} [Zero β₁] [Zero β₂]
+
+#check Finsupp.mapRange_apply
+
+def mapRange (f : (k : σ) → β₁ → β₂) (hf : ∀ i, f i 0 = 0)
+    [∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) :
+    SortedFinsupp σ β₂ cmp := DSortedFinsupp.mapRange f hf l
+
+@[simp]
+def mapRange_apply [DecidableEq σ] {f : (k : σ) → β₁ → β₂} (hf : ∀ i, f i 0 = 0)
+    [∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) (x : σ) :
+    l.mapRange f hf x = f x (l x) := DSortedFinsupp.mapRange_apply ..
+
+end mapRange
+
+section mapDomain
+
+#check Finsupp.mapDomain
+
+end mapDomain
+
+section SumProd
+
+variable {N R : Type*} [CommMonoid N] [DecidableEq σ] [Zero R] [DecidableEq R]
+
+@[to_additive]
+def prod (l : SortedFinsupp σ R cmp)
+    (g : σ → R → N) : N := DSortedFinsupp.prod l g
+
+@[to_additive]
+def prod_eq_prod_support
+    (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
+    l.prod g = ∏ a ∈ l.support.toFinset, g a (l a) := DSortedFinsupp.prod_eq_prod_support ..
+
+@[to_additive]
+def prod_eq_equivFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
+    l.prod g = (equivFinsupp l).prod g := by
+  simp [prod_eq_prod_support, support_eq_equivFinsupp_support, Finsupp.prod]
+
+end SumProd
+
+section SMul
+
+variable {R M} [Zero R] [Zero M] [SMulWithZero R M] [∀ y : M, Decidable (y = 0)]
+
+instance instSMulWithZero :
+    SMulWithZero R (SortedFinsupp σ M cmp) where
+  smul s l := l.mapRange (fun _ ↦ (s • ·)) (by simp)
+  smul_zero s := by
+    classical
+    convert_to (0 : SortedFinsupp σ M cmp).mapRange (fun _ ↦ (s • ·)) (by simp) = 0
+    ext x
+    simp
+  zero_smul l := by
+    convert_to l.mapRange (fun _ ↦ ((0 : R) • ·)) (by simp) = 0
+    classical
+    ext x
+    simp
+
+lemma smul_def (s : R) (l : SortedFinsupp σ M cmp) :
+    s • l = l.mapRange (fun _ ↦ (s • ·)) (by simp) := rfl
+
+lemma smul_apply [DecidableEq σ] (s : R) (l : SortedFinsupp σ M cmp) (x : σ) :
+    (s • l) x = s • (l x) := by
+  simp [smul_def]
+
+end SMul
+
+section AddMonoid
+
+variable {R} [AddMonoid R] [∀ a : R, Decidable (a = 0)]
+
+instance instNatSMul : SMul ℕ (SortedFinsupp σ R cmp) where
+  smul n v := v.mapRange (fun _ ↦ (n • ·)) (fun _ ↦ nsmul_zero _)
+
+lemma nat_smul_def (n : ℕ) (l : SortedFinsupp σ R cmp) :
+    n • l = l.mapRange (fun _ ↦ (n • ·)) (fun _ ↦ nsmul_zero _) := rfl
+
+lemma nat_smul_apply [DecidableEq σ] (n : ℕ) (x : σ) (l : SortedFinsupp σ R cmp) :
+    (n • l) x = n • (l x) := by
+  simp [nat_smul_def]
+
+lemma coe_nat_smul [DecidableEq σ] (n : ℕ) (l : SortedFinsupp σ R cmp) :
+    ⇑(n • l) = n • ⇑l := by
+  ext
+  exact nat_smul_apply ..
+
+instance instAddMonoid [DecidableEq σ] : AddMonoid (SortedFinsupp σ R cmp) :=
+  fast_instance% DFunLike.coe_injective.addMonoid _ coe_zero coe_add (by simp [coe_nat_smul])
+
+end AddMonoid
+
+section mapDomain
+
+variable {σ' R} [Zero R] {cmp' : σ' → σ' → Ordering} [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+
+def mapDomain (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j)) (l : SortedFinsupp σ R cmp) :
+    SortedFinsupp σ' R cmp' :=
+  ⟨
+    ⟨l.val.val.map (fun a ↦ ⟨f a.1, a.2⟩),
+      by
+        rw [List.chain'_iff_pairwise, List.pairwise_map]
+        simp [← hf, ← List.chain'_iff_pairwise]
+        exact l.val.2⟩,
+    (by
+      have := l.2
+      simp at this
+      simp
+      intro a x x1 hx ha
+      aesop)
+  ⟩
 
 
-def chain'_mulMon' (k : R) (l : List (σ × R)) (h : l.Chain' (cmp ·.1 ·.1 = .lt)) : (mulMon' k l).Chain' (cmp ·.1 ·.1 = .lt) := by
-  induction l with
-  | nil => simp [mulMon']
-  | cons head tail h' =>
-    simp [mulMon', List.chain'_cons'] at *
-    sorry
 
-def mulMon (k : R) (l : SortedFinsupp σ R cmp) : SortedFinsupp σ R cmp := ⟨mulMon' k l.val, by
-  exact chain'_mulMon' k l.val l.property
-  sorry
-⟩
-
-def mul' (p₁ : List (σ × R)) (p₂ : List (σ × R)) [∀ k : R, Decidable (k = 1)] : List (σ × R) :=
-  let p₁l := p₁.lengthTR
-  let p₂l := p₂.lengthTR
-  let fuel := p₁l * p₂l + 1
-  if p₁l < p₂l then
-    go p₁ p₂ fuel []
-  else
-    go p₂ p₁ fuel []
-where
-  go (p₁ : List (σ × R)) (p₂ : List (σ × R)) (fuel : Nat) (acc : List (σ × R)) : List (σ × R) :=
-    match p₁ with
-    | .nil => acc
-    | .cons (k, m) p₁ => go p₁ p₂ fuel (add' (p₂.mulMon k m cmp) cmp (fuel := fuel))
+@[simp]
+lemma mapDomain_apply [DecidableEq σ] (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j))
+    (x : σ) (l : SortedFinsupp σ R cmp) :
+  l.mapDomain f hf (f x) = l x := sorry
 
 
-instance : Mul (SortedFinsupp σ R cmp) where
-  mul := sorry
+end mapDomain
+
+-- section SMul
+
+-- variable {R M : Type*} [Zero R] [Zero M] [SMulWithZero R M]
+-- variable [∀ x : M, ∀ s : R, Decidable (s • x = 0)]
 
 
-#check Finsupp
+-- def chain'_mulMon' (k : R) (l : List (σ × R)) (h : l.Chain' (cmp ·.1 ·.1 = .lt)) : (mulMon' k l).Chain' (cmp ·.1 ·.1 = .lt) := by
+--   induction l with
+--   | nil => simp [mulMon']
+--   | cons head tail h' =>
+--     simp [mulMon', List.chain'_cons'] at *
+--     sorry
+
+-- def mulMon (k : R) (l : SortedFinsupp σ R cmp) : SortedFinsupp σ R cmp := ⟨mulMon' k l.val, by
+--   exact chain'_mulMon' k l.val l.property
+--   sorry
+-- ⟩
+
+-- def mul' (p₁ : List (σ × R)) (p₂ : List (σ × R)) [∀ k : R, Decidable (k = 1)] : List (σ × R) :=
+--   let p₁l := p₁.lengthTR
+--   let p₂l := p₂.lengthTR
+--   let fuel := p₁l * p₂l + 1
+--   if p₁l < p₂l then
+--     go p₁ p₂ fuel []
+--   else
+--     go p₂ p₁ fuel []
+-- where
+--   go (p₁ : List (σ × R)) (p₂ : List (σ × R)) (fuel : Nat) (acc : List (σ × R)) : List (σ × R) :=
+--     match p₁ with
+--     | .nil => acc
+--     | .cons (k, m) p₁ => go p₁ p₂ fuel (add' (p₂.mulMon k m cmp) cmp (fuel := fuel))
+
+
+-- instance : Mul (SortedFinsupp σ R cmp) where
+--   mul := sorry
+
+-- end SMul
+-- #check Finsupp
