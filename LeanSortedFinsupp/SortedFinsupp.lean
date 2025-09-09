@@ -383,7 +383,7 @@ lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFin
     l.mapDomain f hf (f x) = l x := by
   classical
   unfold mapDomain
-
+  sorry
 
 
 
@@ -423,9 +423,24 @@ def embDomain (l : SortedFinsupp σ R cmp) :
       by
         have := hf₁ -- write it here so that mapDomainRange will have arguments `hf₂` and `hf₂`
         have := hf₂
-        sorry
+        rw [List.chain'_iff_pairwise, List.pairwise_filterMap]
+        have orig_sorted : List.Pairwise (λ a b => cmp a.1 b.1 = .lt) l.val.val := by
+          rw [← List.chain'_iff_pairwise]
+          exact l.val.2
+        apply List.Pairwise.imp
+        · intro x y h z hz z1 hz2
+          simp at hz hz2
+          cases' hz with h1 h2
+          cases' hz2 with h3 h4
+          aesop
+        · aesop
     ⟩,
-    by sorry
+    by
+      have := l.2
+      simp at this
+      simp
+      intro a x x1 hx ha
+      aesop
   ⟩
 
 -- low priority
