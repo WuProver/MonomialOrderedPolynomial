@@ -73,6 +73,18 @@ lemma toFinset_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
   ext x
   simp [mem_support_iff]
 
+-- todo: should be generalized to DSortedFinsupp
+@[simp]
+def single_support (a : σ) (b : R) [Decidable (b = 0)] :
+    (single cmp a b).support = if b = 0 then [] else [a] := by
+  classical
+  split_ifs
+  · simpa [List.eq_nil_iff_forall_not_mem, mem_support_iff]
+  · -- ugly....
+    unfold single support DSortedFinsupp.single
+    simp [*]
+    rfl
+
 lemma support_finite [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     (Function.support l).Finite := by simp [← toFinset_support]
 
@@ -188,6 +200,19 @@ def addEquivFinsupp [DecidableEq σ] : SortedFinsupp σ R cmp ≃+ (σ →₀ R)
 instance instAddZeroClass [DecidableEq σ] : AddZeroClass (SortedFinsupp σ R cmp) :=
   fast_instance% DFunLike.coe_injective.addZeroClass _ (by ext; simp) (by intro _ _; ext; simp)
 
+#check AddMonoidAlgebra.singleAddHom
+def singleAddHom [DecidableEq σ] [∀ i : R, Decidable (i = 0)] (x : σ) :
+    R →+ SortedFinsupp σ R cmp where
+  toFun y := single cmp x y
+  map_add' := by
+    intro _ _
+    ext
+    simp
+    aesop
+  map_zero' := by
+    ext
+    simp
+
 private def example2 : SortedFinsupp Int Int compare := ⟨⟨[⟨1, 5⟩, ⟨3, 4⟩], by decide⟩, by decide⟩
 
 #reduce example1 + example2
@@ -238,6 +263,7 @@ instance instSMulWithZero :
 lemma smul_def (s : R) (l : SortedFinsupp σ M cmp) :
     s • l = l.mapRange (fun _ ↦ (s • ·)) (by simp) := rfl
 
+@[simp]
 lemma smul_apply [DecidableEq σ] (s : R) (l : SortedFinsupp σ M cmp) (x : σ) :
     (s • l) x = s • (l x) := by
   simp [smul_def]
@@ -296,9 +322,35 @@ def prod_eq_equivFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) 
   simp [prod_eq_prod_support, support_eq_equivFinsupp_support, Finsupp.prod]
 
 -- todo: should be generalized later
+@[to_additive (attr := simp)]
+def single_prod (g : σ → R → N)
+    (hg : ∀ i : σ, g i 0 = 1)
+    (a : σ) (b : R) :
+    (single cmp a b).prod g = g a b := by
+  classical
+  simp [prod_eq_prod_support, single_support]
+  split_ifs
+  · simp [*]
+  · simp
+
+#check single_sum
+
+-- todo: should be generalized later
+@[simp]
+lemma zero_sum {R' : Type*} [AddCommMonoid R'] (g : σ → R → R') :
+    (0 : SortedFinsupp σ R cmp).sum g = 0 := rfl
+
+-- todo: should be generalized later
+@[simp]
+lemma sum_zero {R' : Type*} [AddCommMonoid R']
+    (l : SortedFinsupp σ R cmp) :
+    l.sum (fun _ _ ↦ 0) = (0 : R') := by
+  simp [sum, DSortedFinsupp.sum]
+
+-- todo: should be generalized later
 @[simp]
 lemma sum_apply
-    {R' R'' : Type*} [AddCommMonoid R'] [AddCommMonoid R''] [∀ a : R', Decidable (a = 0)]
+    {R' R'' : Type*} [AddCommMonoid R'] [AddCommMonoid R'']
     (l : SortedFinsupp σ R cmp) (g : σ → R → R') (f : AddMonoidHom R' R'') :
     f (l.sum g) = l.sum (f <| g · ·) := by
   classical
@@ -330,7 +382,6 @@ lemma mapRange_sum
     {R' : Type*} [Zero R']
     {R'' : Type*} [AddCommMonoid R''] [DecidableEq R']
     (f : σ → R → R') (hf : ∀ i, f i 0 = 0)
-    [(i : σ) → (x : R) → Decidable (f i x = 0)]
     (g : σ → R' → R'') (hg : ∀ i, g i 0 = 0)
     (l : SortedFinsupp σ R cmp) :
     (l.mapRange f hf).sum g = l.sum (fun x ↦ (g x <| f x ·)) := by
@@ -445,7 +496,9 @@ def embDomain (l : SortedFinsupp σ R cmp) :
 
 -- low priority
 lemma embDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
-    l.embDomain f₁ hf₁ f₂ hf₂ (f₁ x) = f₂ x (l x) := by sorry
+    (l.embDomain f₁ hf₁ f₂ hf₂) (f₁ x) = f₂ x (l x) := by sorry
+
+#check Finsupp.embDomain
 
 end embDomain
 
