@@ -1,5 +1,5 @@
-import LeanExperiments.List
-import LeanExperiments.DSortedListMap
+import LeanSortedFinsupp.List
+import LeanSortedFinsupp.DSortedListMap
 
 def DSortedFinsupp σ (R : σ → Type*)
     [∀ k, Zero (R k)] (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=

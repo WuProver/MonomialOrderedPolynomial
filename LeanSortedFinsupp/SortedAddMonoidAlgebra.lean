@@ -1,4 +1,4 @@
-import LeanExperiments.SortedFinsupp
+import LeanSortedFinsupp.SortedFinsupp
 
 
 variable {G : Type*}

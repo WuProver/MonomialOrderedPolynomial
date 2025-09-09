@@ -1,4 +1,4 @@
-import LeanExperiments.DSortedFinsupp
+import LeanSortedFinsupp.DSortedFinsupp
 
 def SortedFinsupp σ R
     [Zero R] (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
