@@ -68,7 +68,7 @@ lemma mul_apply (l₁ l₂ : SortedAddMonoidAlgebra G R cmp) (x : G) :
     ← SortedFinsupp.sum_eq_equivFinsupp_sum]
   have :=
     SortedFinsupp.sum_apply (cmp := cmp) (σ := G) (R := R) (f := Finsupp.applyAddHom (M := R) x)
-  simp at this
+  simp only [Finsupp.applyAddHom_apply] at this
   simp [this]
   congr
   ext
