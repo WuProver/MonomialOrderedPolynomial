@@ -25,7 +25,7 @@
    "type": "git",
    "subDir": null,
    "scope": "leanprover-community",
-   "rev": "32d4332a26df0cf354112fe72ef6c464252390da",
+   "rev": "e6b769ccc709911365498247d53b3e3b62816529",
    "name": "mathlib",
    "manifestFile": "lake-manifest.json",
    "inputRev": "master",
@@ -161,5 +161,5 @@
    "inputRev": "main",
    "inherited": true,
    "configFile": "lakefile.toml"}],
- "name": "«lean-experiments»",
+ "name": "LeanSortedFinsupp",
  "lakeDir": ".lake"}

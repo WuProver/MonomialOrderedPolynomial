@@ -302,7 +302,8 @@ lemma sum_apply
     (l : SortedFinsupp σ R cmp) (g : σ → R → R') (f : AddMonoidHom R' R'') :
     f (l.sum g) = l.sum (f <| g · ·) := by
   classical
-  sorry
+  simp [sum_eq_sum_support]
+
 
 variable (cmp) in
 def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
@@ -334,7 +335,9 @@ lemma mapRange_sum
     (g : σ → R' → R'')
     (l : SortedFinsupp σ R cmp) :
     (l.mapRange f hf).sum g = l.sum (fun x ↦ (g x <| f x ·)) := by
-  sorry
+  classical
+  simp [sum_apply (f := g · ·), mapRange_apply]
+
 
 end SumProd
 
