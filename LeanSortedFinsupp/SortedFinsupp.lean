@@ -304,7 +304,6 @@ lemma sum_apply
   classical
   simp [sum_eq_sum_support]
 
-
 variable (cmp) in
 def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
     (x : σ) :
@@ -324,7 +323,7 @@ lemma sum_apply'
     (l.sum g) x = l.sum (g · · x) :=
   sum_apply (f := addMonoidHom cmp' R' x) ..
 
-#check Finsupp.mapDomain_sum
+#check Finsupp.mapRange_apply
 -- todo: should be generalized later
 @[simp]
 lemma mapRange_sum
@@ -332,7 +331,7 @@ lemma mapRange_sum
     {R'' : Type*} [AddCommMonoid R''] [DecidableEq R']
     (f : σ → R → R') (hf : ∀ i, f i 0 = 0)
     [(i : σ) → (x : R) → Decidable (f i x = 0)]
-    (g : σ → R' → R'')
+    (g : σ → R' → R'') (hg : ∀ i, g i 0 = 0)
     (l : SortedFinsupp σ R cmp) :
     (l.mapRange f hf).sum g = l.sum (fun x ↦ (g x <| f x ·)) := by
   classical
