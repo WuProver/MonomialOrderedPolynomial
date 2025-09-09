@@ -5,6 +5,9 @@ def DSortedFinsupp σ (R : σ → Type*)
     [∀ k, Zero (R k)] (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   { l : DSortedListMap σ R cmp // ∀ a ∈ l.val, a.2 ≠ 0}
 
+#check DFinsupp
+#check DirectSum
+
 namespace DSortedFinsupp
 
 variable {σ : Type*} {cmp : σ → σ → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -112,11 +115,11 @@ abbrev mk' (val : DSortedListMap σ R cmp) (h : open Classical in ∀ a, val.get
 --   simp [h1] at h2
 --   exact h2
 
-lemma _root_.Option.elim_ne_d {α β} {b : β} {p : α → β} {a : Option α} (h : a.elim b p ≠ b) :
+lemma _root_.Option.elim_ne_d {α R'} {b : R'} {p : α → R'} {a : Option α} (h : a.elim b p ≠ b) :
     a ≠ none := by
   aesop
 
-lemma _root_.Option.elim_ne_d' {α β} {b : β} {p : α → β} {a : Option α} (h : a.elim b p ≠ b) :
+lemma _root_.Option.elim_ne_d' {α R'} {b : R'} {p : α → R'} {a : Option α} (h : a.elim b p ≠ b) :
     ∃ a' : α, a = some a' := by
   simp [← Option.ne_none_iff_exists', a.elim_ne_d h]
 
@@ -338,6 +341,7 @@ def onSupport (f : (k : σ) → R k) (s : Finset σ) (h : ∀ x, x ∈ s ↔ f x
     DSortedFinsupp σ R cmp :=
   .mk' (DSortedListMap.onFinset cmp (some <| f ·) s) (by simp [DSortedListMap.get?_onFinset, ← h])
 
+@[simp]
 def apply_onSupport [DecidableEq σ] {f : (k : σ) → R k} {s} (h : ∀ x, x ∈ s ↔ f x ≠ 0) :
     onSupport cmp f s h = f := by
   funext x
@@ -473,12 +477,12 @@ end Add
 
 section mapRange
 
-variable {β : σ → Type*} [∀ k : σ, Zero (β k)]
+variable {R' : σ → Type*} [∀ k : σ, Zero (R' k)] (f : (k : σ) → R k → R' k)
+  [∀ i : σ, ∀ x : R i, Decidable (f i x = 0)]
 
 set_option linter.unusedVariables false in
-def mapRange (f : (k : σ) → R k → β k) (hf : ∀ i, f i 0 = 0)
-    [∀ i : σ, ∀ x : R i, Decidable (f i x = 0)] (l : DSortedFinsupp σ R cmp) :
-    DSortedFinsupp σ β cmp :=
+def mapRange (hf : ∀ i, f i 0 = 0) (l : DSortedFinsupp σ R cmp) :
+    DSortedFinsupp σ R' cmp :=
   mk' (l.val.filterMap (let r := f · ·; if r = 0 then none else some r)) (by
     simp_intro a [DSortedListMap.filterMap_get?, Option.bind]
     split
@@ -487,8 +491,7 @@ def mapRange (f : (k : σ) → R k → β k) (hf : ∀ i, f i 0 = 0)
   )
 
 @[simp]
-lemma mapRange_apply [DecidableEq σ] (f : (k : σ) → R k → β k) (hf : ∀ i, f i 0 = 0)
-    [∀ i : σ, ∀ x : R i, Decidable (f i x = 0)] (l : DSortedFinsupp σ R cmp) (x : σ) :
+lemma mapRange_apply [DecidableEq σ] (hf : ∀ i, f i 0 = 0) (l : DSortedFinsupp σ R cmp) (x : σ) :
     l.mapRange f hf x = f x (l x) := by
   simp [mapRange, mk', apply_def]
   simp [DSortedListMap.filterMap_get?, Option.bind]

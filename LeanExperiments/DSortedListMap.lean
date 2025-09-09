@@ -482,7 +482,20 @@ lemma filterMap_get? [DecidableEq α] (f : (k : α) → (β k) → Option (β₁
 
 end filterMap
 
-section filterMap'
+-- #check Std.TreeMap.map
 
-variable {α'} {β' : α' → Type*} {cmp' : α' → α' → Ordering}
-variable [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+-- section embDomain
+
+-- variable {α'} {β' : α' → Type*} (l : DSortedListMap α β cmp)
+--   (cmp' : α' → α' → Ordering) [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+--   (f : Sigma β → Option (Sigma β'))
+--   (hf : ∀ i₁ ∈ l.val, ∀ i₂ ∈ l.val, cmp i₁.1 i₂.1 = .lt →
+--       (f i₁).elim True fun b₁ ↦ (f i₂).elim True (cmp' b₁.1 ·.1 = .lt))
+
+-- def embDomain : DSortedListMap α' β' cmp' :=
+--   ⟨l.val.filterMap f, by sorry⟩
+
+-- def embDomain_apply [DecidableEq α] (a' : α') :
+--     l.map cmp' f hf (f ⟨a', hf⟩) = l (f a')
+
+-- end embDomain

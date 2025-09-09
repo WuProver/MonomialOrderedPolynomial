@@ -76,35 +76,12 @@ lemma toFinset_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
 lemma support_finite [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     (Function.support l).Finite := by simp [← toFinset_support]
 
-instance : IsAntisymm (α := σ) (cmp · · |>.isLE) where
-  antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
-
-instance : IsAntisymm (α := σ) (cmp · · ≠ .gt) := by
-  simp [Ordering.ne_gt_iff_isLE]
-  exact inferInstance
-
-instance : IsTrans (α := σ) (cmp · · |>.isLE) where
-  trans _ _ _ := Std.TransCmp.isLE_trans
-
-instance : IsTrans (α := σ) (cmp · · ≠ .gt) := by
-  simp [Ordering.ne_gt_iff_isLE]
-  exact inferInstance
-
-instance : IsTotal (α := σ) (cmp · · |>.isLE) where
-  total a b := by
-    rw [or_iff_not_imp_left]
-    intro h
-    simp [Std.OrientedCmp.lt_of_not_isLE h]
-
-instance : IsTotal (α := σ) (cmp · · ≠ .gt) := by
-  simp [Ordering.ne_gt_iff_isLE]
-  exact inferInstance
-
 variable (cmp) in
 def onSupport (f : σ → R) (s : Finset σ)
     (h : ∀ x, x ∈ s ↔ f x ≠ 0) :
     SortedFinsupp σ R cmp := DSortedFinsupp.onSupport cmp f s h
 
+@[simp]
 def apply_onSupport [DecidableEq σ] {f : σ → R} {s h} :
     onSupport cmp f s h = f := DSortedFinsupp.apply_onSupport h
 
@@ -142,6 +119,11 @@ lemma equivFinsupp_symm_coe_zero [DecidableEq σ] :
 lemma equivFinsupp_apply [DecidableEq σ] (x : σ) (l : SortedFinsupp σ R cmp) :
     l.equivFinsupp x = l x := by
   simp [equivFinsupp]
+
+variable (cmp) in
+lemma equivFinsupp_symm_apply [DecidableEq σ] (x : σ) (l : σ →₀ R) :
+    (equivFinsupp (cmp := cmp)).symm l x = l x := by
+  simp [equivFinsupp, apply_onSupport]
 
 lemma support_eq_equivFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     l.support.toFinset = (equivFinsupp l).support := by
@@ -218,12 +200,12 @@ variable {β₁ β₂ : Type*} [Zero β₁] [Zero β₂]
 
 #check Finsupp.mapRange_apply
 
-def mapRange (f : (k : σ) → β₁ → β₂) (hf : ∀ i, f i 0 = 0)
+def mapRange (f : σ → β₁ → β₂) (hf : ∀ i, f i 0 = 0)
     [∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) :
     SortedFinsupp σ β₂ cmp := DSortedFinsupp.mapRange f hf l
 
 @[simp]
-def mapRange_apply [DecidableEq σ] {f : (k : σ) → β₁ → β₂} (hf : ∀ i, f i 0 = 0)
+def mapRange_apply [DecidableEq σ] {f : σ → β₁ → β₂} (hf : ∀ i, f i 0 = 0)
     [∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) (x : σ) :
     l.mapRange f hf x = f x (l x) := DSortedFinsupp.mapRange_apply ..
 
@@ -234,26 +216,6 @@ section mapDomain
 #check Finsupp.mapDomain
 
 end mapDomain
-
-section SumProd
-
-variable {N R : Type*} [CommMonoid N] [DecidableEq σ] [Zero R] [DecidableEq R]
-
-@[to_additive]
-def prod (l : SortedFinsupp σ R cmp)
-    (g : σ → R → N) : N := DSortedFinsupp.prod l g
-
-@[to_additive]
-def prod_eq_prod_support
-    (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
-    l.prod g = ∏ a ∈ l.support.toFinset, g a (l a) := DSortedFinsupp.prod_eq_prod_support ..
-
-@[to_additive]
-def prod_eq_equivFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
-    l.prod g = (equivFinsupp l).prod g := by
-  simp [prod_eq_prod_support, support_eq_equivFinsupp_support, Finsupp.prod]
-
-end SumProd
 
 section SMul
 
@@ -306,11 +268,83 @@ instance instAddMonoid [DecidableEq σ] : AddMonoid (SortedFinsupp σ R cmp) :=
 
 end AddMonoid
 
+section AddCommMonoid
+
+variable {R} [AddCommMonoid R] [∀ a : R, Decidable (a = 0)]
+
+instance instAddCommMonoid [DecidableEq σ] : AddCommMonoid (SortedFinsupp σ R cmp) :=
+  DFunLike.coe_injective.addCommMonoid _ coe_zero coe_add (by simp [coe_nat_smul])
+
+end AddCommMonoid
+
+section SumProd
+
+variable {N R : Type*} [CommMonoid N] [DecidableEq σ] [Zero R] [DecidableEq R]
+
+@[to_additive]
+def prod (l : SortedFinsupp σ R cmp)
+    (g : σ → R → N) : N := DSortedFinsupp.prod l g
+
+@[to_additive]
+def prod_eq_prod_support
+    (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
+    l.prod g = ∏ a ∈ l.support.toFinset, g a (l a) := DSortedFinsupp.prod_eq_prod_support ..
+
+@[to_additive]
+def prod_eq_equivFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
+    l.prod g = (equivFinsupp l).prod g := by
+  simp [prod_eq_prod_support, support_eq_equivFinsupp_support, Finsupp.prod]
+
+-- todo: should be generalized later
+@[simp]
+lemma sum_apply
+    {R' R'' : Type*} [AddCommMonoid R'] [AddCommMonoid R''] [∀ a : R', Decidable (a = 0)]
+    (l : SortedFinsupp σ R cmp) (g : σ → R → R') (f : AddMonoidHom R' R'') :
+    f (l.sum g) = l.sum (f <| g · ·) := by
+  classical
+  sorry
+
+variable (cmp) in
+def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
+    (x : σ) :
+    AddMonoidHom (SortedFinsupp σ R cmp) R where
+  toFun l := l x
+  map_zero' := by simp
+  map_add' := by simp
+
+-- todo: should be generalized to DSortedFinsupp later
+-- `DecidableEq R'` can be generalized to `∀ a : R', Decidable (a = 0)`
+@[simp]
+lemma sum_apply'
+    {σ' : Type*} {cmp' : σ' → σ' → Ordering} [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    {R' : Type*} [AddCommMonoid R'] [DecidableEq σ'] [DecidableEq R']
+    (l : SortedFinsupp σ R cmp)
+    (g : σ → R → SortedFinsupp σ' R' cmp') (x : σ') :
+    (l.sum g) x = l.sum (g · · x) :=
+  sum_apply (f := addMonoidHom cmp' R' x) ..
+
+#check Finsupp.mapDomain_sum
+-- todo: should be generalized later
+@[simp]
+lemma mapRange_sum
+    {R' : Type*} [Zero R']
+    {R'' : Type*} [AddCommMonoid R''] [DecidableEq R']
+    (f : σ → R → R') (hf : ∀ i, f i 0 = 0)
+    [(i : σ) → (x : R) → Decidable (f i x = 0)]
+    (g : σ → R' → R'')
+    (l : SortedFinsupp σ R cmp) :
+    (l.mapRange f hf).sum g = l.sum (fun x ↦ (g x <| f x ·)) := by
+  sorry
+
+end SumProd
+
 section mapDomain
 
 variable {σ' R} [Zero R] {cmp' : σ' → σ' → Ordering} [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+variable (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j))
 
-def mapDomain (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j)) (l : SortedFinsupp σ R cmp) :
+-- todo: we should generalize it later
+def mapDomain (l : SortedFinsupp σ R cmp) :
     SortedFinsupp σ' R cmp' :=
   ⟨
     ⟨l.val.val.map (fun a ↦ ⟨f a.1, a.2⟩),
@@ -326,15 +360,53 @@ def mapDomain (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j)) (l : S
       aesop)
   ⟩
 
-
-
 @[simp]
-lemma mapDomain_apply [DecidableEq σ] (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j))
-    (x : σ) (l : SortedFinsupp σ R cmp) :
-  l.mapDomain f hf (f x) = l x := sorry
+lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
+    l.mapDomain f hf (f x) = l x := sorry
 
+lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
+    {R} [AddCommMonoid R]
+    (l : SortedFinsupp σ R cmp) :
+    equivFinsupp (l.mapDomain f hf) = (equivFinsupp l).mapDomain f := sorry
+
+lemma mapDomain_eq [DecidableEq σ] [DecidableEq σ'] {R} [AddCommMonoid R]
+    (l : SortedFinsupp σ R cmp) :
+    l.mapDomain f hf = equivFinsupp.symm ((equivFinsupp l).mapDomain f) := by
+  rw [← equivFinsupp_mapDomain (cmp' := cmp') (σ := σ) (σ' := σ')]
+  simp
+  exact hf
 
 end mapDomain
+
+section embDomain
+
+variable {R' : Type*} [Zero R']
+variable {σ' R} [Zero R] {cmp' : σ' → σ' → Ordering} [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+variable (f₁ : σ → σ') (hf₁ : ∀ i j, cmp i j = cmp' (f₁ i) (f₁ j))
+variable (f₂ : σ → R → R') (hf₂ : ∀ i, f₂ i 0 = 0) [∀ i : σ, ∀ x : R, Decidable (f₂ i x = 0)]
+
+#check Function.comp
+
+-- do the same work as the composition of `mapDomain` and `mapRange`, but should be faster.
+-- low priority.
+def embDomain (l : SortedFinsupp σ R cmp) :
+    SortedFinsupp σ' R' cmp' :=
+  ⟨
+    ⟨l.val.val.filterMap
+      (fun (a : (_ : σ) × R) ↦ let r := f₂ a.1 a.2; if r = 0 then none else some ⟨f₁ a.1, r⟩),
+      by
+        have := hf₁ -- write it here so that mapDomainRange will have arguments `hf₂` and `hf₂`
+        have := hf₂
+        sorry
+    ⟩,
+    by sorry
+  ⟩
+
+-- low priority
+lemma embDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
+    l.embDomain f₁ hf₁ f₂ hf₂ (f₁ x) = f₂ x (l x) := by sorry
+
+end embDomain
 
 -- section SMul
 
