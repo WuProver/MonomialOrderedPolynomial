@@ -335,8 +335,24 @@ lemma mapRange_sum
     (l : SortedFinsupp σ R cmp) :
     (l.mapRange f hf).sum g = l.sum (fun x ↦ (g x <| f x ·)) := by
   classical
-  simp [sum_apply (f := g · ·), mapRange_apply]
-
+  simp [sum_eq_sum_support, mapRange_apply hf]
+  -- sorry
+  have : (mapRange f hf l).support.toFinset = l.support.toFinset.filter (fun x ↦ f x (l x) ≠ 0) := by
+      ext x
+      simp [mem_support_iff, mapRange_apply hf, Finset.mem_filter]
+      intro h
+      by_contra hg
+      rw [hg] at h
+      exact h (hf x)
+  simp [this]
+  rw [Finset.sum_filter]
+  apply Finset.sum_congr rfl
+  intro x hx
+  simp [mem_support_iff] at hx
+  simp
+  intro h
+  rw [h]
+  simp [hg]
 
 end SumProd
 
@@ -364,7 +380,15 @@ def mapDomain (l : SortedFinsupp σ R cmp) :
 
 @[simp]
 lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
-    l.mapDomain f hf (f x) = l x := sorry
+    l.mapDomain f hf (f x) = l x := by
+  classical
+  unfold mapDomain
+
+
+
+
+
+
 
 lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
     {R} [AddCommMonoid R]
