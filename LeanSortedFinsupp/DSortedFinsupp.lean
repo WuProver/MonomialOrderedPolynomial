@@ -4,7 +4,7 @@ import LeanSortedFinsupp.DSortedListMap
 #check DFinsupp.single
 
 /-!
-# Dependent function `DSortedFinsupp σ R` with finite support
+# Dependent function `DSortedFinsupp σ R` with finite support, based on sorted list
 
 This file defines the type `DSortedFinsupp` of dependent function with finite support, based on
 `DSortedListMap`. It is for "computation" (reduction) in the kernel but inefficient in native.

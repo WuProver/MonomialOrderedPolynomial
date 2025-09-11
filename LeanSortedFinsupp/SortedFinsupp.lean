@@ -34,6 +34,7 @@ instance [DecidableEq σ] [DecidableEq R] : DecidableEq (SortedFinsupp σ R cmp)
 instance : Zero (SortedFinsupp σ R cmp) :=
   inferInstanceAs <| Zero <| DSortedFinsupp σ (fun _ ↦ R) cmp
 
+@[inline]
 instance instFunLike [DecidableEq σ] : FunLike (SortedFinsupp σ R cmp) σ R :=
   inferInstanceAs <| FunLike (DSortedFinsupp σ (fun _ ↦ R) cmp) σ R
 
@@ -453,7 +454,6 @@ def mapDomain (l : SortedFinsupp σ R cmp) :
 lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
     l.mapDomain f hf (f x) = l x := by
   classical
-  unfold mapDomain
   have : Function.Injective f := by
     intro a b h
     have := hf a b
@@ -466,13 +466,57 @@ lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFin
       exact this
     simp at r
     exact r
-  sorry
+  by_cases h : l x = 0
+  · simp [h, mapDomain]
+    rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys] at *
+    -- rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys] at h
+    simp [Function.Injective.ne_iff this] at *
+    intro a b h' h''
+    subst h''
+    exact h b h'
+  · simp [mapDomain]
+    rw [eq_comm, DSortedFinsupp.apply_eq_iff_of_apply_ne_zero h,
+      DSortedListMap.get?_eq_some_iff_mem_val', DSortedFinsupp.apply_def, DSortedListMap.get?,
+      List.findSome?_map]
+    simp [Function.comp_def]
+    have h₁ := h
+    rw [← ne_eq, DSortedFinsupp.apply_ne_zero_iff_get?_val_eq_some_apply,
+      DSortedListMap.get?_eq_some_iff_mem_val', DSortedFinsupp.apply_def, DSortedListMap.get?] at h
+    convert h
+    aesop
+  -- ugly proof. should be rewritten later.
 
+@[simp]
+lemma mapDomain_apply_eq_zero_of_notin_range [DecidableEq σ] [DecidableEq σ']
+    (x' : σ') (hf' : ¬ x' ∈ Set.range f) (l : SortedFinsupp σ R cmp) :
+    l.mapDomain f hf x' = 0 := by
+  simp at hf'
+  rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys, mapDomain]
+  simp [hf']
 
 lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
     {R} [AddCommMonoid R]
     (l : SortedFinsupp σ R cmp) :
-    equivFinsupp (l.mapDomain f hf) = (equivFinsupp l).mapDomain f := sorry
+    equivFinsupp (l.mapDomain f hf) = (equivFinsupp l).mapDomain f := by
+  classical
+  have : Function.Injective f := by
+    intro a b h
+    have := hf a b
+    simp at this
+    rw [h] at this
+    have l:  cmp' (f b) (f b) = .eq := by
+      exact Std.ReflCmp.compare_self
+    rw [l] at this
+    have r: cmp a b = .eq := by
+      exact this
+    simp at r
+    exact r
+  ext x'
+  by_cases h : x' ∈ Set.range f
+  · simp at h
+    obtain ⟨x, h⟩ := h
+    simp [← h, Finsupp.mapDomain_apply this]
+  · simp [mapDomain_apply_eq_zero_of_notin_range (hf' := h), Finsupp.mapDomain_notin_range (h := h)]
 
 lemma mapDomain_eq [DecidableEq σ] [DecidableEq σ'] {R} [AddCommMonoid R]
     (l : SortedFinsupp σ R cmp) :
@@ -526,7 +570,6 @@ def embDomain (l : SortedFinsupp σ R cmp) :
 lemma embDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
     (l.embDomain f₁ hf₁ f₂ hf₂) (f₁ x) = f₂ x (l x) := by sorry
 
-#check Finsupp.embDomain
 
 end embDomain
 
