@@ -436,11 +436,6 @@ lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFin
   unfold mapDomain
   sorry
 
-
-
-
-
-
 lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
     {R} [AddCommMonoid R]
     (l : SortedFinsupp σ R cmp) :

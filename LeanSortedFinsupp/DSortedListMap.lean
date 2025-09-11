@@ -1,5 +1,21 @@
 import LeanSortedFinsupp.List
 
+/-!
+# Dependent maps based on sorted `List`
+
+This file defines the type `DSortedListMap` of Dependent maps. It is for "computation" (reduction)
+in the kernel but inefficient in native.
+
+## Definitions
+
+- `DSortedListMap α β cmp`: a list map, where `α` is the type of keys and `β a` is the type of the
+  value at a key `a : α`.
+- `DSortedListMap.single cmp a b`: a map with value `b` at key `a` and nothing else.
+- `DSortedListMap.get? l a`: the value at key `a`, or none if there isn't mapping at `a`.
+- `DSortedListMap.filterMap l`
+
+-/
+
 def DSortedListMap α (β : α → Type*)
     (cmp : α → α → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   { l : List ((k : α) × β k) // l.Chain' (fun (a b : (k : α) × β k ) ↦ cmp a.fst b.fst = .lt) }
