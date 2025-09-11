@@ -8,6 +8,8 @@ def SortedAddMonoidAlgebra (R : Type*) [Semiring R] (cmp : G → G → Ordering)
     [Std.LawfulEqCmp cmp] :=
   SortedFinsupp G R cmp
 
+namespace SortedAddMonoidAlgebra
+
 variable {cmp : G → G → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
 
 section Basic
@@ -15,13 +17,16 @@ section Basic
 variable {R : Type*} [Semiring R]
 
 instance [DecidableEq G] [DecidableEq R] : DecidableEq (SortedAddMonoidAlgebra G R cmp) :=
-  inferInstanceAs <| DecidableEq (SortedFinsupp G R cmp)
+  fast_instance% inferInstanceAs <| DecidableEq (SortedFinsupp G R cmp)
 
 instance : Zero (SortedAddMonoidAlgebra G R cmp) :=
-  inferInstanceAs <| Zero (SortedFinsupp G R cmp)
+  fast_instance% inferInstanceAs <| Zero (SortedFinsupp G R cmp)
 
 instance instFunLike [DecidableEq G] : FunLike (SortedAddMonoidAlgebra G R cmp) G R :=
-  inferInstanceAs <| FunLike (SortedFinsupp G R cmp) G R
+  fast_instance% inferInstanceAs <| FunLike (SortedFinsupp G R cmp) G R
+
+lemma ext_iff [DecidableEq G] {l1 l2 : SortedAddMonoidAlgebra G R cmp} :
+    l1 = l2 ↔ ∀ s : G, l1 s = l2 s := SortedFinsupp.ext_iff
 
 variable (cmp) in
 def single (x : G) (y : R) [Decidable (y = 0)] : SortedAddMonoidAlgebra G R cmp :=
@@ -53,7 +58,8 @@ lemma ext [DecidableEq G] {l1 l2 : SortedAddMonoidAlgebra G R cmp}
   l1 = l2 := SortedFinsupp.ext h
 
 instance instAdd [(a : R) → Decidable (a = 0)] :
-    Add (SortedAddMonoidAlgebra G R cmp) := SortedFinsupp.instAdd
+    Add (SortedAddMonoidAlgebra G R cmp) :=
+  fast_instance% SortedFinsupp.instAdd
 
 @[simp]
 lemma add_apply [DecidableEq G] [(a : R) → Decidable (a = 0)]
@@ -62,19 +68,20 @@ lemma add_apply [DecidableEq G] [(a : R) → Decidable (a = 0)]
 
 instance instAddMonoid [(a : R) → Decidable (a = 0)] [DecidableEq G] :
     AddMonoid (SortedAddMonoidAlgebra G R cmp) :=
-  inferInstanceAs <| AddMonoid (SortedFinsupp G R cmp)
+  fast_instance% inferInstanceAs <| AddMonoid (SortedFinsupp G R cmp)
 
 instance instAddCommMonoid [(a : R) → Decidable (a = 0)] [DecidableEq G] :
     AddCommMonoid (SortedAddMonoidAlgebra G R cmp) :=
-  inferInstanceAs <| AddCommMonoid (SortedFinsupp G R cmp)
+  fast_instance% inferInstanceAs <| AddCommMonoid (SortedFinsupp G R cmp)
 
 instance instSMulWithZero {M} [Zero M] [SMulWithZero M R]
     [∀ y : R, Decidable (y = 0)] :
     SMulWithZero M (SortedAddMonoidAlgebra G R cmp) :=
-  inferInstanceAs <| SMulWithZero M (SortedFinsupp G R cmp)
+  fast_instance% inferInstanceAs <| SMulWithZero M (SortedFinsupp G R cmp)
 
 instance instSMul {M} [Zero M] [SMulWithZero M R] [∀ y : R, Decidable (y = 0)] :
-    SMul M (SortedAddMonoidAlgebra G R cmp) := inferInstance
+    SMul M (SortedAddMonoidAlgebra G R cmp) :=
+  fast_instance% inferInstance
 
 lemma smul_def {M} [Zero M] [SMulWithZero M R] [∀ y : R, Decidable (y = 0)]
     (s : M) (l : SortedAddMonoidAlgebra G R cmp) :
@@ -145,13 +152,11 @@ lemma addEquivAddMonoidAlgebra_mul
     SortedFinsupp.sum_eq_sum_support]
   rfl
 
-
 def ringEquivAddMonoidAlgebra :
     RingEquiv (SortedAddMonoidAlgebra G R cmp) (AddMonoidAlgebra R G) := {
     addEquivAddMonoidAlgebra with
     map_mul' := addEquivAddMonoidAlgebra_mul
   }
-
 
 lemma mul_eq (l₁ l₂ : SortedAddMonoidAlgebra G R cmp) : l₁ * l₂ =
     addEquivAddMonoidAlgebra.symm (addEquivAddMonoidAlgebra l₁ * addEquivAddMonoidAlgebra l₂) := by
@@ -257,3 +262,5 @@ end Semiring
 
 -- instance instSMulWithZero : SMulWithZero R (SortedFinsupp G M cmp)
 #check List.mergeWith
+
+end SortedAddMonoidAlgebra
