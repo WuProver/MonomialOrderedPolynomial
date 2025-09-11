@@ -454,7 +454,20 @@ lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFin
     l.mapDomain f hf (f x) = l x := by
   classical
   unfold mapDomain
+  have : Function.Injective f := by
+    intro a b h
+    have := hf a b
+    simp at this
+    rw [h] at this
+    have l:  cmp' (f b) (f b) = .eq := by
+      exact Std.ReflCmp.compare_self
+    rw [l] at this
+    have r: cmp a b = .eq := by
+      exact this
+    simp at r
+    exact r
   sorry
+
 
 lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
     {R} [AddCommMonoid R]

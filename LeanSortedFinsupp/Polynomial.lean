@@ -92,6 +92,8 @@ lemma Polynomial.PolyRepr.eq_iff' {p q : Polynomial R} [p' : Polynomial.PolyRepr
   Polynomial.PolyRepr.eq_iff ..
 
 set_option profiler true
+
+#count_heartbeats in
 open Polynomial in
 example : ((X  + 1) ^ 20 : Nat[X]) = ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) := by
   -- grind
