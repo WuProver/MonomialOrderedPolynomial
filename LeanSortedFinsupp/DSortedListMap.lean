@@ -12,10 +12,15 @@ in the kernel but inefficient in native.
   value at a key `a : α`.
 - `DSortedListMap.single cmp a b`: a map with value `b` at key `a` and nothing else.
 - `DSortedListMap.get? l a`: the value at key `a`, or none if there isn't mapping at `a`.
-- `DSortedListMap.filterMap l`
+- `DSortedListMap.filterMap f l`: update values with `f`, and remove those on which `f` is `none`.
+- `DSortedListMap.mergeWith f l₁ l₂`: merge `l₁ l₂ : DSortedListMap` with f.
+- `DSortedListMap.keys l`: keys of `a : DSortedListMap`, sorted w.r.t. `cmp`.
 
 -/
 
+/--
+a list map, where `α` is the type of keys and `β a` is the type of the value at a key `a : α`
+-/
 def DSortedListMap α (β : α → Type*)
     (cmp : α → α → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   { l : List ((k : α) × β k) // l.Chain' (fun (a b : (k : α) × β k ) ↦ cmp a.fst b.fst = .lt) }
@@ -34,10 +39,13 @@ instance [DecidableEq α] [∀ a : α, DecidableEq (β a)] : DecidableEq (DSorte
 abbrev toList (l : DSortedListMap α β cmp) := l.val
 
 variable (cmp) in
+/--
+a map with value `b` at key `a` and nothing else
+-/
 def single (x : α) (y : β x) : DSortedListMap α β cmp :=
   ⟨[⟨x, y⟩], by simp⟩
 
-def val_eq_toList (l : DSortedListMap α β cmp) : l.val = l.toList := rfl
+lemma val_eq_toList (l : DSortedListMap α β cmp) : l.val = l.toList := rfl
 
 instance : Std.TransCmp (α := (k : α) × β k) (cmp ·.1 ·.1) where
   eq_swap := Std.OrientedCmp.eq_swap
@@ -149,6 +157,9 @@ lemma eq_of_mem {l : DSortedListMap α β cmp} {a1 a2} (h : a1.1 = a2.1)
   · exact h.symm
   · simp
 
+/--
+the value at key `a`, or none if there isn't mapping at `a`.
+-/
 def get? [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) : Option (β a) :=
     (List.findSome? (fun i ↦ if h : i.1 = a then some (h ▸ i.2 : β a) else none) l.val)
 
@@ -258,6 +269,9 @@ private def example1 : DSortedListMap Int (fun _ ↦ Int) compare := ⟨[⟨1, 3
 -- instance : Zero (ListMap σ R cmp) where
 --   zero := ∅
 
+/--
+keys of `a : DSortedListMap`, sorted w.r.t. `cmp`.
+-/
 def keys (l : DSortedListMap α β cmp) : List α := l.val.map (·.1)
 
 @[simp]
@@ -369,6 +383,9 @@ instance : Fact <|
     simp [- Sigma.eta] at ha'
     exact Std.ReflCmp.cmp_eq_of_eq ha'.2.1
 
+/--
+merge `l₁ l₂ : DSortedListMap` with f
+-/
 def mergeWith (l₁ l₂ : DSortedListMap α β cmp) : DSortedListMap α β cmp :=
   ⟨List.mergeWithByFuel l₁.val l₂.val (cmp ·.1 ·.1) (mergeFn' mergeFn), by
     rw [List.chain'_iff_pairwise, List.mergeWithByFuel_eq]
@@ -465,6 +482,9 @@ section filterMap
 
 variable {β₁ : α → Type*}
 
+/--
+update values with `f`, and remove those on which `f` is `none`.
+-/
 def filterMap (f : (k : α) → (β k) → Option (β₁ k)) (l : DSortedListMap α β cmp) :
     DSortedListMap α β₁ cmp :=
   ⟨l.val.filterMap (fun ⟨a, b⟩ ↦ f a b |>.map (⟨a, ·⟩)), by

@@ -1,5 +1,21 @@
 import LeanSortedFinsupp.DSortedFinsupp
 
+/-!
+
+# function `SortedFinsupp σ R` with finite support, based on sorted list
+
+For more information, refer to `DSortedFinsupp`.
+
+## TODO
+
+Refactor it into structure without `Sigma`, which uses dependent type on the value and visibly
+reduce performance in kernel.
+
+-/
+
+/--
+function with finite support, based on `DSortedFinsupp`.
+-/
 def SortedFinsupp σ R
     [Zero R] (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   DSortedFinsupp σ (fun _ ↦ R) cmp
@@ -35,6 +51,7 @@ lemma zero_apply [DecidableEq σ] (x : σ) : (0 : SortedFinsupp σ R cmp) x = 0 
 lemma coe_zero  [DecidableEq σ] : ⇑(0 : SortedFinsupp σ R cmp) = 0 := rfl
 
 variable (cmp) in
+@[inherit_doc DSortedFinsupp.single]
 def single (x : σ) (y : R) [Decidable (y = 0)] : SortedFinsupp σ R cmp :=
   DSortedFinsupp.single cmp x y
 
@@ -57,6 +74,7 @@ private def example1 : SortedFinsupp Int Int compare := ⟨⟨[⟨1, 3⟩, ⟨2,
 
 #reduce example1 3
 
+@[inherit_doc DSortedFinsupp.support]
 def support (l : SortedFinsupp σ R cmp) : List σ := DSortedFinsupp.support l
 
 @[simp]
@@ -150,6 +168,7 @@ variable {R : Type*} [Zero R] [∀ a : R, Decidable (a = 0)]
 variable (mergeFn : (k : σ) → R → R → R)
 variable (l₁ l₂ : SortedFinsupp σ R cmp)
 
+@[inherit_doc DSortedFinsupp.mergeWith]
 def mergeWith : SortedFinsupp σ R cmp := DSortedFinsupp.mergeWith mergeFn l₁ l₂
 
 @[simp]
@@ -225,6 +244,7 @@ variable {β₁ β₂ : Type*} [Zero β₁] [Zero β₂]
 
 #check Finsupp.mapRange_apply
 
+@[inherit_doc DSortedFinsupp.mapRange]
 def mapRange (f : σ → β₁ → β₂) (hf : ∀ i, f i 0 = 0)
     [∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) :
     SortedFinsupp σ β₂ cmp := DSortedFinsupp.mapRange f hf l

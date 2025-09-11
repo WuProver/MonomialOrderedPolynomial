@@ -1,12 +1,32 @@
 import LeanSortedFinsupp.List
 import LeanSortedFinsupp.DSortedListMap
 
+#check DFinsupp.single
+
+/-!
+# Dependent function `DSortedFinsupp σ R` with finite support
+
+This file defines the type `DSortedFinsupp` of dependent function with finite support, based on
+`DSortedListMap`. It is for "computation" (reduction) in the kernel but inefficient in native.
+
+Application of a `l : DSortedFinsupp σ R` with `a : σ`: `l a` (requiring `DecidableEq σ`).
+
+## Definitions
+
+- `DSortedFinsupp α β cmp`: dependent function with finite support, based on `DSortedListMap`.
+- `DSortedFinsupp.single cmp a b`: a function mapping `a` to `b` and others to zero.
+- `DSortedFinsupp.mapRange f l`: update values with `f`.
+- `DSortedFinsupp.mergeWith f l₁ l₂`: merge `l₁ l₂ : DSortedFinsupp` with f.
+- `DSortedFinsupp.support l`: support of `l : DSortedFinsupp`, sorted w.r.t. `cmp`.
+
+-/
+
+/--
+dependent function with finite support, based on `DSortedListMap`.
+-/
 def DSortedFinsupp σ (R : σ → Type*)
     [∀ k, Zero (R k)] (cmp : σ → σ → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   { l : DSortedListMap σ R cmp // ∀ a ∈ l.val, a.2 ≠ 0}
-
-#check DFinsupp
-#check DirectSum
 
 namespace DSortedFinsupp
 
@@ -180,6 +200,9 @@ lemma apply_def [DecidableEq σ] (l : DSortedFinsupp σ R cmp) (a : σ) :
     l a = (l.val.get? a).getD 0 := rfl
 
 variable (cmp) in
+/--
+a function mapping `a` to `b` and others to zero.
+-/
 def single (x : σ) (y : R x) [Decidable (y = 0)] : DSortedFinsupp σ R cmp :=
   if h : y = 0 then 0 else
     mk' (DSortedListMap.single cmp x y) (by
@@ -279,6 +302,9 @@ private def example1 : DSortedFinsupp Int (fun _ ↦ Int) compare := ⟨⟨[⟨1
 -- instance : Zero (DSortedFinsupp σ R cmp) where
 --   zero := ∅
 
+/--
+support of `l : DSortedFinsupp`, sorted w.r.t. `cmp`.
+-/
 def support (l : DSortedFinsupp σ R cmp) : List σ := l.val.keys
 
 @[simp]
@@ -396,6 +422,9 @@ variable (l₁ l₂ : DSortedFinsupp σ R cmp)
 
 #check Finsupp.zipWith_apply
 
+/--
+merge `l₁ l₂ : DSortedFinsupp` with f.
+-/
 def mergeWith : DSortedFinsupp σ R cmp :=
   ⟨l₁.val.mergeWith (let a := mergeFn · · ·; if a = 0 then none else some a) l₂.val,
     by
@@ -481,6 +510,9 @@ variable {R' : σ → Type*} [∀ k : σ, Zero (R' k)] (f : (k : σ) → R k →
   [∀ i : σ, ∀ x : R i, Decidable (f i x = 0)]
 
 set_option linter.unusedVariables false in
+/--
+update values with `f`
+-/
 def mapRange (hf : ∀ i, f i 0 = 0) (l : DSortedFinsupp σ R cmp) :
     DSortedFinsupp σ R' cmp :=
   mk' (l.val.filterMap (let r := f · ·; if r = 0 then none else some r)) (by
