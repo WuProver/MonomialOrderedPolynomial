@@ -1,7 +1,7 @@
-# SortedPolynomial
-This library provides a formally verified data structure for efficient polynomial identity verification through kernel reduction in Lean 4. We leverage strictly sorted data structures to enable reliable in-kernel computation and formal verification of polynomial operations. It provides sorted and kernel-computable version of `DFinsupp`, `Finsupp`, `AddMonoidAlgebra`, and `Polynomial`.
+# MonomialOrderedPolynomial
+This library provides a formally verified data structure for efficient polynomial identity testing via kernel reduction in Lean 4. By leveraging strictly ordered data structures, it ensures reliable in-kernel computation and verification of polynomial operations. Although primarily optimized for polynomial identity testing, the library also supports a wide range of fundamental operations, including computing degrees, extracting coefficients, performing evaluations, and handling expansions of both univariate and multivariate polynomials across diverse contexts.
 
-This project directly supports the implementation of Gröbner basis algorithms in Lean. For the main Gröbner basis formalization project, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj)
+One of the goals of this project is helping with proving properties about Gröbner basis on concrete polynomials. For the main Gröbner basis formalization project, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj)
 
 This project is still work in process. We are working to complete this promptly.
 
@@ -13,15 +13,15 @@ This project is still work in process. We are working to complete this promptly.
 - [`SortedAddMonoidAlgebra`](https://github.com/WuProver/SortedPolynomial/blob/master/LeanSortedFinsupp/SortedAddMonoidAlgebra.lean): A sorted implementation of [`AddMonoidAlgebra`](https://leanprover-community.github.io/mathlib4_docs/search.html?q=AddMonoidAlgebra) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
 
 ### How It Works
-At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between abstract mathematical objects from Mathlib (such as Polynomial expressions with concrete coefficients) and our internal, computable data structures (like sorted lists). This allows the kernel to efficiently reduce expressions within our framework, while guaranteeing that the results remain mathematically sound and consistent with the original abstract theory.
+At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between abstract mathematical objects from Mathlib (such as `Polynomial` expressions with concrete coefficients) and our internal, computable data structures (like sorted lists). This allows the kernel to efficiently reduce expressions within our framework, while guaranteeing that the results remain mathematically sound and consistent with the original abstract theory.
 
 ## Build
 If you don't already have Lean 4 set up, please follow the official [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
 
 Once Lean is installed, you can clone this repository and build the project:
 ```bash
-git clone https://github.com/WuProver/SortedPolynomial.git
-cd SortedPolynomial
+git clone https://github.com/WuProver/MonomialOrderedPolynomial.git
+cd MonomialOrderedPolynomial
 lake exe cache get!
 lake build
 ```
