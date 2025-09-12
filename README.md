@@ -1,7 +1,7 @@
 # SortedPolynomial
 This library provides a formally verified data structure for efficient polynomial identity verification through kernel reduction in Lean 4. We leverage strictly sorted data structures to enable reliable in-kernel computation and formal verification of polynomial operations. It provides sorted and kernel-computable version of `DFinsupp`, `Finsupp`, `AddMonoidAlgebra`, and `Polynomial`.
 
-This project directly supports the formalization of Gröbner basis algorithms in Lean. For the main Gröbner basis formalization project, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj)
+This project directly supports the implementation of Gröbner basis algorithms in Lean. For the main Gröbner basis formalization project, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj)
 
 This project is still work in process. We are working to complete this promptly.
 
