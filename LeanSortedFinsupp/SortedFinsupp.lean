@@ -462,7 +462,13 @@ def mapDomain (l : SortedFinsupp σ R cmp) :
 lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
     l.mapDomain f hf (f x) = l x := by
   have : Function.Injective f := by
-    sorry
+    intro a b h
+    have := hf a b
+    rw [h] at this
+    have ha : cmp' (f b) (f b) = .eq := by simp
+    rw [ha] at this
+    simp at this
+    exact this
   -- ugly proof. should be rewritten later.
   by_cases h : l x = 0
   · simp [h, mapDomain]
@@ -495,7 +501,14 @@ lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
     {R} [AddCommMonoid R]
     (l : SortedFinsupp σ R cmp) :
     equivFinsupp (l.mapDomain f hf) = (equivFinsupp l).mapDomain f := by
-  have : Function.Injective f := sorry
+  have : Function.Injective f := by
+    intro a b h
+    have := hf a b
+    rw [h] at this
+    have ha : cmp' (f b) (f b) = .eq := by simp
+    rw [ha] at this
+    simp at this
+    exact this
   ext x'
   classical
   by_cases h : x' ∈ Set.range f
