@@ -1,9 +1,7 @@
 # MonomialOrderedPolynomial
 This library provides a formally verified data structure for efficient polynomial identity testing via kernel reduction in Lean 4. By leveraging strictly ordered data structures, it ensures reliable in-kernel computation and verification of polynomial operations. Although primarily optimized for polynomial identity testing, the library also supports a wide range of fundamental operations, including computing degrees, extracting coefficients, performing evaluations, and handling expansions of both univariate and multivariate polynomials across diverse contexts.
 
-One of the goals of this project is helping with proving properties about Gröbner basis on concrete polynomials. For the main Gröbner basis formalization project, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj)
-
-This project is still work in process. We are working to complete this promptly.
+This project develops tools that help with the computation and formal verification of Gröbner bases of polynomial ideals. In addition, it supports other fundamental polynomial operations, including greatest common divisors, factorization, and solving polynomial systems. For the main Gröbner basis formalization effort, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj). This work is still in progress and under active development.
 
 ## Introduction
 
