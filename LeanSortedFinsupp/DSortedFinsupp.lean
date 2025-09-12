@@ -7,17 +7,35 @@ import LeanSortedFinsupp.DSortedListMap
 # Dependent function `DSortedFinsupp σ R` with finite support, based on sorted list
 
 This file defines the type `DSortedFinsupp` of dependent function with finite support, based on
-`DSortedListMap`. It is for "computation" (reduction) in the kernel but inefficient in native.
+`DSortedListMap`. It is for "computation" (reduction) in the kernel.
 
-Application of a `l : DSortedFinsupp σ R` with `a : σ`: `l a` (requiring `DecidableEq σ`).
+Application of `l : DSortedFinsupp σ R` with `a : σ` is denoted `l a` (requiring `DecidableEq σ`).
 
 ## Definitions
 
-- `DSortedFinsupp α β cmp`: dependent function with finite support, based on `DSortedListMap`.
+- `DSortedFinsupp α R cmp`: dependent function with finite support, based on `DSortedListMap`.
 - `DSortedFinsupp.single cmp a b`: a function mapping `a` to `b` and others to zero.
 - `DSortedFinsupp.mapRange f l`: update values with `f`.
 - `DSortedFinsupp.mergeWith f l₁ l₂`: merge `l₁ l₂ : DSortedFinsupp` with f.
 - `DSortedFinsupp.support l`: support of `l : DSortedFinsupp`, sorted w.r.t. `cmp`.
+- `DSortedFinsupp.val l`: the underlying `DSortedListMap` of `l`
+- `DSortedFinsupp.equivDFinsupp`: the equivalence between `DSortedFinsupp σ R` and `DFinsupp σ R`,
+  where application is preserved, for `l : DSortedFinsupp σ R`, `(equivDFinsupp l) x = l x`, or
+  `⇑(equivDFinsupp l) = ⇑l`.
+
+## Examples
+
+```
+def example1' : DSortedFinsupp Int (fun _ ↦ Int) compare :=
+  ⟨⟨[⟨1, 3⟩, ⟨2, 4⟩, ⟨5, 6⟩], by decide⟩, by decide⟩
+def example2' : DSortedFinsupp Int (fun _ ↦ Int) compare :=
+  ⟨⟨[⟨1, -1⟩, ⟨3, 4⟩, ⟨5, -6⟩], by decide⟩, by decide⟩
+example :
+    example1' + example2' =
+    ⟨⟨[⟨1, 2⟩, ⟨2, 4⟩, ⟨3, 4⟩], by decide⟩, by decide⟩ := by decide
+#reduce example1' 1   -- reduced to 3
+#reduce example1' 3   -- reduced to 0
+```
 
 -/
 
@@ -378,6 +396,10 @@ def apply_onSupport [DecidableEq σ] {f : (k : σ) → R k} {s} (h : ∀ x, x �
   · simp [hx] at *
     simp [h]
 
+/--
+The equivalence between `DSortedFinsupp σ R` and `DFinsupp σ R`, where the application is
+preserved, i.e. `(equivDFinsupp l) x = l x`.
+-/
 def equivDFinsupp [DecidableEq σ] [∀ k, ∀ b : R k, Decidable (b = 0)] :
     Equiv (DSortedFinsupp σ R cmp) (Π₀ k : σ, R k) where
   toFun l := DFinsupp.mk l.support.toFinset (l ·.val)

@@ -34,10 +34,10 @@ instance {α} {cmp : α → α → Ordering} [Std.TransCmp cmp] :
 
 set_option trace.Meta.synthInstance true in
 -- open Classical in
-#synth Algebra R (SortedAddMonoidAlgebra Nat R (compare · · |>.swap))
+#synth Algebra R (SortedAddMonoidAlgebra R Nat (compare · · |>.swap))
 
 noncomputable def TreeRepr.toSortedAddMonoidAlgebra :
-    TreeRepr Unit R → SortedAddMonoidAlgebra Nat R (compare · · |>.swap)
+    TreeRepr Unit R → SortedAddMonoidAlgebra R Nat (compare · · |>.swap)
   | const c => single _ 0 c
   | var _ => single _ 1 1
   | add p q => p.toSortedAddMonoidAlgebra + q.toSortedAddMonoidAlgebra
@@ -48,7 +48,7 @@ noncomputable def TreeRepr.toSortedAddMonoidAlgebra :
 -- #check alg
 
 def algEquivPolynomial :
-    (SortedAddMonoidAlgebra Nat R (compare · · |>.swap)) ≃ₐ[R] (Polynomial R) :=
+    (SortedAddMonoidAlgebra R Nat (compare · · |>.swap)) ≃ₐ[R] (Polynomial R) :=
   AlgEquiv.trans SortedAddMonoidAlgebra.algEquivAddMonoidAlgebra (Polynomial.toFinsuppIsoAlg R).symm
 
 lemma TreeRepr.algEquivPolynomial_apply (p : TreeRepr Unit R) :
@@ -92,8 +92,6 @@ lemma Polynomial.PolyRepr.eq_iff' {p q : Polynomial R} [p' : Polynomial.PolyRepr
   Polynomial.PolyRepr.eq_iff ..
 
 set_option profiler true
-
-#count_heartbeats in
 open Polynomial in
 example : ((X  + 1) ^ 20 : Nat[X]) = ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) := by
   -- grind

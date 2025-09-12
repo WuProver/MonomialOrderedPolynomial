@@ -10,11 +10,26 @@ in the kernel but inefficient in native.
 
 - `DSortedListMap α β cmp`: a list map, where `α` is the type of keys and `β a` is the type of the
   value at a key `a : α`.
+- `DSortedListMap.val l`: the underlying sorted `List` of `l`.
 - `DSortedListMap.single cmp a b`: a map with value `b` at key `a` and nothing else.
 - `DSortedListMap.get? l a`: the value at key `a`, or none if there isn't mapping at `a`.
 - `DSortedListMap.filterMap f l`: update values with `f`, and remove those on which `f` is `none`.
 - `DSortedListMap.mergeWith f l₁ l₂`: merge `l₁ l₂ : DSortedListMap` with f.
 - `DSortedListMap.keys l`: keys of `a : DSortedListMap`, sorted w.r.t. `cmp`.
+- `DSortedListMap.onFinset cmp f s`: the `DSortedListMap` of `f` limited on `s : Finset`
+  (irreducible in kernel).
+
+## Examples
+
+```
+def example1' : DSortedListMap Int (fun _ ↦ Int) compare := ⟨[⟨1, 3⟩, ⟨2, 4⟩, ⟨5, 6⟩], by decide⟩
+def example2' : DSortedListMap Int (fun _ ↦ Int) compare := ⟨[⟨1, -1⟩, ⟨3, 4⟩, ⟨5, -6⟩], by decide⟩
+example :
+    example1'.mergeWith (fun _ a b => if a + b = 0 then none else some (a + b)) example2' =
+    ⟨[⟨1, 2⟩, ⟨2, 4⟩, ⟨3, 4⟩], by decide⟩ := by decide
+#reduce example1'.get? 3   -- reduced to `none`
+#reduce example1'.get? 2   -- reduced to `some 4`
+```
 
 -/
 
@@ -24,6 +39,8 @@ a list map, where `α` is the type of keys and `β a` is the type of the value a
 def DSortedListMap α (β : α → Type*)
     (cmp : α → α → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   { l : List ((k : α) × β k) // l.Chain' (fun (a b : (k : α) × β k ) ↦ cmp a.fst b.fst = .lt) }
+
+#check Finsupp
 
 namespace DSortedListMap
 
@@ -318,6 +335,9 @@ def linearOrder [DecidableRel (cmp · · |>.isLE)] : LinearOrder α where
   toDecidableLE := inferInstance
 
 variable (cmp) in
+/--
+the `DSortedListMap` of `f` limited on `s : Finset` (irreducible in kernel)
+-/
 def onFinset (f : (k : α) → Option <| β k) (s : Finset α) :
     DSortedListMap α β cmp :=
   ⟨s.sort (cmp · · |>.isLE) |>.filterMap fun x ↦ f x |>.map (⟨x, ·⟩),
