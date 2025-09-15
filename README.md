@@ -25,17 +25,21 @@ lake build
 ```
 
 ## Comparison
+Our comparison is confined solely to polynomial operations within polynomial rings. Moreover, we only consider the case of processing a single goal or a single hypothesis.
 
 ### Core Comparison Table
 
 | Feature | Our Tool | Grind | Notes & Implications |
 | :--- | :--- | :--- | :--- |
-| **Equality** | ✅ Supported | ✅ Supported | |
-| **Inequality** | ✅ Supported | ❌ **Not Supported** | **Major Limitation:**  Grind provides no way to check if values are not equal. |
+| **Equality** | ✅ Supported | ✅ Supported | Grind is eight times faster than our tool. |
+| **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind provides no way to check if two polynomials are not equal. |
 | **Coeffcients** | ✅ Fully Supported | ❌ **Only Int** | Grind can only determine the equality of polynomials with integer coefficients |
 
+### Some Examples
+
+
 ### Conclusion
-Use the right tool for the job. Our tool is more suitable for polynomial manipulation, general computations.
+Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
 
 ## ToDo
 1. Implement monomial order on `SortedFinsupp`, to imolement sorted `MvPolynomial`;

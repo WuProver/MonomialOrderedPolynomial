@@ -93,9 +93,10 @@ lemma Polynomial.PolyRepr.eq_iff' {p q : Polynomial R} [p' : Polynomial.PolyRepr
 
 set_option profiler true
 open Polynomial in
-example : ((X  + 1) ^ 20 : Nat[X]) = ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) := by
-  -- grind
-  rw [Polynomial.PolyRepr.eq_iff']
-  decide +kernel
+example : ((X  + 1) ^ 20 : Nat[X]) =  ((X ^ 2 + 2 * X +1) ^ 10 + 1 : Nat[X]) := by
+  grind
+  -- rw [Polynomial.PolyRepr.eq_iff']
+  -- decide +kernel
+
 
 end Polynomial
