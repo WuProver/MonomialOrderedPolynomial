@@ -48,9 +48,10 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 | Feature | Our Tool | Grind | Notes & Implications |
 | :--- | :--- | :--- | :--- |
 | **Equality** | ✅ Our tool is suited for verifying the PIT problem for polynomials with computable coefficients. | ✅ Grind is suited for verifying the PIT problem for polynomials with coefficients in computationally discrete rings (like ℤ, ℕ), but it lacks native support for reasoning about coefficients in fields such as ℚ or ℝ | Grind is eight times faster than our tool. |
-| **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind provides no way to check if two polynomials are not equal. |
+| **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind can only prove two polynomials are equal, but it cannot prove they are not equal. |
 
-
+### Some Examples
+![example](img/example.jpg)
 
 ### Conclusion
 Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients

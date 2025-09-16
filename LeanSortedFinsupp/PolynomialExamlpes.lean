@@ -73,4 +73,3 @@ example : ((X + C (1 / 2 : ℝ)) ^ 2 : ℝ[X]) = ((X ^ 2 + X + C (1 / 4 : ℝ)))
   -- todo
   -- can be proved via homomorphism from ℚ to ℝ
   sorry
-
