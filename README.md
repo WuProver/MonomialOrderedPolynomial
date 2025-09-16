@@ -24,6 +24,17 @@ lake exe cache get!
 lake build
 ```
 
+## Core Capabilities
+This library provides comprehensive support for polynomial operations in both univariate and multivariate contexts:
+### Univariate Polynomial Operations
+- Polynomial Identity Testing: Efficient verification of univarite polynomial equality through kernel reduction
+- Degree Computation: Calculation of polynomial degrees with formal verification
+- Coefficient Extraction: Retrieval of specific coefficients from polynomial expressions
+
+### Multivariate Polynomial Operations
+- Polynomial Identity Testing: Efficient verification of multivarite polynomial equality through kernel reduction
+
+
 ## Comparison
 Our comparison is confined solely to polynomial operations within polynomial rings. Moreover, we only consider the case of processing a single goal or a single hypothesis.
 
@@ -31,9 +42,8 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 
 | Feature | Our Tool | Grind | Notes & Implications |
 | :--- | :--- | :--- | :--- |
-| **Equality** | ✅ Supported | ✅ Supported | Grind is eight times faster than our tool. |
+| **Equality** | ✅ Our tool is suited for verifying the PIT problem for polynomials with computable coefficients. | ✅ Grind is suited for verifying the PIT problem for polynomials with coefficients in computationally discrete rings (like ℤ, ℕ), but it lacks native support for reasoning about coefficients in fields such as ℚ or ℝ | Grind is eight times faster than our tool. |
 | **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind provides no way to check if two polynomials are not equal. |
-| **Coeffcients** | ✅ Fully Supported | ❌ **Only Int** | Grind can only determine the equality of polynomials with integer coefficients |
 
 ### Some Examples
 
@@ -41,6 +51,6 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 ### Conclusion
 Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
 
-## ToDo
+## WIP
 1. Implement monomial order on `SortedFinsupp`, to imolement sorted `MvPolynomial`;
 2. refactor `SortedFinsupp` to use independent `Prod` to be more effective.
