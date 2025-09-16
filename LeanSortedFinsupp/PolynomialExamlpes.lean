@@ -51,6 +51,7 @@ example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ)))
   fail_if_success grind
   sorry
 
+
 example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
   rw [Polynomial.PolyRepr.eq_iff']
   decide +kernel

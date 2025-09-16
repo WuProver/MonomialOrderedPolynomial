@@ -51,7 +51,31 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 | **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind can only prove two polynomials are equal, but it cannot prove they are not equal. |
 
 ### Some Examples
-![example](img/example.jpg)
+<!-- ![example](img/example.jpg) -->
+`grind` doesn't solve the polynomial identity test below, since the coefficients are rational numbers:
+```lean
+example : ((X + C (1 / 2 : Q)) ^ 2 : Q[X]) = ((X ^ 2 + X + C (1 / 4 : Q))) := by
+    grind
+```
+
+our solution can prove the polynomial identity test below
+```lean
+example : ((X + C (1 / 2 : Q)) ^ 2 : Q[X]) = ((X ^ 2 + X + C (1 / 4 : Q))) := by
+    rw [Polynomial.PolyRepr.eq_iff']
+    decide +kernel
+```
+
+`grind` cannot determine if two polynomials are not equal
+```lean
+example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
+    grind
+```
+
+but our solution can do it
+```lean
+example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
+    simp +decide [Polynomial.PolyRepr.eq_iff']
+```
 
 ### Conclusion
 Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
