@@ -55,7 +55,7 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 `grind` doesn't solve the polynomial identity test below, since the coefficients are rational numbers:
 ```lean
 example : ((X + C (1 / 2 : Q)) ^ 2 : Q[X]) = ((X ^ 2 + X + C (1 / 4 : Q))) := by
-    grind
+    grind  -- `grind` failed
 ```
 
 our solution can prove the polynomial identity test below
@@ -68,7 +68,7 @@ example : ((X + C (1 / 2 : Q)) ^ 2 : Q[X]) = ((X ^ 2 + X + C (1 / 4 : Q))) := by
 `grind` cannot determine if two polynomials are not equal
 ```lean
 example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
-    grind
+    grind  --`grind` failed
 ```
 
 but our solution can do it
