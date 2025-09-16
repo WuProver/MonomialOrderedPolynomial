@@ -3,6 +3,7 @@ This library provides a formally verified data structure for efficient polynomia
 
 This project develops tools that help with the computation and formal verification of Gröbner bases of polynomial ideals. In addition, it supports other fundamental polynomial operations, including greatest common divisors, factorization, and solving polynomial systems. For the main Gröbner basis formalization effort, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj). This work is still in progress and under active development.
 
+
 ## Introduction
 
 ### Main Structure
@@ -12,6 +13,7 @@ This project develops tools that help with the computation and formal verificati
 
 ### How It Works
 At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between abstract mathematical objects from Mathlib (such as `Polynomial` expressions with concrete coefficients) and our internal, computable data structures (like sorted lists). This allows the kernel to efficiently reduce expressions within our framework, while guaranteeing that the results remain mathematically sound and consistent with the original abstract theory.
+
 
 ## Build
 If you don't already have Lean 4 set up, please follow the official [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
@@ -24,8 +26,10 @@ lake exe cache get!
 lake build
 ```
 
+
 ## Core Capabilities
-This library provides comprehensive support for polynomial operations in both univariate and multivariate contexts:
+This library provides comprehensive support for polynomial operations in both univariate and multivariate contexts, You can see some concrete examples in [PolynomialExamples.lean](https://github.com/WuProver/MonomialOrderedPolynomial/blob/master/LeanSortedFinsupp/PolynomialExamlpes.lean).
+
 ### Univariate Polynomial Operations
 - Polynomial Identity Testing: Efficient verification of univarite polynomial equality through kernel reduction
 - Degree Computation: Calculation of polynomial degrees with formal verification
@@ -33,6 +37,7 @@ This library provides comprehensive support for polynomial operations in both un
 
 ### Multivariate Polynomial Operations
 - Polynomial Identity Testing: Efficient verification of multivarite polynomial equality through kernel reduction
+
 
 
 ## Comparison
@@ -45,11 +50,12 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 | **Equality** | ✅ Our tool is suited for verifying the PIT problem for polynomials with computable coefficients. | ✅ Grind is suited for verifying the PIT problem for polynomials with coefficients in computationally discrete rings (like ℤ, ℕ), but it lacks native support for reasoning about coefficients in fields such as ℚ or ℝ | Grind is eight times faster than our tool. |
 | **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind provides no way to check if two polynomials are not equal. |
 
-### Some Examples
 
 
 ### Conclusion
 Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
+
+
 
 ## WIP
 1. Implement monomial order on `SortedFinsupp`, to imolement sorted `MvPolynomial`;
