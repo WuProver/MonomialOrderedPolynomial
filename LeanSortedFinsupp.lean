@@ -4,3 +4,5 @@ import LeanSortedFinsupp.DSortedFinsupp
 import LeanSortedFinsupp.SortedFinsupp
 import LeanSortedFinsupp.SortedAddMonoidAlgebra
 import LeanSortedFinsupp.Polynomial
+import LeanSortedFinsupp.MvPolynomial
+
