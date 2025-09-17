@@ -94,6 +94,12 @@ lemma empty_val : (∅ : DSortedListMap α β cmp).val = [] := rfl
 lemma eq_empty_iff (l : DSortedListMap α β cmp) : l = ∅ ↔ l.val = [] := by
   rw [empty_def, Subtype.ext_iff_val]
 
+abbrev cons' (a : α) (b : β a) (l : DSortedListMap α β cmp)
+    (h : ∀ p ∈ l.val, cmp a p.1 = .lt) : DSortedListMap α β cmp := ⟨
+  ⟨a, b⟩ :: l.val,
+  by simpa [List.chain'_iff_pairwise, l.pairwise]
+⟩
+
 @[elab_as_elim]
 theorem induction {motive : DSortedListMap α β cmp → Prop} (empty : motive ∅)
     (cons : ∀ (a : (k : α) × β k) (s : DSortedListMap α β cmp)
@@ -196,6 +202,83 @@ lemma single_get?_of_ne [DecidableEq α] (a : α) (b : β a) (c : α) (h : a ≠
     (single cmp a b).get? c = none := by
   simp [single_get?, h]
 
+@[simp]
+lemma cons_get?_eq [DecidableEq α] (a) (l) (h) :
+    DSortedListMap.get? (⟨a :: l, h⟩ : DSortedListMap α β cmp) a.1 = a.2 := by
+  simp [get?]
+
+@[simp]
+lemma cons_get?_eq' [DecidableEq α] (a b) (l) (h) :
+    DSortedListMap.get? (⟨⟨a, b⟩ :: l, h⟩ : DSortedListMap α β cmp) a = b := by
+  simp [get?]
+
+lemma cons_get? [DecidableEq α] (a) (l : DSortedListMap α β cmp) (h) (a' : α)
+    [DecidableEq (a' = a.1)] :
+    DSortedListMap.get? (⟨a :: l.val, h⟩ : DSortedListMap α β cmp) a' =
+      if h : a' = a.1 then some (h ▸ a.2) else l.get? a' := by
+  split_ifs with h'
+  · subst h'
+    exact cons_get?_eq ..
+  · simp [get?, ne_comm.mp h']
+
+@[simp]
+lemma cons_get?_eq_none_of_lt [DecidableEq α] (a) (l) {h} {a' : α}
+    (ha' : cmp a' a.1 = .lt) :
+    DSortedListMap.get? (⟨a :: l, h⟩ : DSortedListMap α β cmp) a' = none := by
+  -- have := l.pairwise
+  simp [get?]
+  split_ands
+  · rintro rfl
+    simp [Std.ReflCmp.compare_self] at ha'
+  · intro ⟨a'', _⟩ ha''
+    rintro rfl
+    have := DSortedListMap.pairwise ⟨a :: l, h⟩
+    simp at this
+    simp [Std.OrientedCmp.gt_iff_lt.mpr <| this.1 _ ha''] at ha'
+
+@[simp]
+lemma cons_get?_eq_none_of_lt' [DecidableEq α] (a b) (l) {h} {a' : α}
+    (ha' : cmp a' a = .lt) :
+    DSortedListMap.get? (⟨⟨a, b⟩ :: l, h⟩ : DSortedListMap α β cmp) a' = none := by
+  -- have := l.pairwise
+  simp [get?]
+  split_ands
+  · rintro rfl
+    simp [Std.ReflCmp.compare_self] at ha'
+  · intro ⟨a'', _⟩ ha''
+    rintro rfl
+    have := DSortedListMap.pairwise ⟨⟨a, b⟩ :: l, h⟩
+    simp at this
+    simp [Std.OrientedCmp.gt_iff_lt.mpr <| this.1 _ ha''] at ha'
+
+lemma cons_get?'₁ [DecidableEq α] {a} {l : DSortedListMap α β cmp} (h : l.val.head? = some a) :
+    l.get? a.1 = a.2 := by
+  rw [List.head?_eq_some_iff] at h
+  obtain ⟨_, h⟩ := h
+  simp [get?, h]
+
+lemma cons_get?₁ [DecidableEq α] (a) (l l' : DSortedListMap α β cmp) (a' : α)
+    [DecidableEq (a' = a.1)] (h : l.val = a :: l'.val) :
+    l.get? a' =
+      if h : a' = a.1 then some (h ▸ a.2) else l'.get? a' := by
+  convert cons_get? ..
+  · simp [← h]
+  · simp [← h, l.property]
+  · assumption
+
+lemma cons_get?_eq_none_of_lt₁ [DecidableEq α] (l : DSortedListMap α β cmp) {a a' : α}
+    (h : l.val.head?.map (·.1) = a')
+    (ha' : cmp a a' = .lt) :
+    l.get? a = none := by
+  simp at h
+  obtain ⟨x, hx⟩ := h
+  rw [List.head?_eq_some_iff] at hx
+  obtain ⟨tail, hx⟩ := hx
+  convert cons_get?_eq_none_of_lt (a := ⟨a', x⟩) (l := tail) ..
+  · simp [← hx]
+  · simp [← hx, l.2]
+  · exact ha'
+
 lemma find?_eq_get?_map [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     l.val.find? (·.fst = a) = (l.get? a).map (⟨a, ·⟩) := by
   induction l using induction with
@@ -258,6 +341,18 @@ theorem get?_eq_none_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α
     · exact h''.symm
     · simp
 
+lemma get?_eq_none_of_cmp_eq_lt [DecidableEq α] (l : DSortedListMap α β cmp) {i a}
+    (h : l.val.head? = some a) (h' : cmp i a.1 = .lt) : l.get? i = none := by
+  simp [get?_eq_none_iff]
+  rw [List.head?_eq_some_iff] at h
+  obtain ⟨a', ha'⟩ := h
+  intro b h''
+  have := l.pairwise
+  simp [ha'] at this h''
+  rcases h'' with h'' | h''
+  · simp [← h'', Std.ReflCmp.compare_self] at h'
+  · simp [Std.OrientedCmp.gt_of_lt (this.1 _ h'')] at h'
+
 theorem get?_eq_some_iff_mem_val' [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (b : β a) :
     l.get? a = some b ↔ ⟨a, b⟩ ∈ l.val := by
   simp [← find?_left_eq_some_iff', find?_eq_get?_map]
@@ -300,6 +395,13 @@ lemma keys_pairwise (l : DSortedListMap α β cmp) : l.keys.Pairwise (cmp · · 
 lemma mem_keys_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     a ∈ l.keys ↔ l.get? a ≠ none := by
   simp [← get?_eq_some_iff_mem_val, keys, ← Option.isSome_iff_ne_none, Option.isSome_iff_exists]
+
+abbrev cons'' (a : α) (b : β a) (l : DSortedListMap α β cmp)
+    (h : ∀ a' ∈ l.keys, cmp a a' = .lt) : DSortedListMap α β cmp :=
+  cons' a b l (by
+    simp [keys] at h
+    aesop
+  )
 
 instance : IsAntisymm (α := α) (cmp · · |>.isLE) where
   antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')

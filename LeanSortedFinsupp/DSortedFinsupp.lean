@@ -56,17 +56,17 @@ section Basic
 instance [DecidableEq σ] [∀ a : σ, DecidableEq (R a)] : DecidableEq (DSortedFinsupp σ R cmp) :=
   Subtype.instDecidableEq
 
-@[inline]
-abbrev toList (l : DSortedFinsupp σ R cmp) := l.val.val
+-- @[inline]
+-- abbrev val.val (l : DSortedFinsupp σ R cmp) := l.val.val
 
-lemma chain' (l : DSortedFinsupp σ R cmp) : l.toList.Chain' (cmp ·.1 ·.1 = .lt) := l.val.2
+lemma chain' (l : DSortedFinsupp σ R cmp) : l.val.val.Chain' (cmp ·.1 ·.1 = .lt) := l.val.2
 
-lemma pairwise (l : DSortedFinsupp σ R cmp) : l.toList.Pairwise (cmp ·.1 ·.1 = .lt) :=
+lemma pairwise (l : DSortedFinsupp σ R cmp) : l.val.val.Pairwise (cmp ·.1 ·.1 = .lt) :=
   List.chain'_iff_pairwise.mp l.chain'
 
-lemma ne_zero {l : DSortedFinsupp σ R cmp} {i : Sigma R} (h : i ∈ l.toList) : i.2 ≠ 0 := l.2 i h
+lemma ne_zero {l : DSortedFinsupp σ R cmp} {i : Sigma R} (h : i ∈ l.val.val) : i.2 ≠ 0 := l.2 i h
 
-lemma ne_zero' {l : DSortedFinsupp σ R cmp} {a : σ} {b : R a} (h : ⟨a, b⟩ ∈ l.toList) : b ≠ 0 := ne_zero h
+lemma ne_zero' {l : DSortedFinsupp σ R cmp} {a : σ} {b : R a} (h : ⟨a, b⟩ ∈ l.val.val) : b ≠ 0 := ne_zero h
 
 lemma ne_zero_of_val_get?_eq_some [DecidableEq σ] {l : DSortedFinsupp σ R cmp} {a : σ} {b : R a}
     (h : l.val.get? a = some b) : b ≠ 0 := ne_zero' ((l.val.get?_eq_some_iff_mem_val' ..).mp h)
@@ -285,6 +285,17 @@ theorem apply_eq_iff_of_apply_ne_zero [DecidableEq σ] {l : DSortedFinsupp σ R 
   simp [apply_ne_zero_iff_get?_val_eq_some_apply] at h
   simp [h]
 
+theorem apply_eq_iff_of_ne_zero [DecidableEq σ] {l : DSortedFinsupp σ R cmp} {x : σ}
+    {y : R x} (h : y ≠ 0) : l x = y ↔ l.val.get? x = some y := by
+  classical
+  by_cases h' : l x = 0
+  · simp [h']
+    constructor
+    · aesop
+    · intro h''
+      simp [h'', apply_def, h] at h'
+  · exact apply_eq_iff_of_apply_ne_zero h'
+
 theorem apply_eq_of_get?_val_eq_some [DecidableEq σ] {l : DSortedFinsupp σ R cmp} {x : σ} {y : R x}
     (h : l.val.get? x = some y) : l x = y := by simp [apply_def, h]
 
@@ -344,6 +355,103 @@ lemma mem_support_iff [DecidableEq σ] (l : DSortedFinsupp σ R cmp) (a : σ) :
 --     (Function.support l).Finite := by simp [← toFinset_support]
 
 end Basic
+
+abbrev cons'' [DecidableEq σ] (a : σ) (b : R a) (l : DSortedFinsupp σ R cmp)
+    (h : ∀ a' ∈ l.support, cmp a a' = .lt) (hb : b ≠ 0) : DSortedFinsupp σ R cmp :=
+  mk'
+    (l.val.cons'' a b (by simp [support] at h; exact h))
+    (by
+      simp_intro _ [hb, DSortedListMap.cons', DSortedListMap.cons_get?]
+      split_ifs with h'
+      · aesop
+      · intro h''
+        apply DSortedFinsupp.ne_zero_of_val_get?_eq_some at h''
+        exact h'' rfl
+    )
+
+@[simp]
+lemma cons_apply_eq [DecidableEq σ] (a) (l) {h hb} :
+    DFunLike.coe (F := DSortedFinsupp σ R cmp) ⟨⟨a :: l, h⟩, hb⟩ a.1 = a.2 := by
+  classical
+  simp [apply_def, DSortedListMap.cons_get?_eq]
+
+@[simp]
+lemma cons_apply_eq' [DecidableEq σ] (a b) (l) {h hb} :
+    DFunLike.coe (F := DSortedFinsupp σ R cmp) ⟨⟨⟨a, b⟩ :: l, h⟩, hb⟩ a = b := by
+  classical
+  simp [apply_def, DSortedListMap.cons_get?_eq']
+
+lemma cons_apply [DecidableEq σ] (a b) (l : DSortedFinsupp σ R cmp) {h hb} (a' : σ)
+    [DecidableEq (a' = a)] :
+    DFunLike.coe (F := DSortedFinsupp σ R cmp) ⟨⟨⟨a, b⟩ :: l.val.val, h⟩, hb⟩ a' =
+      if h : a' = a then h ▸ b else l a' := by
+  simp [apply_def, DSortedListMap.cons_get?]
+  split_ifs
+  · simp [*]
+  · simp [*]
+
+@[simp]
+lemma cons_apply_eq_zero_of_lt [DecidableEq σ] (a) (l) {h hb} {a' : σ}
+    (ha' : cmp a' a.1 = .lt) :
+    DFunLike.coe (F := DSortedFinsupp σ R cmp) ⟨⟨a :: l, h⟩, hb⟩ a' = 0 := by
+  simp [apply_def, DSortedListMap.cons_get?_eq_none_of_lt (h := h) (ha' := ha')]
+
+@[simp]
+lemma cons_apply_eq_zero_of_lt' [DecidableEq σ] (a b) (l) {h hb} {a' : σ}
+    (ha' : cmp a' a = .lt) :
+    DFunLike.coe (F := DSortedFinsupp σ R cmp) ⟨⟨⟨a, b⟩ :: l, h⟩, hb⟩ a' = 0 := by
+  simp [apply_def, DSortedListMap.cons_get?_eq_none_of_lt' (h := h) (ha' := ha')]
+
+@[simp]
+lemma cons_apply_eq₁ [DecidableEq σ] (a : Sigma R) (l : DSortedFinsupp σ R cmp)
+    (h : l.val.val.head? = a) :
+    l a.1 = a.2 := by
+  simp [List.head?_eq_some_iff] at h
+  obtain ⟨tail, hy⟩ := h
+  convert cons_apply_eq (a := a) (l := tail) ..
+  · simp [← hy]
+  · exact hy ▸ l.chain'
+  · convert hy ▸ l.2
+
+@[simp]
+lemma cons_apply_eq₁' [DecidableEq σ] (a b) (l : DSortedFinsupp σ R cmp)
+    (h : l.val.val.head? = some ⟨a, b⟩) :
+    l a = b := by
+  convert cons_apply_eq₁ (a := ⟨a, b⟩) (l := l) (h := h)
+
+@[simp]
+lemma cons_apply_eq'₁ [DecidableEq σ] (a b) (l) {h hb} :
+    DFunLike.coe (F := DSortedFinsupp σ R cmp) ⟨⟨⟨a, b⟩ :: l, h⟩, hb⟩ a = b := by
+  classical
+  simp
+
+lemma cons_apply₁ [DecidableEq σ] (a) (l l' : DSortedFinsupp σ R cmp) (a' : σ)
+    [DecidableEq (a' = a.1)] (h : l.val.val = a :: l'.val.val) :
+    l a' =
+      if h : a' = a.1 then h ▸ a.2 else l' a' := by
+  simp [apply_def, DSortedListMap.cons_get?₁ (a := a) (l := l.val) (h := h)]
+  split_ifs
+  · simp
+  · simp
+
+lemma cons_apply_eq_zero_of_lt₁ [DecidableEq σ] (l : DSortedFinsupp σ R cmp) {a a' : σ}
+    (h : l.val.val.head?.map (·.1) = a')
+    (ha' : cmp a a' = .lt) :
+    l a = 0 := by
+  simp at h
+  obtain ⟨x, hx⟩ := h
+  rw [List.head?_eq_some_iff] at hx
+  obtain ⟨tail, hx⟩ := hx
+  convert cons_apply_eq_zero_of_lt (a := ⟨a', x⟩) (l := tail) ..
+  · simp [← hx]
+  · simp [← hx, l.1.2]
+  · have := l.2
+    simpa [← hx]
+  · exact ha'
+
+lemma get?_eq_zero_of_cmp_eq_lt [DecidableEq σ] (l : DSortedFinsupp σ R cmp) {i a}
+    (h : l.val.val.head? = some a) (h' : cmp i a.1 = .lt) : l i = 0 := by
+  simp [apply_def, DSortedListMap.get?_eq_none_of_cmp_eq_lt (h' := h') (h := h)]
 
 section DFinsupp
 

@@ -18,7 +18,7 @@ set_option trace.Meta.synthInstance true in
 -- open Classical in
 #synth Algebra R (SortedAddMonoidAlgebra R Nat (compare · · |>.swap))
 
-noncomputable def TreeRepr.toSortedAddMonoidAlgebra :
+def TreeRepr.toSortedAddMonoidAlgebra :
     TreeRepr Unit R → SortedAddMonoidAlgebra R Nat (compare · · |>.swap)
   | const c => single _ 0 c
   | var _ => single _ 1 1
@@ -26,8 +26,6 @@ noncomputable def TreeRepr.toSortedAddMonoidAlgebra :
   | mul p q => p.toSortedAddMonoidAlgebra * q.toSortedAddMonoidAlgebra
   | pow p n => p.toSortedAddMonoidAlgebra ^ n
   | ref p => p.toSortedAddMonoidAlgebra
-
--- #check alg
 
 def algEquivPolynomial :
     (SortedAddMonoidAlgebra R Nat (compare · · |>.swap)) ≃ₐ[R] (Polynomial R) :=
@@ -86,4 +84,3 @@ lemma Polynomial.PolyRepr.coeff {p : Polynomial R} {n} [p' : Polynomial.PolyRepr
   sorry
 
 end Polynomial
-

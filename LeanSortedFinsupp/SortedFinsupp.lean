@@ -169,6 +169,16 @@ lemma support_eq_equivFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R c
   ext x
   simp [mem_support_iff]
 
+@[simp]
+lemma equivFinsupp_zero [DecidableEq σ] :
+    equivFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
+
+@[simp]
+lemma equivFinsupp_single [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] :
+    equivFinsupp (single cmp a b) = Finsupp.single a b := by
+  ext x
+  simp [Finsupp.single_apply]
+
 end Finsupp
 
 section mergeWith
