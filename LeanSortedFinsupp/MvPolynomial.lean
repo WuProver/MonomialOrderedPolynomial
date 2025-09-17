@@ -11,15 +11,15 @@ variable {σ} [DecidableEq σ] [LinearOrder σ] {R} [CommSemiring R] [DecidableE
 
 -- #synth Algebra R (SortedAddMonoidAlgebra R (Lex <| SortedFinsupp σ Nat compare) (compare · · |>.swap))
 
-def TreeRepr.toSortedAddMonoidAlgebra :
+def TreeRepr.toMvSortedAddMonoidAlgebra :
     TreeRepr σ R → SortedAddMonoidAlgebra R
       (Lex <| SortedFinsupp σ Nat compare) (compare · · |>.swap)
   | const c => SortedAddMonoidAlgebra.single _ 0 c
   | var v => SortedAddMonoidAlgebra.single _ (SortedFinsupp.single _ v 1) 1
-  | add p q => p.toSortedAddMonoidAlgebra + q.toSortedAddMonoidAlgebra
-  | mul p q => p.toSortedAddMonoidAlgebra * q.toSortedAddMonoidAlgebra
-  | pow p n => p.toSortedAddMonoidAlgebra ^ n
-  | ref p => p.toSortedAddMonoidAlgebra
+  | add p q => p.toMvSortedAddMonoidAlgebra + q.toMvSortedAddMonoidAlgebra
+  | mul p q => p.toMvSortedAddMonoidAlgebra * q.toMvSortedAddMonoidAlgebra
+  | pow p n => p.toMvSortedAddMonoidAlgebra ^ n
+  | ref p => p.toMvSortedAddMonoidAlgebra
 
 -- #check MvPolynomial.renameEquiv (SortedFinsupp.orderIsoFinsupp)
 -- #check AddMonoidAlgebra.mapRangeAlgEquiv
@@ -35,7 +35,7 @@ noncomputable def algEquivMvPolynomial :
 lemma TreeRepr.algEquivMvPolynomial_apply
     {σ} [DecidableEq σ] [LinearOrder σ]
     (p : TreeRepr σ R) :
-    algEquivMvPolynomial p.toSortedAddMonoidAlgebra = p.toMvPolynomial := by
+    algEquivMvPolynomial p.toMvSortedAddMonoidAlgebra = p.toMvPolynomial := by
   match p with
   | const c =>
     convert_to
@@ -57,25 +57,25 @@ lemma TreeRepr.algEquivMvPolynomial_apply
       MvPolynomial.X v
     simp
     rfl
-  | add p q => simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
+  | add p q => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
       TreeRepr.algEquivMvPolynomial_apply p, TreeRepr.algEquivMvPolynomial_apply q]
-  | mul p q => simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
+  | mul p q => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
       TreeRepr.algEquivMvPolynomial_apply p, TreeRepr.algEquivMvPolynomial_apply q]
-  | pow p n => simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
+  | pow p n => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
       TreeRepr.algEquivMvPolynomial_apply p]
-  | ref p => simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
+  | ref p => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
       TreeRepr.algEquivMvPolynomial_apply p]
 
-lemma TreeRepr.algEquivPolynomial_symm (p : TreeRepr σ R) :
-    p.toSortedAddMonoidAlgebra = algEquivMvPolynomial.symm p.toMvPolynomial := by
+lemma TreeRepr.algEquivMvPolynomial_symm (p : TreeRepr σ R) :
+    p.toMvSortedAddMonoidAlgebra = algEquivMvPolynomial.symm p.toMvPolynomial := by
   simp [← algEquivMvPolynomial_apply]
 
 lemma MvPolynomial.PolyRepr.eq_iff {p q : MvPolynomial σ R}
     (p' : MvPolynomial.PolyRepr p) (q' : MvPolynomial.PolyRepr q) :
-    p = q ↔ p'.tree.toSortedAddMonoidAlgebra = q'.tree.toSortedAddMonoidAlgebra := by
+    p = q ↔ p'.tree.toMvSortedAddMonoidAlgebra = q'.tree.toMvSortedAddMonoidAlgebra := by
   simp [← p'.tree_eq, ← q'.tree_eq, ← TreeRepr.algEquivMvPolynomial_apply]
 
 lemma MvPolynomial.PolyRepr.eq_iff' {p q : MvPolynomial σ R} [p' : MvPolynomial.PolyRepr p]
     [q' : MvPolynomial.PolyRepr q] :
-    p = q ↔ p'.tree.toSortedAddMonoidAlgebra = q'.tree.toSortedAddMonoidAlgebra :=
+    p = q ↔ p'.tree.toMvSortedAddMonoidAlgebra = q'.tree.toMvSortedAddMonoidAlgebra :=
   MvPolynomial.PolyRepr.eq_iff ..
