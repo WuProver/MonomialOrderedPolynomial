@@ -1,6 +1,6 @@
-import LeanSortedFinsupp.TreeRepr
-import LeanSortedFinsupp.SortedAddMonoidAlgebra
-import LeanSortedFinsupp.Ordering
+import MonomialOrderedPolynomial.TreeRepr
+import MonomialOrderedPolynomial.SortedAddMonoidAlgebra
+import MonomialOrderedPolynomial.Ordering
 
 section Polynomial
 

@@ -1,4 +1,4 @@
-import LeanSortedFinsupp.SortedFinsupp
+import MonomialOrderedPolynomial.SortedFinsupp
 
 /-!
 #

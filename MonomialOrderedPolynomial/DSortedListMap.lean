@@ -1,4 +1,4 @@
-import LeanSortedFinsupp.List
+import MonomialOrderedPolynomial.List
 
 /-!
 # Dependent maps based on sorted `List`

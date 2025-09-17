@@ -1,5 +1,5 @@
-import LeanSortedFinsupp.List
-import LeanSortedFinsupp.DSortedListMap
+import MonomialOrderedPolynomial.List
+import MonomialOrderedPolynomial.DSortedListMap
 
 #check DFinsupp.single
 

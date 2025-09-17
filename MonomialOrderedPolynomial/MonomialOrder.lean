@@ -1,6 +1,6 @@
 import Mathlib.Data.Finsupp.MonomialOrder
-import LeanSortedFinsupp.SortedFinsupp
-import LeanSortedFinsupp.Ordering
+import MonomialOrderedPolynomial.SortedFinsupp
+import MonomialOrderedPolynomial.Ordering
 
 -- todo: generalize
 namespace SortedFinsupp

@@ -1,4 +1,4 @@
-import LeanSortedFinsupp.Polynomial
+import MonomialOrderedPolynomial.Polynomial
 
 open Polynomial
 

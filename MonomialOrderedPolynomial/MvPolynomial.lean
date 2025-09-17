@@ -1,6 +1,6 @@
-import LeanSortedFinsupp.SortedAddMonoidAlgebra
-import LeanSortedFinsupp.TreeRepr
-import LeanSortedFinsupp.MonomialOrder
+import MonomialOrderedPolynomial.SortedAddMonoidAlgebra
+import MonomialOrderedPolynomial.TreeRepr
+import MonomialOrderedPolynomial.MonomialOrder
 
 variable {σ} [DecidableEq σ] [LinearOrder σ] {R} [CommSemiring R] [DecidableEq R]
 

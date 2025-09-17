@@ -1,4 +1,4 @@
-import LeanSortedFinsupp.MvPolynomial
+import MonomialOrderedPolynomial.MvPolynomial
 
 open MvPolynomial
 

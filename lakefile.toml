@@ -1,7 +1,7 @@
-name = "LeanSortedFinsupp"
+name = "MonomialOrderedPolynomial"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["LeanSortedFinsupp"]
+defaultTargets = ["MonomialOrderedPolynomial"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -20,5 +20,5 @@ name = "groebner"
 scope = "WuProver"
 
 [[lean_lib]]
-name = "LeanSortedFinsupp"
+name = "MonomialOrderedPolynomial"
 
