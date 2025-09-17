@@ -3,21 +3,27 @@ This library provides a formally verified data structure for efficient polynomia
 
 This project develops tools that help with the computation and formal verification of Gröbner bases of polynomial ideals. In addition, it supports other fundamental polynomial operations, including greatest common divisors, factorization, and solving polynomial systems. For the main Gröbner basis formalization effort, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj). This work is still in progress and under active development.
 
+Both the library and its documents are still WIP.
+
 ## Introduction
 
-### Main Structure
+### Main Contents
 
-- [`DSortedFinsupp`](./MonomialOrderedPolynomial/DSortedFinsupp.lean): A sorted implementation of finitely-supported dependent functions [`DFinsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=DFinsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4). It is built upon the [`DSortedListMap`](./MonomialOrderedPolynomial/DSortedListMap.lean) data structure.
-- [`SortedFinsupp`](./MonomialOrderedPolynomial/SortedFinsupp.lean): A sorted implementation of finitely-supported functions [`Finsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Finsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
-- [`SortedAddMonoidAlgebra`](./MonomialOrderedPolynomial/SortedAddMonoidAlgebra.lean): A sorted implementation of [`AddMonoidAlgebra`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=AddMonoidAlgebra#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
-- [`Polynomial.Lean`](./MonomialOrderedPolynomial/MonomialOrder.lean): equivalence of algebras 
-- [`MonomialOrder.lean`](./MonomialOrderedPolynomial/MonomialOrder.lean): Order on `SortedFinsupp`, mostly for multivariate polynomials.
-- [``]
+This library focusses on structure based on list where elements are sorted with an order.
+
+- [`List.lean`](./MonomialOrderedPolynomial/List.lean): General operations and properties of such kind of structure.
+- [`DSortedListMap.lean`](./MonoialOrderedPolynomial/DSortedFinsupp.lean): Maps based on sorted list.
+- [`DSortedFinsupp.lean`](./MonomialOrderedPolynomial/DSortedFinsupp.lean): A sorted implementation of finitely-supported dependent functions [`DFinsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=DFinsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4). It is built upon the [`DSortedListMap`](./MonomialOrderedPolynomial/DSortedListMap.lean) data structure.
+- [`SortedFinsupp.lean`](./MonomialOrderedPolynomial/SortedFinsupp.lean): A sorted implementation of finitely-supported functions [`Finsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Finsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
+- [`SortedAddMonoidAlgebra.lean`](./MonomialOrderedPolynomial/SortedAddMonoidAlgebra.lean): A sorted implementation of [`AddMonoidAlgebra`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=AddMonoidAlgebra#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
+- [`TreeRepr.lean`](./MonomialOrderedPolynomial/TreeRepr.lean): instances that extract a computable tree structure from concrete `Polynomial` and `MvPolynomial` expressions, inspired by [Junyan Xu's work on polynomial computations by reflection](https://gist.github.com/alreadydone/2dca4fde11fb2e9be7f8a10b59216b3f).
+- [`Polynomial.lean`](./MonomialOrderedPolynomial/Polynomial.lean): equivalence of algebras from `SortedAddMonoidAlgebra` (where monomials are represented as sorted elements of a list) to [`Polynomial`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Polynomial#doc).
+- [`MonomialOrder.lean`](./MonomialOrderedPolynomial/MonomialOrder.lean): Order on `SortedFinsupp`.
+- [`MvPolynomial.Lean`](./MonomialOrderedPolynomial/MvPolynomial.lean): equivalence of algebras from `SortedAddMonoidAlgebra` to [`MvPolynomial`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=MvPolynomial#doc).
 
 ### How It Works
 
-At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between incomputable mathematical objects from Mathlib and our computable data structures (like sorted lists). This allows the kernel to efficiently reduce concrete expressions about structures we define, and prove proposition about the corresponding objects from Mathlib by the result, while guaranteeing mathematically sound and consistent with the original theory.
-
+At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between incomputable mathematical objects from Mathlib and our computable data structures. This allows the kernel to efficiently reduce concrete expressions about structures we define, and prove proposition about the corresponding objects from Mathlib by the result, while guaranteeing mathematically sound and consistent with the original theory.
 
 ## Build
 If you don't already have Lean 4 set up, please follow the official [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
@@ -30,22 +36,32 @@ lake exe cache get
 lake build
 ```
 
+## Capabilities about `MvPolynomial` and `Polynomial`
 
-## Core Capabilities
+This library provides support for operations of polynomials (`MvPolynomial` and `Polynomial`) on `SortedAddMonoidAlgebra`:
 
-This library provides support for operations of concrete polynomials (`MvPol`). You can see some concrete examples in [PolynomialExamples.lean](https://github.com/WuProver/MonomialOrderedPolynomial/blob/master/LeanSortedFinsupp/PolynomialExamlpes.lean).
+- const,
+- variable,
+- addition / subtraction,
+- multiplication,
+- exponentiation.
 
-### Univariate Polynomial Operations
-- Polynomial Identity Testing: Efficient verification of univarite polynomial equality through kernel reduction
-- Degree Computation: Calculation of polynomial degrees with formal verification
+One of their applications is [PIT (polynomial identity testing)](https://en.m.wikipedia.org/wiki/Polynomial_identity_testing).
+
+Corresponding `SortedAddMonoidAlgebra` of concrete polynomials can be synthesized via instance. Some examples are in [PolynomialExamples.lean](https://github.com/WuProver/MonomialOrderedPolynomial/blob/master/LeanSortedFinsupp/PolynomialExamlpes.lean).
+
+### `Polynomial`-specific Operations
+
+- Degree Computation: Calculation of polynomial degrees
 - Coefficient Extraction: Retrieval of specific coefficients from polynomial expressions
 
-### Multivariate Polynomial Operations
-- Polynomial Identity Testing: Efficient verification of multivarite polynomial equality through kernel reduction
+### `MvPolynomial`-specific Operations
 
-
+- Degree Computation (WIP): Calculation of polynomial degrees w.r.t. a specific monomial order (such as lexicographic order);
+- Coefficient Extraction (WIP): Retrieval of specific coefficients from polynomial expressions w.r.t. a specific monomial order.
 
 ## Comparison
+
 Our comparison is confined solely to polynomial operations within polynomial rings. Moreover, we only consider the case of processing a single goal or a single hypothesis.
 
 ### Core Comparison Table
