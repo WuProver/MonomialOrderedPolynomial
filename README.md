@@ -60,28 +60,31 @@ Corresponding `SortedAddMonoidAlgebra` of concrete polynomials can be synthesize
 - Degree Computation (WIP): Calculation of polynomial degrees w.r.t. a specific monomial order (such as lexicographic order);
 - Coefficient Extraction (WIP): Retrieval of specific coefficients from polynomial expressions w.r.t. a specific monomial order.
 
-## Comparison
+## Comparison on PIT
 
 Our comparison is confined solely to polynomial operations within polynomial rings. Moreover, we only consider the case of processing a single goal or a single hypothesis.
 
-### Core Comparison Table
+### Comparison Table
 
-| Feature | Our Tool | Grind | Notes & Implications |
+| Goal | Requirement (Our Tool) | Requirement (Grind) | Notes & Implications |
 | :--- | :--- | :--- | :--- |
-| **Equality** | ✅ Our tool is suited for verifying the PIT problem for polynomials with computable coefficients. | ✅ Grind is suited for verifying the PIT problem for polynomials with coefficients in computationally discrete rings (like ℤ, ℕ), but it lacks native support for reasoning about coefficients in fields such as ℚ or ℝ | Grind is eight times faster than our tool. |
-| **Disequality** | ✅ Supported | ❌ **Not Supported** | Grind can only prove two polynomials are equal, but it cannot prove they are not equal. |
+| **Equality** | ✅ concrete polynomials with computable coefficients | ✅ provable by general properties of commutative semiring/ring | Our tool can prove polynomial with results of operations of coefficients, but only if they're computable and the polynomial is concrete. Grind is faster and may prove equality with unknown parts, while cannot use details except general properties of commutative semiring/ring. |
+| **Disequality** | ✅ (same requirements as equality) | ❌ **Not Supported, except some trivial cases** | Grind can only prove two polynomials are equal, but it cannot prove they are not equal. |
 
 ### Some Examples
 <!-- ![example](img/example.jpg) -->
+
+#### `Polynomial`
+
 `grind` doesn't solve the polynomial identity test below, since the coefficients are rational numbers:
 ```lean
-example : ((X + C (1 / 2 : Q)) ^ 2 : Q[X]) = ((X ^ 2 + X + C (1 / 4 : Q))) := by
+example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
     grind  -- `grind` failed
 ```
 
 our solution can prove the polynomial identity test below
 ```lean
-example : ((X + C (1 / 2 : Q)) ^ 2 : Q[X]) = ((X ^ 2 + X + C (1 / 4 : Q))) := by
+example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
     rw [Polynomial.PolyRepr.eq_iff']
     decide +kernel
 ```
@@ -97,6 +100,24 @@ but our solution can do it
 example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
     simp +decide [Polynomial.PolyRepr.eq_iff']
 ```
+
+#### `MvPolynomial`
+
+Equality:
+```lean
+example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
+  rw [ne_eq, MvPolynomial.PolyRepr.eq_iff']
+  decide +kernel
+```
+
+Disequality:
+```lean
+example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
+  rw [MvPolynomial.PolyRepr.eq_iff']
+  decide +kernel
+```
+
+
 
 ### Conclusion
 Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
