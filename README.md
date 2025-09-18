@@ -52,8 +52,28 @@ Corresponding `SortedAddMonoidAlgebra` of concrete polynomials can be synthesize
 
 ### `Polynomial`-specific Operations
 
-- Degree Computation (WIP): Calculation of polynomial degrees
-- Coefficient Extraction (WIP): Retrieval of specific coefficients from polynomial expressions
+- Degree Computation (WIP, still not sorry-free): Calculation of polynomial degrees
+- Coefficient Extraction (WIP, still not sorry-free): Retrieval of specific coefficients from polynomial expressions
+
+```lean
+open Polynomial
+
+example : ((X ^ 3 + C 1) ^ 3 - X ^ 9: Int[X]).degree = 6 := by
+  rw [Polynomial.PolyRepr.degree_eq]
+  decide +kernel
+
+example : ((X ^ 3 + C 1) ^ 3 - X ^ 9: Int[X]).degree ^ 2 = 36 := by
+  rw [Polynomial.PolyRepr.degree_eq]
+  decide +kernel
+
+example : (((X + C (1 / 2 : ℚ)) ^ 3 : ℚ[X]) - X ^ 3).leadingCoeff = (3 / 2 : ℚ) := by
+  rw [Polynomial.PolyRepr.leadingCoeff]
+  decide +kernel
+
+example : (((X + C (1 / 2 : ℚ)) ^ 3 : ℚ[X]) - X ^ 3).coeff 1 = (3 / 4 : ℚ) := by
+  rw [Polynomial.PolyRepr.coeff]
+  decide +kernel
+```
 
 ### `MvPolynomial`-specific Operations
 
