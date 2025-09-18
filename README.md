@@ -16,7 +16,7 @@ This library focusses on structure based on list where elements are sorted with 
 - [`DSortedFinsupp.lean`](./MonomialOrderedPolynomial/DSortedFinsupp.lean): A sorted implementation of finitely-supported dependent functions [`DFinsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=DFinsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4). It is built upon the [`DSortedListMap`](./MonomialOrderedPolynomial/DSortedListMap.lean) data structure.
 - [`SortedFinsupp.lean`](./MonomialOrderedPolynomial/SortedFinsupp.lean): A sorted implementation of finitely-supported functions [`Finsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Finsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
 - [`SortedAddMonoidAlgebra.lean`](./MonomialOrderedPolynomial/SortedAddMonoidAlgebra.lean): A sorted implementation of [`AddMonoidAlgebra`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=AddMonoidAlgebra#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
-- [`TreeRepr.lean`](./MonomialOrderedPolynomial/TreeRepr.lean): instances that extract a computable tree structure from concrete `Polynomial` and `MvPolynomial` expressions, inspired by [Junyan Xu's work on polynomial computations by reflection](https://gist.github.com/alreadydone/2dca4fde11fb2e9be7f8a10b59216b3f).
+- [`TreeRepr.lean`](./MonomialOrderedPolynomial/TreeRepr.lean): instances that extract a computable tree structure from concrete `Polynomial` and `MvPolynomial` expressions
 - [`Polynomial.lean`](./MonomialOrderedPolynomial/Polynomial.lean): equivalence of algebras from `SortedAddMonoidAlgebra` (where monomials are represented as sorted elements of a list) to [`Polynomial`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Polynomial#doc).
 - [`MonomialOrder.lean`](./MonomialOrderedPolynomial/MonomialOrder.lean): Order on `SortedFinsupp`.
 - [`MvPolynomial.Lean`](./MonomialOrderedPolynomial/MvPolynomial.lean): equivalence of algebras from `SortedAddMonoidAlgebra` to [`MvPolynomial`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=MvPolynomial#doc).
@@ -180,3 +180,7 @@ example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 
 2. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it more effective;
 3. a user-friendly way to interact with exponents and monomial order of `MvPolynomial`;
 4. prove equalities via homomorphism from computable structure (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
+
+## Thanks
+
+This project, especially the way to synthesize computable structure from incomputable expressions, is inspired by [Junyan Xu](https://github.com/alreadydone)'s [work on polynomial computations by reflection](https://gist.github.com/alreadydone/2dca4fde11fb2e9be7f8a10b59216b3f). And the computable structure of this project is inspired by [the implementation](https://github.com/leanprover/lean4/blob/c2876a1a6a42e6df458ffb37abbc3868632beb58/src/Init/Grind/CommRing/Poly.lean) of [the algebraic solver of Grind](https://lean-lang.org/doc/reference/latest/The--grind--tactic/Algebraic-Solver-_LPAR_Commutative-Rings___-Fields_RPAR_).
