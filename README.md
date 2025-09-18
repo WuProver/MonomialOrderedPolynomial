@@ -157,5 +157,8 @@ Our tool is particularly suitable for polynomial manipulation, with an emphasis 
 
 
 ## WIP
-1. Implement monomial order on `SortedFinsupp`, to imolement sorted `MvPolynomial`;
-2. refactor `SortedFinsupp` to use independent `Prod` to be more effective.
+
+1. clean up code;
+2. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it more effective;
+3. a user-friendly way to interact with exponents and monomial order of `MvPolynomial`;
+4. prove equalities via homomorphism from computable structure (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
