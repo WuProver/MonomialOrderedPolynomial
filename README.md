@@ -129,6 +129,7 @@ example {R : Type*} [CommRing R] [DecidableEq R] :
   fail_if_success decide +kernel +revert --failed: `failed to synthesize`
   sorry
 
+open Polynomial in
 example (p : Polynomial Int) :
     1 + p = (p + 1 : Int[X]) := by
   fail_if_success { rw [Polynomial.PolyRepr.eq_iff'] } -- failed: `failed to synthesize`
@@ -139,6 +140,7 @@ example (p : Polynomial Int) :
 
 Equality:
 ```lean
+open MvPolynomial in
 example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
   rw [ne_eq, MvPolynomial.PolyRepr.eq_iff']
   decide +kernel
@@ -146,6 +148,7 @@ example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 
 
 Disequality:
 ```lean
+open MvPolynomial in
 example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
   rw [MvPolynomial.PolyRepr.eq_iff']
   decide +kernel
