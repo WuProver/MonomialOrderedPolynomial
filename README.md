@@ -52,13 +52,13 @@ Corresponding `SortedAddMonoidAlgebra` of concrete polynomials can be synthesize
 
 ### `Polynomial`-specific Operations
 
-- Degree Computation: Calculation of polynomial degrees
-- Coefficient Extraction: Retrieval of specific coefficients from polynomial expressions
+- Degree Computation (WIP): Calculation of polynomial degrees
+- Coefficient Extraction (WIP): Retrieval of specific coefficients from polynomial expressions
 
 ### `MvPolynomial`-specific Operations
 
-- Degree Computation (WIP): Calculation of polynomial degrees w.r.t. a specific monomial order (such as lexicographic order);
-- Coefficient Extraction (WIP): Retrieval of specific coefficients from polynomial expressions w.r.t. a specific monomial order.
+- Degree Computation (TODO): Calculation of polynomial degrees w.r.t. a specific monomial order (such as lexicographic order);
+- Coefficient Extraction (TODO): Retrieval of specific coefficients from polynomial expressions w.r.t. a specific monomial order.
 
 ## Comparison on PIT
 
@@ -153,11 +153,6 @@ example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 
   rw [MvPolynomial.PolyRepr.eq_iff']
   decide +kernel
 ```
-
-### Conclusion
-
-Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
-
 
 ## WIP
 
