@@ -34,6 +34,7 @@ example :
 example :
     (Polynomial.X + 1 : Polynomial Int) ^ 2 ≠ Polynomial.X ^ 2 + 3 * Polynomial.X := by
   fail_if_success grind
+  sorry
 
 
 example {R : Type*} [CommRing R] (p : Polynomial R) : p + 1 + Polynomial.X = 1 + p + Polynomial.X := by
