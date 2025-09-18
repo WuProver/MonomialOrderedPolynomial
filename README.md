@@ -68,37 +68,71 @@ Our comparison is confined solely to polynomial operations within polynomial rin
 
 | Goal | Requirement (Our Tool) | Requirement (Grind) | Notes & Implications |
 | :--- | :--- | :--- | :--- |
-| **Equality** | ✅ concrete polynomials with computable coefficients | ✅ provable by general properties of commutative semiring/ring | Our tool can prove polynomial with results of operations of coefficients, but only if they're computable and the polynomial is concrete. Grind is faster and may prove equality with unknown parts, while cannot use details except general properties of commutative semiring/ring. |
-| **Disequality** | ✅ (same requirements as equality) | ❌ **Not Supported, except some trivial cases** | Grind can only prove two polynomials are equal, but it cannot prove they are not equal. |
+| **Equality** | ✅ polynomials with computable coefficients, and independent of hypotheses | ✅ provable by general properties of commutative semiring/ring | Our tool can prove polynomial equalities by performing explicit computations on the coefficients, but only when the coefficients are computable and the polynomial is given concretely. In contrast, grind is faster and  may establish an equality even when the equality, or some of its subterms, depend on hypotheses, but it cannot exploit any information beyond the general algebraic laws of a commutative semiring or ring. |
+| **Disequality** | ✅ (same requirements as equality) | ❌ **Not Supported, except some trivial cases** | Grind can only prove equality, but never inequality except some trivial ones. When the equality does not hold, it just fails instead of proving. |
 
 ### Some Examples
 <!-- ![example](img/example.jpg) -->
 
 #### `Polynomial`
 
-`grind` doesn't solve the polynomial identity test below, since the coefficients are rational numbers:
+`grind` doesn't solve the polynomial identity test below, since the coefficients are rational numbers and it doesn't know `Polynomial.C`:
 ```lean
+open Polynomial in
 example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
-    grind  -- `grind` failed
+  fail_if_success grind  -- `grind` failed
+  sorry
 ```
 
-our solution can prove the polynomial identity test below
+Our solution can prove the polynomial identity below
 ```lean
+open Polynomial in
 example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
-    rw [Polynomial.PolyRepr.eq_iff']
-    decide +kernel
+  rw [Polynomial.PolyRepr.eq_iff']
+  decide +kernel
 ```
 
 `grind` cannot determine if two polynomials are not equal
 ```lean
+open Polynomial in
 example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
-    grind  --`grind` failed
+  fail_if_success grind  --`grind` failed
+  sorry
 ```
 
 but our solution can do it
 ```lean
+open Polynomial in
 example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
-    simp +decide [Polynomial.PolyRepr.eq_iff']
+  simp +decide [Polynomial.PolyRepr.eq_iff']
+```
+
+`grind` can prove some goals dependent on hypotheses, including but not limited to abstract algebra structures, unknown polynomials, and equations.
+```lean
+open Polynomial in
+example {R : Type*} [CommRing R] (p : Polynomial R) : p + 1 + X = 1 + p + X := by
+  grind
+
+open Polynomial in
+example {R : Type*} [CommRing R] (p q : Polynomial R) (h : p + 1 = q) :
+    p ^ 2 - 1 + Polynomial.X = q ^ 2 - 2 * q + Polynomial.X := by
+  grind
+```
+
+but not our tools
+```lean
+open Polynomial in
+example {R : Type*} [CommRing R] [DecidableEq R] :
+    1 + X = (X + 1 : R[X]) := by
+  rw [Polynomial.PolyRepr.eq_iff']
+  fail_if_success decide +kernel -- failed: `Expected type must not contain free variables`
+  fail_if_success decide +kernel +revert --failed: `failed to synthesize`
+  sorry
+
+example (p : Polynomial Int) :
+    1 + p = (p + 1 : Int[X]) := by
+  fail_if_success { rw [Polynomial.PolyRepr.eq_iff'] } -- failed: `failed to synthesize`
+  sorry
 ```
 
 #### `MvPolynomial`
@@ -117,11 +151,9 @@ example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 
   decide +kernel
 ```
 
-
-
 ### Conclusion
-Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
 
+Our tool is particularly suitable for polynomial manipulation, with an emphasis on Gröbner basis computation and verification, as well as on operations such as computing polynomial degrees and coefficients
 
 
 ## WIP
