@@ -72,7 +72,7 @@ lemma Polynomial.PolyRepr.eq_iff' {p q : Polynomial R} [p' : Polynomial.PolyRepr
   Polynomial.PolyRepr.eq_iff ..
 
 lemma Polynomial.PolyRepr.degree_eq {p : Polynomial R} [p' : Polynomial.PolyRepr p] :
-    p.degree = p'.tree.toSortedAddMonoidAlgebra.val.val.head?.elim ⊥ (·.1) := by
+    p.degree = p'.tree.toSortedAddMonoidAlgebra.val.val.head?.elim (⊥ : WithBot ℕ) (·.1) := by
   sorry
 
 lemma Polynomial.PolyRepr.leadingCoeff {p : Polynomial R} [p' : Polynomial.PolyRepr p] :
