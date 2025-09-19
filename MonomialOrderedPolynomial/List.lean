@@ -3,17 +3,17 @@ import Mathlib
 /-!
 # Definition of `List.mergeWith`
 
-This files define `mergeWith` merging two strictly sorted `List`s into a new strictly sorted
+This file defines `mergeWith`, merging two strictly sorted `List`s into a new strictly sorted
 `List`, and prove some theorems describing this behaviour.
 
 ## Definitions
 
 - `List.mergeWith l₁ l₂ cmp mergeFn`: merge strictly sorted `l₁ l₂ : List` into a new strictly
   sorted `List`, and elements contained in both `l₁` and `l₂` but equal w.r.t. `cmp` will be merged
-  with `mergeFn`, which may return a new value, or return `none` so that there will be no
+  with `mergeFn`, which may return a new value, or return `none`, so that there will be no
   element for them in the new `List`.
-- `List.mergeWithByFuel l₁ l₂ cmp mergeFn (fuel := 2 ^ 62)`: do the same thing as mergeWith but
-  prove termination with fuel so that it can be reduced well in kernel.
+- `List.mergeWithByFuel l₁ l₂ cmp mergeFn (fuel := 2 ^ 62)`: do the same thing as mergeWith, but
+  prove termination with fuel so that it can be reduced well in the kernel.
 
 ## Theorems
 
@@ -26,8 +26,8 @@ This files define `mergeWith` merging two strictly sorted `List`s into a new str
 An argument `cmp : α → α → Ordering` instead of instance `LinearOrder` or `Ord` is used to pass the
 order to compare elements, since
 
-1. (with `LinearOrder` and `Ord`) it would be inconvenient to use a different order on a same type;
-2. the order used here isn't required to be antisymm, and ensuring elements in list is strictly
+1. (with `LinearOrder` and `Ord`) it would be inconvenient to use a different order on the same type;
+2. the order used here isn't required to be antisymmetric, and ensuring elements in the list are strictly
   sorted is enough;
 
 -/
@@ -76,8 +76,8 @@ lemma mergeWith_right_nil : mergeWith l [] cmp mergeFn = l := by
   split; rfl; rfl; simp at *
 
 /--
-Do the same thing as mergeWith but prove termination with a natural number fuel so that it can be
-reduced well in kernel.
+Do the same thing as mergeWith, but prove termination with a natural number fuel so that it can be
+reduced well in the kernel.
 -/
 -- for reduction in kernel
 def mergeWithByFuel (l₁ l₂ : List α) (cmp : α → α → Ordering)
