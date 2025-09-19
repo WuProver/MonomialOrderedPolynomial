@@ -92,7 +92,7 @@ lemma empty_def : (∅ : DSortedListMap α β cmp) = ⟨[], List.chain'_nil⟩ :
 lemma empty_val : (∅ : DSortedListMap α β cmp).val = [] := rfl
 
 lemma eq_empty_iff (l : DSortedListMap α β cmp) : l = ∅ ↔ l.val = [] := by
-  rw [empty_def, Subtype.ext_iff_val]
+  rw [empty_def, Subtype.ext_iff]
 
 abbrev cons' (a : α) (b : β a) (l : DSortedListMap α β cmp)
     (h : ∀ p ∈ l.val, cmp a p.1 = .lt) : DSortedListMap α β cmp := ⟨
@@ -565,7 +565,7 @@ lemma mergeWith_get? [DecidableEq α] (l₁ l₂ : DSortedListMap α β cmp) (x 
       simp [imp_not_comm]
       intro x' hx'
       have := fun (y : β x'.1) ↦ Sigma.eq_of_eq (show (⟨x'.1, y⟩ : Sigma β).1 = x from hx')
-      simp [this, Eq.rec_eq_cast, (cast_bijective (congrArg β hx'.symm)).surjective.exists, hx']
+      simp [this, eqRec_eq_cast, (cast_bijective (congrArg β hx'.symm)).surjective.exists, hx']
       simp [show ∃ y, ⟨x, y⟩ ∈ l₁.val from ⟨y₁, heq⟩,
         show ∃ y, ⟨x, y⟩ ∈ l₂.val from ⟨y₂, heq_1⟩]
       use x, y₁
@@ -589,7 +589,7 @@ lemma mergeWith_get? [DecidableEq α] (l₁ l₂ : DSortedListMap α β cmp) (x 
     simp [imp_not_comm]
     intro x' hx'
     have := fun (y : β x'.1) ↦ Sigma.eq_of_eq (show (⟨x'.1, y⟩ : Sigma β).1 = x from hx')
-    simp [this, Eq.rec_eq_cast, (cast_bijective (congrArg β hx'.symm)).surjective.exists]
+    simp [this, eqRec_eq_cast, (cast_bijective (congrArg β hx'.symm)).surjective.exists]
     simp [show ¬ ∃ y, ⟨x, y⟩ ∈ l₁.val by simp [heq],
       show ¬ ∃ y, ⟨x, y⟩ ∈ l₂.val by simp [heq_1]]
 
