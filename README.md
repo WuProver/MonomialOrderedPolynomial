@@ -1,7 +1,7 @@
 # MonomialOrderedPolynomial
 This library provides a formally verified data structure for efficient [polynomial identity testing](https://en.m.wikipedia.org/wiki/Polynomial_identity_testing) via kernel reduction in Lean 4. By leveraging strictly ordered data structures, it ensures reliable in-kernel computation and verification of polynomial operations. Although primarily optimized for polynomial identity testing, the library also supports or plans to support a wide range of fundamental operations, including computing degrees, extracting coefficients, performing evaluations, and handling expansions of both univariate and multivariate polynomials across diverse contexts.
 
-One of the goals of this project is to develop tools that support both the formal verification and the computation of Gröbner bases for polynomial ideals. In addition, it may support other fundamental polynomial operations in the future, including greatest common divisors, factorization, and solving polynomial systems. For our Gröbner basis formalization, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj). This work is still in progress and under active development.
+One of the project's goals is to develop tools that support both formal verification and the computation of Gröbner bases for polynomial ideals. Additionally, it may support other fundamental polynomial operations in the future, including the calculation of greatest common divisors, factorization, and solving polynomial systems. For our Gröbner basis formalization, see: [WuProver/groebner_proj](https://github.com/WuProver/groebner_proj). This work is still in progress and under active development.
 
 Both the library and its documents are still WIP.
 
@@ -14,9 +14,9 @@ Both the library and its documents are still WIP.
 
 ### Main Contents
 
-This library focusses on structure based on list where elements are sorted with an order.
+This library focuses on a structure based on a list where elements are sorted in order.
 
-- [`List.lean`](./MonomialOrderedPolynomial/List.lean): General operations and properties of such kind of structure.
+- [`List.lean`](./MonomialOrderedPolynomial/List.lean): General operations and properties of the list structure.
 - [`DSortedListMap.lean`](./MonoialOrderedPolynomial/DSortedFinsupp.lean): Maps based on sorted list.
 - [`DSortedFinsupp.lean`](./MonomialOrderedPolynomial/DSortedFinsupp.lean): A sorted implementation of finitely-supported dependent functions [`DFinsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=DFinsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4). It is built upon the [`DSortedListMap`](./MonomialOrderedPolynomial/DSortedListMap.lean) data structure.
 - [`SortedFinsupp.lean`](./MonomialOrderedPolynomial/SortedFinsupp.lean): A sorted implementation of finitely-supported functions [`Finsupp`](https://leanprover-community.github.io/mathlib4_docs/find/?pattern=Finsupp#doc) within the [Mathlib](https://github.com/leanprover-community/mathlib4).
@@ -28,7 +28,7 @@ This library focusses on structure based on list where elements are sorted with 
 
 ### How It Works
 
-At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between incomputable mathematical objects from Mathlib and our computable data structures. This allows the kernel to efficiently reduce concrete expressions about structures we define, and prove proposition about the corresponding objects from Mathlib by the result, while guaranteeing mathematically sound and consistent with the original theory.
+At its core, this library enables computation through a technique known as proof by reflection. We establish a formal isomorphism, defining a two-way translation between incomputable mathematical objects from Mathlib and our computable data structures. This allows the kernel to efficiently reduce concrete expressions about structures we defined, and prove propositions about the corresponding objects from Mathlib by the result, while guaranteeing mathematically sound and consistent with the original theory.
 
 ## Build
 If you don't already have Lean 4 set up, please follow the official [Lean 4 installation instructions](https://leanprover-community.github.io/get_started.html).
@@ -47,13 +47,13 @@ This library provides support for operations of polynomials (`MvPolynomial` and 
 
 - const,
 - variable,
-- addition / subtraction,
+- addition/subtraction,
 - multiplication,
 - exponentiation.
 
 One of their applications is [PIT (polynomial identity testing)](https://en.m.wikipedia.org/wiki/Polynomial_identity_testing).
 
-Corresponding `SortedAddMonoidAlgebra` of concrete polynomials can be synthesized via instance. Some examples are in [PolynomialExamples.lean](https://github.com/WuProver/MonomialOrderedPolynomial/blob/master/LeanSortedFinsupp/PolynomialExamlpes.lean).
+The corresponding `SortedAddMonoidAlgebra` of concrete polynomials can be synthesized via an instance. Some examples are in [PolynomialExamples.lean](https://github.com/WuProver/MonomialOrderedPolynomial/blob/master/LeanSortedFinsupp/PolynomialExamlpes.lean).
 
 ### `Polynomial`-specific Operations
 
@@ -167,10 +167,10 @@ example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 
 ## WIP
 
 1. clean up code;
-2. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it much more faster;
+2. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it much faster;
 3. a user-friendly way to interact with exponents and monomial order of `MvPolynomial`;
-4. prove equalities via homomorphism from computable structure (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
+4. prove equalities via homomorphism from computable structures (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
 
 ## Thanks
 
-This project, especially the way to synthesize computable structure from incomputable expressions, is inspired by [Junyan Xu](https://github.com/alreadydone)'s [work on polynomial computations by reflection](https://gist.github.com/alreadydone/2dca4fde11fb2e9be7f8a10b59216b3f). And the computable structure of this project is inspired by [the implementation](https://github.com/leanprover/lean4/blob/c2876a1a6a42e6df458ffb37abbc3868632beb58/src/Init/Grind/CommRing/Poly.lean) of [the algebraic solver of Grind](https://lean-lang.org/doc/reference/latest/The--grind--tactic/Algebraic-Solver-_LPAR_Commutative-Rings___-Fields_RPAR_).
+This project, especially the approach of  synthesizing  computable structure from incomputable expressions, is inspired by [Junyan Xu](https://github.com/alreadydone)'s [work on polynomial computations via reflection](https://gist.github.com/alreadydone/2dca4fde11fb2e9be7f8a10b59216b3f). Addition inspiration comes from the implementation of computable sturctures of  [the algebraic solver of Grind](https://lean-lang.org/doc/reference/latest/The--grind--tactic/Algebraic-Solver-_LPAR_Commutative-Rings___-Fields_RPAR_).
