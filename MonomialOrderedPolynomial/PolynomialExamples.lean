@@ -54,7 +54,7 @@ section DegreeAndCoeff
 
 -- tactic `compute_degree` in Mathlib:
 -- https://leanprover-community.github.io/mathlib-manual/html-multi/Tactics/All-tactics/#compute_degree-next
--- it can prove results about polynomial with incomputable coefficient and/or even unknown subterms
+-- it can prove results about a polynomial with incomputable coefficients and/or even unknown subterms
 example {c : ℝ} : ((X ^ 3 + C c) ^ 3 : ℝ[X]).degree = 9 := by
   compute_degree <;> aesop
 
@@ -125,7 +125,7 @@ example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ)))
   sorry
 
 /-
-Our solution can prove the polynomial identity below
+We can prove the polynomial identity below
 -/
 open Polynomial in
 example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
@@ -141,7 +141,7 @@ example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := b
   sorry
 
 /-
-but our solution can do it
+We can prove  two polynomials are not equal  
 -/
 open Polynomial in
 example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
