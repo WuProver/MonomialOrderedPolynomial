@@ -109,7 +109,7 @@ example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ)))
   sorry
 ```
 
-Our solution can prove the polynomial identity below
+Our approach is capable of establishing the following polynomial identity:
 ```lean
 open Polynomial in
 example : ((X + C (1 / 2 : ℚ)) ^ 2 : ℚ[X]) = ((X ^ 2 + X + C (1 / 4 : ℚ))) := by
@@ -125,7 +125,7 @@ example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := b
   sorry
 ```
 
-but our solution can do it
+We establish the following polynomial inequality using our method:
 ```lean
 open Polynomial in
 example : ((X + 1) ^ 20 : Nat[X]) ≠ ((X ^ 2 + 2 * X +1) ^ 10: Nat[X]) + 1 := by
@@ -144,38 +144,23 @@ example {R : Type*} [CommRing R] (p q : Polynomial R) (h : p + 1 = q) :
   grind
 ```
 
-but not our tools
-```lean
-open Polynomial in
-example {R : Type*} [CommRing R] [DecidableEq R] :
-    1 + X = (X + 1 : R[X]) := by
-  rw [Polynomial.PolyRepr.eq_iff']
-  fail_if_success decide +kernel -- failed: `Expected type must not contain free variables`
-  fail_if_success decide +kernel +revert --failed: `failed to synthesize`
-  sorry
-
-open Polynomial in
-example (p : Polynomial Int) :
-    1 + p = (p + 1 : Int[X]) := by
-  fail_if_success { rw [Polynomial.PolyRepr.eq_iff'] } -- failed: `failed to synthesize`
-  sorry
-```
+We simply note that our method is not yet able to handle the above examples.
 
 #### `MvPolynomial`
 
 Equality:
 ```lean
 open MvPolynomial in
-example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
-  rw [ne_eq, MvPolynomial.PolyRepr.eq_iff']
+example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
+  rw [MvPolynomial.PolyRepr.eq_iff']
   decide +kernel
 ```
 
 Disequality:
 ```lean
 open MvPolynomial in
-example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
-  rw [MvPolynomial.PolyRepr.eq_iff']
+example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
+  rw [ne_eq, MvPolynomial.PolyRepr.eq_iff']
   decide +kernel
 ```
 
