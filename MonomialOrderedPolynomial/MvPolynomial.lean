@@ -79,3 +79,16 @@ lemma MvPolynomial.PolyRepr.eq_iff' {p q : MvPolynomial σ R} [p' : MvPolynomial
     [q' : MvPolynomial.PolyRepr q] :
     p = q ↔ p'.tree.toMvSortedAddMonoidAlgebra = q'.tree.toMvSortedAddMonoidAlgebra :=
   MvPolynomial.PolyRepr.eq_iff ..
+
+open MonomialOrder
+
+lemma MvPolynomial.PolyRepr.lex_degree_eq [WellFoundedGT σ] {p : MvPolynomial σ R}
+    [p' : MvPolynomial.PolyRepr p] :
+    lex.degree p = SortedFinsupp.equivFinsupp
+      (ofLex (p'.tree.toMvSortedAddMonoidAlgebra.1.1.head?.elim (toLex 0) (·.1))) := sorry
+
+lemma MvPolynomial.PolyRepr.lex_degree_eq' [WellFoundedGT σ] {p : MvPolynomial σ R}
+    [p' : MvPolynomial.PolyRepr p] :
+    lex.toSyn (lex.degree p) = SortedFinsupp.orderIsoFinsupp
+      (p'.tree.toMvSortedAddMonoidAlgebra.1.1.head?.elim (toLex 0) (·.1)) :=
+  MvPolynomial.PolyRepr.lex_degree_eq
