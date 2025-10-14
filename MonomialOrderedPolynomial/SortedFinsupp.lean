@@ -194,7 +194,7 @@ def mergeWith : SortedFinsupp σ R cmp := DSortedFinsupp.mergeWith mergeFn l₁ 
 lemma mergeWith_apply [DecidableEq σ] (a : σ)
     (hzero : ∀ b : R, mergeFn a b 0 = b)
     (hzero' : ∀ b : R, mergeFn a 0 b = b) :
-    (l₁.mergeWith mergeFn l₂ a) = mergeFn a (l₁ a) (l₂ a) :=
+    (l₁.mergeWith mergeFn l₂) a = mergeFn a (l₁ a) (l₂ a) :=
   DSortedFinsupp.mergeWith_apply mergeFn l₁ l₂ a hzero hzero'
 
 variable (mergeFn : R → R → R) in
@@ -274,6 +274,24 @@ def mapRange_apply [DecidableEq σ] {f : σ → β₁ → β₂} (hf : ∀ i, f 
     l.mapRange f hf x = f x (l x) := DSortedFinsupp.mapRange_apply ..
 
 end mapRange
+
+section Sub
+
+variable [DecidableEq σ] {R : Type*} [AddCommMonoid R] [PartialOrder R]
+  [CanonicallyOrderedAdd R] [Sub R] [OrderedSub R] [(a : R) → Decidable (a = 0)]
+
+-- inefficient -- the worst time complexit to compute `a - b` is $O(length of a * length of b)$.
+-- todo: optimize.
+instance tsub : Sub (SortedFinsupp σ R cmp) where
+  sub a b :=
+    a.mapRange (fun i m => m - b i) (by simp)
+
+lemma tsub_apply (l₁ l₂ : SortedFinsupp σ R cmp) (a : σ) :
+    (l₁ - l₂) a = l₁ a - l₂ a := by
+  convert_to (l₁.mapRange _ _) a = _
+  rw [mapRange_apply]
+
+end Sub
 
 section mapDomain
 
