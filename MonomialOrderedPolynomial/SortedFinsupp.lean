@@ -374,26 +374,26 @@ def single_prod (g : σ → R → N)
 
 #check single_sum
 
--- todo: should be generalized later
+-- todo: should be generalized to `DSortedFinsupp` later
 @[simp]
 lemma zero_sum {R' : Type*} [AddCommMonoid R'] (g : σ → R → R') :
     (0 : SortedFinsupp σ R cmp).sum g = 0 := rfl
 
--- todo: should be generalized later
+-- todo: should be generalized to `DSortedFinsupp` later
 @[simp]
 lemma sum_zero {R' : Type*} [AddCommMonoid R']
     (l : SortedFinsupp σ R cmp) :
     l.sum (fun _ _ ↦ 0) = (0 : R') := by
   simp [sum, DSortedFinsupp.sum]
 
--- todo: should be generalized later
-@[simp]
-lemma sum_apply
-    {R' R'' : Type*} [AddCommMonoid R'] [AddCommMonoid R'']
-    (l : SortedFinsupp σ R cmp) (g : σ → R → R') (f : AddMonoidHom R' R'') :
-    f (l.sum g) = l.sum (f <| g · ·) := by
-  classical
-  simp [sum_eq_sum_support]
+-- todo: should be generalized to `DSortedFinsupp` later
+@[to_additive (attr := simp)]
+lemma prod_apply
+    {R' R'' : Type*} [CommMonoid R'] [CommMonoid R'']
+    (l : SortedFinsupp σ R cmp) (g : σ → R → R')
+    {F} [FunLike F R' R''] [MonoidHomClass F R' R''] (f : F) :
+    f (l.prod g) = l.prod (f <| g · ·) := by
+  simp [prod_eq_prod_support]
 
 variable (cmp) in
 def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
