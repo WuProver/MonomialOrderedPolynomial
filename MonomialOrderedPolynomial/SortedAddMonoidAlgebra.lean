@@ -96,17 +96,50 @@ lemma smul_apply [DecidableEq G] {M} [Zero M] [SMulWithZero M R] [∀ y : R, Dec
     (s : M) (l : SortedAddMonoidAlgebra R G cmp) (x : G) :
     (s • l) x = s • (l x) := SortedFinsupp.smul_apply ..
 
-def addEquivAddMonoidAlgebra [(a : R) → Decidable (a = 0)] [DecidableEq G] :
-    AddEquiv (SortedAddMonoidAlgebra R G cmp) (AddMonoidAlgebra R G) :=
-  SortedFinsupp.addEquivFinsupp
+def toAddMonoidAlgebra [DecidableEq G] : Equiv (SortedAddMonoidAlgebra R G cmp) (AddMonoidAlgebra R G) :=
+  SortedFinsupp.toFinsupp
+
+variable (cmp) in
+def ofAddMonoidAlgebra [DecidableEq G] : Equiv (AddMonoidAlgebra R G) (SortedAddMonoidAlgebra R G cmp) :=
+  SortedFinsupp.ofFinsupp cmp
 
 @[simp]
-lemma addEquivAddMonoidAlgebra_apply [(a : R) → Decidable (a = 0)] [DecidableEq G]
-    (l : SortedAddMonoidAlgebra R G cmp) (x : G) :
-    addEquivAddMonoidAlgebra l x = l x := SortedFinsupp.equivFinsupp_apply ..
+lemma toAddMonoidAlgebra_ofAddMonoidAlgebra [DecidableEq G] (l : SortedAddMonoidAlgebra R G cmp) :
+    ofAddMonoidAlgebra cmp l.toAddMonoidAlgebra = l := SortedFinsupp.toFinsupp_ofFinsupp l
 
-lemma addEquivAddMonoidAlgebra_zero [(a : R) → Decidable (a = 0)] [DecidableEq G] :
-    addEquivAddMonoidAlgebra (0 : SortedAddMonoidAlgebra R G cmp) = 0 := rfl
+variable (cmp) in
+@[simp]
+lemma ofAddMonoidAlgebra_toAddMonoidAlgebra [DecidableEq G] (l : AddMonoidAlgebra R G) :
+    (ofAddMonoidAlgebra cmp l).toAddMonoidAlgebra = l := SortedFinsupp.ofFinsupp_toFinsupp cmp l
+
+@[simps]
+def addEquivAddMonoidAlgebra [(a : R) → Decidable (a = 0)] [DecidableEq G] :
+    AddEquiv (SortedAddMonoidAlgebra R G cmp) (AddMonoidAlgebra R G) :=
+  { SortedFinsupp.addEquivFinsupp with
+    toFun := toAddMonoidAlgebra
+    invFun := ofAddMonoidAlgebra cmp
+  }
+
+@[simp]
+lemma toAddMonoidAlgebra_add [DecidableEq G] [(a : R) → Decidable (a = 0)]
+    (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) :
+    toAddMonoidAlgebra (l₁ + l₂) = toAddMonoidAlgebra l₁ + toAddMonoidAlgebra l₂ :=
+  SortedFinsupp.toFinsupp_add ..
+
+variable (cmp) in
+@[simp]
+lemma ofAddMonoidAlgebra_add [DecidableEq G] [(a : R) → Decidable (a = 0)]
+    (l₁ l₂ : AddMonoidAlgebra R G) :
+    ofAddMonoidAlgebra cmp (l₁ + l₂) = ofAddMonoidAlgebra cmp l₁ + ofAddMonoidAlgebra cmp l₂ :=
+  SortedFinsupp.ofFinsupp_add ..
+
+@[simp]
+lemma toAddMonoidAlgebra_coe [(a : R) → Decidable (a = 0)] [DecidableEq G]
+    (l : SortedAddMonoidAlgebra R G cmp) :
+  ⇑(toAddMonoidAlgebra l) = ⇑l := SortedFinsupp.toFinsupp_coe l
+
+lemma toAddMonoidAlgebra_zero [(a : R) → Decidable (a = 0)] [DecidableEq G] :
+    toAddMonoidAlgebra (0 : SortedAddMonoidAlgebra R G cmp) = 0 := rfl
 
 def singleAddHom [DecidableEq G] [∀ i : R, Decidable (i = 0)] (x : G) :
     R →+ SortedAddMonoidAlgebra R G cmp := {
@@ -133,10 +166,9 @@ lemma mul_apply (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) (x : G) :
   congr
   ext x' y'
   have (f : G →₀ R) : f = (SkewMonoidAlgebra.ofFinsupp f).toFinsupp := rfl
-  rw [this (SortedFinsupp.equivFinsupp _), ← SkewMonoidAlgebra.toFinsupp_mapDomain,
+  rw [this (SortedFinsupp.toFinsupp _), ← SkewMonoidAlgebra.toFinsupp_mapDomain,
     SkewMonoidAlgebra.mapDomain_apply, SkewMonoidAlgebra.toFinsupp_sum',
-    SortedFinsupp.equivFinsupp_symm_apply,
-    ← SortedFinsupp.sum_eq_equivFinsupp_sum]
+    ← SortedFinsupp.sum_eq_toFinsupp_sum]
   have :=
     SortedFinsupp.sum_apply (cmp := cmp) (σ := G) (R := R) (f := Finsupp.applyAddHom (M := R) x)
   simp only [Finsupp.applyAddHom_apply] at this
@@ -147,10 +179,11 @@ lemma mul_apply (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) (x : G) :
   · simp [h]
   · simp [h]
 
-lemma addEquivAddMonoidAlgebra_mul
+@[simp]
+lemma toAddMonoidAlgebra_mul
     (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) :
-    addEquivAddMonoidAlgebra (l₁ * l₂) =
-      addEquivAddMonoidAlgebra l₁ * addEquivAddMonoidAlgebra l₂ := by
+    toAddMonoidAlgebra (l₁ * l₂) =
+      toAddMonoidAlgebra l₁ * toAddMonoidAlgebra l₂ := by
   ext
   simp [mul_apply, AddMonoidAlgebra.mul_apply, Finsupp.sum.eq_def,
     SortedFinsupp.sum_eq_sum_support]
@@ -159,19 +192,29 @@ lemma addEquivAddMonoidAlgebra_mul
 def ringEquivAddMonoidAlgebra :
     RingEquiv (SortedAddMonoidAlgebra R G cmp) (AddMonoidAlgebra R G) := {
     addEquivAddMonoidAlgebra with
-    map_mul' := addEquivAddMonoidAlgebra_mul
+    map_mul' := toAddMonoidAlgebra_mul
   }
 
-lemma mul_eq (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) : l₁ * l₂ =
-    addEquivAddMonoidAlgebra.symm (addEquivAddMonoidAlgebra l₁ * addEquivAddMonoidAlgebra l₂) := by
-  simp [← addEquivAddMonoidAlgebra_mul]
+variable (cmp) in
+@[simp]
+lemma ofAddMonoidAlgebra_mul
+    (l₁ l₂ : AddMonoidAlgebra R G) :
+    ofAddMonoidAlgebra cmp (l₁ * l₂) = ofAddMonoidAlgebra cmp l₁ * ofAddMonoidAlgebra cmp l₂ :=
+  ringEquivAddMonoidAlgebra.symm.map_mul ..
 
+lemma mul_eq (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) : l₁ * l₂ =
+    ofAddMonoidAlgebra cmp (toAddMonoidAlgebra l₁ * toAddMonoidAlgebra l₂) := by
+  simp [← toAddMonoidAlgebra_mul]
+
+set_option diagnostics true
 instance instSemiring : Semiring (SortedAddMonoidAlgebra R G cmp) where
-  left_distrib a b c := by simp [mul_eq, mul_add]
-  right_distrib a b c := by simp [mul_eq, add_mul]
+  left_distrib a b c := by
+    simp [mul_eq, mul_add, -toAddMonoidAlgebra_mul, -ofAddMonoidAlgebra_mul]
+  right_distrib a b c := by
+    simp [mul_eq, add_mul, -toAddMonoidAlgebra_mul, -ofAddMonoidAlgebra_mul]
   zero_mul := by simp [ext_iff, mul_apply]
   mul_zero := by simp [ext_iff, mul_apply]
-  mul_assoc := by simp [mul_eq, mul_assoc]
+  mul_assoc := by simp [mul_eq, mul_assoc, -toAddMonoidAlgebra_mul, -ofAddMonoidAlgebra_mul]
   one := single cmp 0 1
   one_mul := by
     convert_to ∀ (a : SortedAddMonoidAlgebra R G cmp), single cmp 0 (1 : R) * a = a
@@ -186,7 +229,7 @@ instance instSemiring : Semiring (SortedAddMonoidAlgebra R G cmp) where
 
 instance instCommSemiring {R} [CommSemiring R] [DecidableEq R] :
     CommSemiring (SortedAddMonoidAlgebra R G cmp) where
-  mul_comm := by simp [mul_eq, mul_comm]
+  mul_comm := by simp [mul_eq, mul_comm, -toAddMonoidAlgebra_mul, -ofAddMonoidAlgebra_mul]
 
 #check AddMonoidAlgebra.singleZeroAlgHom
 def singleZeroRingHom {R} [DecidableEq R] [Semiring R] :

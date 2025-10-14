@@ -53,10 +53,10 @@ lemma ext_iff [DecidableEq σ] {l1 l2 : SortedFinsupp σ R cmp} :
 lemma ext [DecidableEq σ] {l1 l2 : SortedFinsupp σ R cmp} (h : ∀ s : σ, l1 s = l2 s) :
     l1 = l2 := ext_iff.mpr h
 
-@[simp]
+@[simp, defeq]
 lemma zero_apply [DecidableEq σ] (x : σ) : (0 : SortedFinsupp σ R cmp) x = 0 := rfl
 
-@[simp]
+@[simp, defeq]
 lemma coe_zero  [DecidableEq σ] : ⇑(0 : SortedFinsupp σ R cmp) = 0 := rfl
 
 variable (cmp) in
@@ -132,50 +132,69 @@ def equivDFinsupp_apply [DecidableEq σ] [∀ y : R, Decidable (y = 0)]
     (x : σ) (l : SortedFinsupp σ R cmp) :
     l.equivDFinsupp x = l x := DSortedFinsupp.equivDFinsupp_apply ..
 
-def equivFinsupp [DecidableEq σ] :
+-- def toFinsupp [DecidableEq σ] (l : SortedFinsupp σ R cmp) : σ →₀ R :=
+--   Finsupp.mk l.support.toFinset l (by simp [l.mem_support_iff])
+
+-- variable (cmp) in
+-- def ofFinsupp (f : σ →₀ R) : SortedFinsupp σ R cmp :=
+--   onSupport cmp f f.support (fun _ ↦ f.mem_support_iff)
+
+-- def equivFinsupp [DecidableEq σ] :
+--     Equiv (SortedFinsupp σ R cmp) (σ →₀ R) where
+--   toFun := toFinsupp
+--   invFun := ofFinsupp cmp
+--   left_inv l := by ext x; simp [ofFinsupp, toFinsupp, apply_onSupport]
+--   right_inv f := by ext x; simp [ofFinsupp, toFinsupp, apply_onSupport]
+
+def toFinsupp [DecidableEq σ] :
     Equiv (SortedFinsupp σ R cmp) (σ →₀ R) where
   toFun l := Finsupp.mk l.support.toFinset l (by simp [l.mem_support_iff])
   invFun f := onSupport cmp f f.support (fun _ ↦ f.mem_support_iff)
   left_inv l := by ext x; simp [apply_onSupport]
   right_inv f := by ext x; simp [apply_onSupport]
 
-lemma equivFinsupp_coe [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
-    Eq (α := σ → R) (equivFinsupp l) l := rfl
-
-lemma equivFinsupp_symm_coe [DecidableEq σ] (f : σ →₀ R) :
-    Eq (α := σ → R) (equivFinsupp (cmp := cmp) |>.symm f) f := by
-  simp [equivFinsupp, apply_onSupport]
-
-lemma equivFinsupp_coe_zero [DecidableEq σ] :
-    equivFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
-
-lemma equivFinsupp_symm_coe_zero [DecidableEq σ] :
-    (equivFinsupp.symm (0 : σ →₀ R)) = (0 : SortedFinsupp σ R cmp) := by
-  ext x
-  simp [equivFinsupp, apply_onSupport]
+variable (cmp) in
+def ofFinsupp [DecidableEq σ] : Equiv (σ →₀ R) (SortedFinsupp σ R cmp) :=
+  toFinsupp.symm
 
 @[simp]
-lemma equivFinsupp_apply [DecidableEq σ] (x : σ) (l : SortedFinsupp σ R cmp) :
-    l.equivFinsupp x = l x := by
-  simp [equivFinsupp]
+lemma toFinsupp_ofFinsupp [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    ofFinsupp cmp l.toFinsupp = l := congrArg (· l) (toFinsupp.symm_comp_self)
 
 variable (cmp) in
-lemma equivFinsupp_symm_apply [DecidableEq σ] (x : σ) (l : σ →₀ R) :
-    (equivFinsupp (cmp := cmp)).symm l x = l x := by
-  simp [equivFinsupp, apply_onSupport]
+@[simp]
+lemma ofFinsupp_toFinsupp [DecidableEq σ] (l : σ →₀ R) :
+    (ofFinsupp cmp l).toFinsupp = l := congrArg (· l) (toFinsupp.self_comp_symm)
 
-lemma support_eq_equivFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
-    l.support.toFinset = (equivFinsupp l).support := by
+@[simp]
+lemma toFinsupp_coe [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    ⇑(toFinsupp l) = l := rfl
+
+@[simp]
+lemma ofFinsupp_coe [DecidableEq σ] (f : σ →₀ R) :
+    ⇑(ofFinsupp cmp f) = f := by
+  simp [ofFinsupp, toFinsupp, apply_onSupport]
+
+lemma toFinsupp_coe_zero [DecidableEq σ] :
+  toFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
+
+lemma ofFinsupp_symm_coe_zero [DecidableEq σ] :
+    (ofFinsupp cmp (0 : σ →₀ R)) = (0 : SortedFinsupp σ R cmp) := by
+  ext x
+  simp [ofFinsupp, toFinsupp, apply_onSupport]
+
+lemma support_eq_toFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    l.support.toFinset = (toFinsupp l).support := by
   ext x
   simp [mem_support_iff]
 
 @[simp]
-lemma equivFinsupp_zero [DecidableEq σ] :
-    equivFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
+lemma toFinsupp_zero [DecidableEq σ] :
+    toFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
 
 @[simp]
-lemma equivFinsupp_single [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] :
-    equivFinsupp (single cmp a b) = Finsupp.single a b := by
+lemma toFinsupp_single [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] :
+    toFinsupp (single cmp a b) = Finsupp.single a b := by
   ext x
   simp [Finsupp.single_apply]
 
@@ -198,11 +217,11 @@ lemma mergeWith_apply [DecidableEq σ] (a : σ)
   DSortedFinsupp.mergeWith_apply mergeFn l₁ l₂ a hzero hzero'
 
 variable (mergeFn : R → R → R) in
-lemma mergeWith_eq_equivFinsupp_zipWith [DecidableEq σ] (a : σ)
+lemma mergeWith_eq_toFinsupp_zipWith [DecidableEq σ] (a : σ)
     (hzero : ∀ b : R, mergeFn b 0 = b)
     (hzero' : ∀ b : R, mergeFn 0 b = b) :
     l₁.mergeWith (fun _ ↦ mergeFn) l₂ a =
-      (equivFinsupp l₁).zipWith mergeFn (hzero 0) (equivFinsupp l₂) a := by
+      (toFinsupp l₁).zipWith mergeFn (hzero 0) (toFinsupp l₂) a := by
   classical
   simp [Finsupp.zipWith_apply, mergeWith_apply (fun _ ↦ mergeFn) l₁ l₂ a hzero hzero']
 
@@ -226,14 +245,30 @@ lemma coe_add [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
   ext
   exact add_apply ..
 
+@[simp]
+lemma toFinsupp_add [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
+    toFinsupp (l₁ + l₂) = toFinsupp l₁ + toFinsupp l₂ := by
+  ext x
+  simp
+
+variable (cmp) in
+@[simp]
+lemma ofFinsupp_add [DecidableEq σ] (l₁ l₂ : Finsupp σ R) :
+    ofFinsupp cmp (l₁ + l₂) = ofFinsupp cmp l₁ + ofFinsupp cmp l₂ := by
+  ext x
+  simp
+
 def addEquivDFinsupp [DecidableEq σ] : SortedFinsupp σ R cmp ≃+ (Π₀ _ : σ, R) :=
   DSortedFinsupp.addEquivDFinsupp
 
+@[simps! -fullyApplied]
 def addEquivFinsupp [DecidableEq σ] : SortedFinsupp σ R cmp ≃+ (σ →₀ R) :=
-{ equivFinsupp with
-  map_add' l₁ l₂ := by
-    ext x
-    simp [equivFinsupp_coe, add_apply]}
+{ toFinsupp with
+  toFun := toFinsupp
+  invFun := ofFinsupp cmp
+  map_add' := toFinsupp_add }
+
+#print addEquivFinsupp_apply_support_val
 
 instance instAddZeroClass [DecidableEq σ] : AddZeroClass (SortedFinsupp σ R cmp) :=
   fast_instance% DFunLike.coe_injective.addZeroClass _ (by ext; simp) (by intro _ _; ext; simp)
@@ -290,6 +325,12 @@ lemma tsub_apply (l₁ l₂ : SortedFinsupp σ R cmp) (a : σ) :
     (l₁ - l₂) a = l₁ a - l₂ a := by
   convert_to (l₁.mapRange _ _) a = _
   rw [mapRange_apply]
+
+@[simp]
+lemma coe_tsub (l₁ l₂ : SortedFinsupp σ R cmp) : ⇑(l₁ - l₂) = ⇑l₁ - ⇑l₂ := by
+  ext
+  simp [tsub_apply]
+
 
 end Sub
 
@@ -374,9 +415,9 @@ def prod_eq_prod_support
     l.prod g = ∏ a ∈ l.support.toFinset, g a (l a) := DSortedFinsupp.prod_eq_prod_support ..
 
 @[to_additive]
-def prod_eq_equivFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
-    l.prod g = (equivFinsupp l).prod g := by
-  simp [prod_eq_prod_support, support_eq_equivFinsupp_support, Finsupp.prod]
+def prod_eq_toFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
+    l.prod g = (toFinsupp l).prod g := by
+  simp [prod_eq_prod_support, support_eq_toFinsupp_support, Finsupp.prod]
 
 -- todo: should be generalized later
 @[to_additive (attr := simp)]
@@ -411,7 +452,7 @@ lemma prod_apply
     (l : SortedFinsupp σ R cmp) (g : σ → R → R')
     {F} [FunLike F R' R''] [MonoidHomClass F R' R''] (f : F) :
     f (l.prod g) = l.prod (f <| g · ·) := by
-  simp [prod_eq_prod_support]
+  simp only [prod_eq_prod_support, map_prod]
 
 variable (cmp) in
 def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
@@ -420,6 +461,8 @@ def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
   toFun l := l x
   map_zero' := by simp
   map_add' := by simp
+
+#check Finsupp.toDFinsupp_zero
 
 -- todo: should be generalized to DSortedFinsupp later
 -- `DecidableEq R'` can be generalized to `∀ a : R', Decidable (a = 0)`
@@ -525,10 +568,10 @@ lemma mapDomain_apply_eq_zero_of_notin_range [DecidableEq σ] [DecidableEq σ']
   rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys, mapDomain]
   simp [hf']
 
-lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
+lemma toFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
     {R} [AddCommMonoid R]
     (l : SortedFinsupp σ R cmp) :
-    equivFinsupp (l.mapDomain f hf) = (equivFinsupp l).mapDomain f := by
+    toFinsupp (l.mapDomain f hf) = (toFinsupp l).mapDomain f := by
   have : Function.Injective f := by
     intro a b h
     have := hf a b
@@ -547,10 +590,9 @@ lemma equivFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
 
 lemma mapDomain_eq [DecidableEq σ] [DecidableEq σ'] {R} [AddCommMonoid R]
     (l : SortedFinsupp σ R cmp) :
-    l.mapDomain f hf = equivFinsupp.symm ((equivFinsupp l).mapDomain f) := by
-  rw [← equivFinsupp_mapDomain (cmp' := cmp') (σ := σ) (σ' := σ')]
+    l.mapDomain f hf = ofFinsupp cmp' ((toFinsupp l).mapDomain f) := by
+  rw [← toFinsupp_mapDomain (cmp' := cmp') (σ := σ) (σ' := σ') (hf := hf)]
   simp
-  exact hf
 
 end mapDomain
 

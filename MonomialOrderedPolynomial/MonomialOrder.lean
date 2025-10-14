@@ -259,7 +259,7 @@ instance instLinearOrder [DecidableEq σ] {R : Type*} [Zero R] [LinearOrder R]
     letI : LinearOrder σ := LinearOrder.ofLawfulOrd
     letI : LinearOrder R := inferInstance
     LinearOrder.liftWithOrd'
-      (toLex ∘ SortedFinsupp.equivFinsupp ∘ ofLex)
+      (toLex ∘ SortedFinsupp.toFinsupp ∘ ofLex)
       (β := Lex <| σ →₀ R)
       (by simp [Equiv.injective])
       (by
@@ -280,7 +280,7 @@ instance instLinearOrder' {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Ze
   compare a b := lex compare a.1.1 b.1.1
   __ :=
     LinearOrder.liftWithOrd'
-      (toLex ∘ SortedFinsupp.equivFinsupp ∘ ofLex)
+      (toLex ∘ SortedFinsupp.toFinsupp ∘ ofLex)
       (β := Lex <| σ →₀ R)
       (by simp [Equiv.injective])
       (by
@@ -299,7 +299,7 @@ instance instLinearOrder' {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Ze
 def orderIsoFinsupp {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Zero R] [LinearOrder R]
     [fact : Fact <| ∀ y : R, y ≠ 0 → compare 0 y = .lt] :
     OrderIso (Lex (SortedFinsupp σ R compare)) (Lex (Finsupp σ R)) where
-  __ := ofLex.trans SortedFinsupp.equivFinsupp |>.trans toLex
+  __ := ofLex.trans SortedFinsupp.toFinsupp |>.trans toLex
   map_rel_iff' := by
     intro a b
     simp [le_iff_lt_or_eq, Finsupp.lex_lt_iff,

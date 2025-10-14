@@ -40,20 +40,20 @@ lemma TreeRepr.algEquivMvPolynomial_apply
   | const c =>
     convert_to
       (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
-        (SortedFinsupp.equivFinsupp (.single _ (0 : SortedFinsupp σ Nat compare) c))
+        (SortedFinsupp.toFinsupp (.single _ (0 : SortedFinsupp σ Nat compare) c))
         = MvPolynomial.C c
     simp
     rfl
   | var v =>
     convert_to
       (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
-        (SortedFinsupp.equivFinsupp
+        (SortedFinsupp.toFinsupp
           (.single _ (.single _ v 1 : SortedFinsupp σ Nat compare) 1))
         = MvPolynomial.X v
     simp
     convert_to
       AddMonoidAlgebra.single
-        (SortedFinsupp.equivFinsupp <| SortedFinsupp.single _ v (1 : Nat)) (1 : R) =
+        (SortedFinsupp.toFinsupp <| SortedFinsupp.single _ v (1 : Nat)) (1 : R) =
       MvPolynomial.X v
     simp
     rfl
@@ -84,7 +84,7 @@ open MonomialOrder
 
 lemma MvPolynomial.PolyRepr.lex_degree_eq [WellFoundedGT σ] {p : MvPolynomial σ R}
     [p' : MvPolynomial.PolyRepr p] :
-    lex.degree p = SortedFinsupp.equivFinsupp
+    lex.degree p = SortedFinsupp.toFinsupp
       (ofLex (p'.tree.toMvSortedAddMonoidAlgebra.1.1.head?.elim (toLex 0) (·.1))) := sorry
 
 lemma MvPolynomial.PolyRepr.lex_degree_eq' [WellFoundedGT σ] {p : MvPolynomial σ R}
