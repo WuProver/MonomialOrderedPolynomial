@@ -1,29 +1,9 @@
 import MonomialOrderedPolynomial.SortedAddMonoidAlgebra
-import MonomialOrderedPolynomial.TreeRepr
 import MonomialOrderedPolynomial.MonomialOrder
 
+namespace SortedAddMonoidAlgebra
+
 variable {σ} [DecidableEq σ] [LinearOrder σ] {R} [CommSemiring R] [DecidableEq R]
-
--- #synth AddCommMonoid <| Lex <| SortedFinsupp σ Nat compare
-
--- #synth DecidableEq <| Lex <| SortedFinsupp σ Nat compare
-
-
--- #synth Algebra R (SortedAddMonoidAlgebra R (Lex <| SortedFinsupp σ Nat compare) (compare · · |>.swap))
-
-def TreeRepr.toMvSortedAddMonoidAlgebra :
-    TreeRepr σ R → SortedAddMonoidAlgebra R
-      (Lex <| SortedFinsupp σ Nat compare) (compare · · |>.swap)
-  | const c => SortedAddMonoidAlgebra.single _ 0 c
-  | var v => SortedAddMonoidAlgebra.single _ (SortedFinsupp.single _ v 1) 1
-  | add p q => p.toMvSortedAddMonoidAlgebra + q.toMvSortedAddMonoidAlgebra
-  | mul p q => p.toMvSortedAddMonoidAlgebra * q.toMvSortedAddMonoidAlgebra
-  | pow p n => p.toMvSortedAddMonoidAlgebra ^ n
-  | ref p => p.toMvSortedAddMonoidAlgebra
-
--- #check MvPolynomial.renameEquiv (SortedFinsupp.orderIsoFinsupp)
--- #check AddMonoidAlgebra.mapRangeAlgEquiv
--- #check AddMonoidAlgebra.domCongr
 
 noncomputable def algEquivMvPolynomial :
     SortedAddMonoidAlgebra R
@@ -32,19 +12,27 @@ noncomputable def algEquivMvPolynomial :
   AlgEquiv.trans SortedAddMonoidAlgebra.algEquivAddMonoidAlgebra
     (AddMonoidAlgebra.domCongr _ _ <| SortedFinsupp.lexAddEquiv compare)
 
-lemma TreeRepr.algEquivMvPolynomial_apply
-    {σ} [DecidableEq σ] [LinearOrder σ]
-    (p : TreeRepr σ R) :
-    algEquivMvPolynomial p.toMvSortedAddMonoidAlgebra = p.toMvPolynomial := by
-  match p with
-  | const c =>
+class _root_.MvPolynomial.SortedRepr (p : MvPolynomial σ R) where
+  repr : SortedAddMonoidAlgebra R (Lex <| SortedFinsupp σ Nat compare) (compare · · |>.swap)
+  eq : algEquivMvPolynomial repr = p
+
+def _root_.MvPolynomial.toSortedRepr (p : MvPolynomial σ R) [inst : p.SortedRepr] := inst
+
+open MvPolynomial
+
+instance {c} : (C c : MvPolynomial σ R).SortedRepr where
+  repr := SortedAddMonoidAlgebra.single _ 0 c
+  eq := by
     convert_to
       (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
         (SortedFinsupp.toFinsupp (.single _ (0 : SortedFinsupp σ Nat compare) c))
         = MvPolynomial.C c
     simp
     rfl
-  | var v =>
+
+instance {v} : (X v : MvPolynomial σ R).SortedRepr where
+  repr := SortedAddMonoidAlgebra.single _ (SortedFinsupp.single _ v 1) 1
+  eq := by
     convert_to
       (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
         (SortedFinsupp.toFinsupp
@@ -57,38 +45,83 @@ lemma TreeRepr.algEquivMvPolynomial_apply
       MvPolynomial.X v
     simp
     rfl
-  | add p q => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
-      TreeRepr.algEquivMvPolynomial_apply p, TreeRepr.algEquivMvPolynomial_apply q]
-  | mul p q => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
-      TreeRepr.algEquivMvPolynomial_apply p, TreeRepr.algEquivMvPolynomial_apply q]
-  | pow p n => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
-      TreeRepr.algEquivMvPolynomial_apply p]
-  | ref p => simp [TreeRepr.toMvSortedAddMonoidAlgebra, TreeRepr.toMvPolynomial,
-      TreeRepr.algEquivMvPolynomial_apply p]
 
-lemma TreeRepr.algEquivMvPolynomial_symm (p : TreeRepr σ R) :
-    p.toMvSortedAddMonoidAlgebra = algEquivMvPolynomial.symm p.toMvPolynomial := by
-  simp [← algEquivMvPolynomial_apply]
+instance (p q : MvPolynomial σ R) [p.SortedRepr] [q.SortedRepr] : (p * q).SortedRepr where
+  repr := p.toSortedRepr.repr * q.toSortedRepr.repr
+  eq := by
+    simp [p.toSortedRepr.eq, q.toSortedRepr.eq]
 
-lemma MvPolynomial.PolyRepr.eq_iff {p q : MvPolynomial σ R}
-    (p' : MvPolynomial.PolyRepr p) (q' : MvPolynomial.PolyRepr q) :
-    p = q ↔ p'.tree.toMvSortedAddMonoidAlgebra = q'.tree.toMvSortedAddMonoidAlgebra := by
-  simp [← p'.tree_eq, ← q'.tree_eq, ← TreeRepr.algEquivMvPolynomial_apply]
+instance (p q : MvPolynomial σ R) [p.SortedRepr] [q.SortedRepr] : (p + q).SortedRepr where
+  repr := p.toSortedRepr.repr + q.toSortedRepr.repr
+  eq := by
+    simp [p.toSortedRepr.eq, q.toSortedRepr.eq]
 
-lemma MvPolynomial.PolyRepr.eq_iff' {p q : MvPolynomial σ R} [p' : MvPolynomial.PolyRepr p]
-    [q' : MvPolynomial.PolyRepr q] :
-    p = q ↔ p'.tree.toMvSortedAddMonoidAlgebra = q'.tree.toMvSortedAddMonoidAlgebra :=
-  MvPolynomial.PolyRepr.eq_iff ..
+instance {R} [CommRing R] [DecidableEq R] (p q : MvPolynomial σ R) [p.SortedRepr] [q.SortedRepr] :
+    (p - q).SortedRepr where
+  repr := p.toSortedRepr.repr - q.toSortedRepr.repr
+  eq := by
+    simp [p.toSortedRepr.eq, q.toSortedRepr.eq]
+
+instance {R} [CommRing R] [DecidableEq R] (p : MvPolynomial σ R) [p.SortedRepr] :
+    (- p).SortedRepr where
+  repr := - p.toSortedRepr.repr
+  eq := by
+    simp [p.toSortedRepr.eq]
+
+instance (p : MvPolynomial σ R) [p.SortedRepr] (n : ℕ) : (p ^ n).SortedRepr where
+  repr := p.toSortedRepr.repr ^ n
+  eq := by
+    simp [p.toSortedRepr.eq]
+
+instance (p : MvPolynomial σ R) [p.SortedRepr] (n : ℕ) : (n • p).SortedRepr where
+  repr := n • p.toSortedRepr.repr
+  eq := by
+    simp [p.toSortedRepr.eq]
+
+instance {R} [CommRing R] [DecidableEq R] (p : MvPolynomial σ R) [p.SortedRepr] (n : ℤ) :
+    (n • p).SortedRepr where
+  repr := n • p.toSortedRepr.repr
+  eq := by
+    simp [p.toSortedRepr.eq]
+
+instance : (0 : MvPolynomial σ R).SortedRepr where
+  repr := 0
+  eq := rfl
+
+instance : (1 : MvPolynomial σ R).SortedRepr where
+  repr := 1
+  eq := by
+    simp
+
+instance {n : Nat} [Nat.AtLeastTwo n] : (ofNat(n) : MvPolynomial σ R).SortedRepr where
+  repr := n
+  eq := by
+    simp
+    rfl
+
+lemma _root_.MvPolynomial.SortedRepr.eq_iff {p q : MvPolynomial σ R}
+    (p' : MvPolynomial.SortedRepr p) (q' : MvPolynomial.SortedRepr q) :
+    p = q ↔ p'.repr = q'.repr := by
+  nth_rw 1 [← p'.eq, ← q'.eq]
+  simp
+
+lemma _root_.MvPolynomial.SortedRepr.eq_iff' {p q : MvPolynomial σ R}
+    [p' : MvPolynomial.SortedRepr p] [q' : MvPolynomial.SortedRepr q] :
+    p = q ↔ p'.repr = q'.repr := MvPolynomial.SortedRepr.eq_iff ..
+
+instance {p q : MvPolynomial σ R} [p.SortedRepr] [q.SortedRepr] :
+    Decidable (p = q) :=
+  decidable_of_iff _ MvPolynomial.SortedRepr.eq_iff'.symm
 
 open MonomialOrder
 
-lemma MvPolynomial.PolyRepr.lex_degree_eq [WellFoundedGT σ] {p : MvPolynomial σ R}
-    [p' : MvPolynomial.PolyRepr p] :
+lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq [WellFoundedGT σ] {p : MvPolynomial σ R}
+    [p' : p.SortedRepr] :
     lex.degree p = SortedFinsupp.toFinsupp
-      (ofLex (p'.tree.toMvSortedAddMonoidAlgebra.1.1.head?.elim (toLex 0) (·.1))) := sorry
+      (ofLex (p'.repr.1.1.head?.elim (toLex 0) (·.1))) := sorry
 
-lemma MvPolynomial.PolyRepr.lex_degree_eq' [WellFoundedGT σ] {p : MvPolynomial σ R}
-    [p' : MvPolynomial.PolyRepr p] :
+lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq' [WellFoundedGT σ] {p : MvPolynomial σ R}
+    [p' : p.SortedRepr] :
     lex.toSyn (lex.degree p) = SortedFinsupp.orderIsoFinsupp
-      (p'.tree.toMvSortedAddMonoidAlgebra.1.1.head?.elim (toLex 0) (·.1)) :=
-  MvPolynomial.PolyRepr.lex_degree_eq
+      (p'.repr.1.1.head?.elim (toLex 0) (·.1)) :=
+  MvPolynomial.SortedRepr.lex_degree_eq
