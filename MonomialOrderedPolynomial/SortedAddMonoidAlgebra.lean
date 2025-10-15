@@ -231,6 +231,28 @@ instance instCommSemiring {R} [CommSemiring R] [DecidableEq R] :
     CommSemiring (SortedAddMonoidAlgebra R G cmp) where
   mul_comm := by simp [mul_eq, mul_comm, -toAddMonoidAlgebra_mul, -ofAddMonoidAlgebra_mul]
 
+-- to be generalize to more general instances
+instance {R} [CommRing R] [DecidableEq R] :
+    CommRing (SortedAddMonoidAlgebra R G cmp) where
+  neg l := l.mapRange (fun _ ↦ Neg.neg) (by simp)
+  zsmul n l := l.mapRange (fun _ ↦ (n * ·)) (by simp)
+  neg_add_cancel _ := by
+    ext
+    rw [add_apply, zero_apply, SortedFinsupp.mapRange_apply, neg_add_cancel]
+  zsmul_zero' _ := by
+    ext
+    rw [SortedFinsupp.mapRange_apply, zero_apply]
+    simp
+  zsmul_succ' _ _ := by
+    ext
+    simp
+    rw [SortedFinsupp.mapRange_apply, SortedFinsupp.mapRange_apply, add_mul, one_mul]
+  zsmul_neg' _ _ := by
+    ext
+    rw [SortedFinsupp.mapRange_apply, SortedFinsupp.mapRange_apply]
+    simp
+    ring
+
 #check AddMonoidAlgebra.singleZeroAlgHom
 def singleZeroRingHom {R} [DecidableEq R] [Semiring R] :
     R →+* SortedAddMonoidAlgebra R G cmp :=
