@@ -16,6 +16,10 @@ rev = "v4.24.0-rc1"
 name = "lean4export"
 scope = "leanprover"
 
+[[require]]
+name = "groebner"
+scope = "WuProver"
+
 [[lean_lib]]
 name = "MonomialOrderedPolynomial"
 

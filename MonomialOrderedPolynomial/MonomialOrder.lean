@@ -296,7 +296,7 @@ instance instLinearOrder' {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Ze
           simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
       )
 
-def orderIsoFinsupp {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Zero R] [LinearOrder R]
+def lexOrderIsoLexFinsupp {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Zero R] [LinearOrder R]
     [fact : Fact <| ∀ y : R, y ≠ 0 → compare 0 y = .lt] :
     OrderIso (Lex (SortedFinsupp σ R compare)) (Lex (Finsupp σ R)) where
   __ := ofLex.trans SortedFinsupp.toFinsupp |>.trans toLex

@@ -330,6 +330,11 @@ lemma coe_tsub (l₁ l₂ : SortedFinsupp σ R cmp) : ⇑(l₁ - l₂) = ⇑l₁
   ext
   simp [tsub_apply]
 
+@[simp]
+lemma toFinsupp_tsub (l₁ l₂ : SortedFinsupp σ R cmp) :
+    (l₁ - l₂).toFinsupp = l₁.toFinsupp - l₂.toFinsupp := by
+  ext
+  simp
 
 end Sub
 

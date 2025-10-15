@@ -1,5 +1,7 @@
 import MonomialOrderedPolynomial.SortedAddMonoidAlgebra
 import MonomialOrderedPolynomial.MonomialOrder
+import MonomialOrderedPolynomial.Finsupp
+import Groebner.Defs
 
 namespace SortedAddMonoidAlgebra
 
@@ -45,6 +47,19 @@ instance {v} : (X v : MvPolynomial σ R).SortedRepr where
       MvPolynomial.X v
     simp
     rfl
+
+instance {c : R} {s : σ →₀ ℕ} [inst : s.SortedRepr] :
+    (MvPolynomial.monomial s c).SortedRepr where
+  repr := SortedAddMonoidAlgebra.single _ inst.repr c
+  eq := by
+    convert_to
+      (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
+        (SortedFinsupp.toFinsupp
+          (.single _ inst.repr c))
+        = MvPolynomial.monomial _ _
+    simp
+    congr
+    exact inst.eq
 
 instance (p q : MvPolynomial σ R) [p.SortedRepr] [q.SortedRepr] : (p * q).SortedRepr where
   repr := p.toSortedRepr.repr * q.toSortedRepr.repr
@@ -113,15 +128,33 @@ instance {p q : MvPolynomial σ R} [p.SortedRepr] [q.SortedRepr] :
     Decidable (p = q) :=
   decidable_of_iff _ MvPolynomial.SortedRepr.eq_iff'.symm
 
+section MonomialOrder
 open MonomialOrder
 
-lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq [WellFoundedGT σ] {p : MvPolynomial σ R}
-    [p' : p.SortedRepr] :
+variable [WellFoundedGT σ] {p q : MvPolynomial σ R}
+  [p' : p.SortedRepr] [q' : q.SortedRepr]
+
+lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq :
     lex.degree p = SortedFinsupp.toFinsupp
       (ofLex (p'.repr.1.1.head?.elim (toLex 0) (·.1))) := sorry
 
-lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq' [WellFoundedGT σ] {p : MvPolynomial σ R}
-    [p' : p.SortedRepr] :
-    lex.toSyn (lex.degree p) = SortedFinsupp.orderIsoFinsupp
+lemma _root_.MvPolynomial.SortedRepr.lex_leadingCoeff_eq :
+    lex.leadingCoeff p = p'.repr.1.1.head?.elim 0 (·.2) := sorry
+
+lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq' :
+    lex.toSyn (lex.degree p) = SortedFinsupp.lexOrderIsoLexFinsupp
       (p'.repr.1.1.head?.elim (toLex 0) (·.1)) :=
   MvPolynomial.SortedRepr.lex_degree_eq
+
+instance : (lex.degree p).SortedRepr where
+  repr := ofLex (p'.repr.1.1.head?.elim (toLex 0) (·.1))
+  eq := by simp [p'.lex_degree_eq]
+
+instance {R} [CommRing R] [DecidableEq R] [WellFoundedGT σ] {p q : MvPolynomial σ R}
+  [p' : p.SortedRepr] [q' : q.SortedRepr] : (lex.sPolynomial p q).SortedRepr where
+  repr :=
+    ((monomial (lex.degree q - lex.degree p)) (q'.repr.1.1.head?.elim 0 (·.2)) * p -
+      (monomial (lex.degree p - lex.degree q)) (p'.repr.1.1.head?.elim 0 (·.2)) * q).toSortedRepr.repr
+  eq := by
+    rw [SortedRepr.eq, ← SortedRepr.lex_leadingCoeff_eq, ← SortedRepr.lex_leadingCoeff_eq]
+    rfl

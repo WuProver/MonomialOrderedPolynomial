@@ -167,9 +167,10 @@ example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 
 ## WIP
 
 1. clean up code;
-2. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it much faster;
-3. a user-friendly way to interact with exponents and monomial order of `MvPolynomial`;
-4. prove equalities via homomorphism from computable structures (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
+2. support more monomial orders;
+3. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it much faster;
+4. a user-friendly way to interact with exponents and monomial order of `MvPolynomial`;
+5. prove equalities via homomorphism from computable structures (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
 
 ## Thanks
 
