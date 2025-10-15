@@ -8,16 +8,17 @@ For more information, refer to `DSortedFinsupp`.
 
 ## Definitions
 
-- `SortedFinsupp.equivFinsupp`: the equivalence between `SortedFinsupp σ R` and `Finsupp σ R`,
-  where application is preserved, i.e. for `l : SortedFinsupp σ R`, `(equivFinsupp l) x = l x`,
-  or `⇑(equivFinsupp l) = ⇑l`.
+- `SortedFinsupp.toFinsupp`: the equivalence between `SortedFinsupp σ R` and `Finsupp σ R`,
+  where application is preserved, i.e. for `l : SortedFinsupp σ R`, `(toFinsupp l) x = l x`,
+  or `⇑(toFinsupp l) = ⇑l`.
 
 For others, refer to definitions of `DSortedFinsupp`.
 
 ## TODO
 
-Refactor it into structure without `Sigma`, which uses dependent type on the value and visibly
-reduce performance in kernel.
+- Refactor it into structure without `Sigma`, which uses dependent type on the value and visibly
+  reduce performance in kernel.
+- Generalize some definitions and lemmas to DSortedFinsupp
 
 -/
 
@@ -267,8 +268,6 @@ def addEquivFinsupp [DecidableEq σ] : SortedFinsupp σ R cmp ≃+ (σ →₀ R)
   toFun := toFinsupp
   invFun := ofFinsupp cmp
   map_add' := toFinsupp_add }
-
-#print addEquivFinsupp_apply_support_val
 
 instance instAddZeroClass [DecidableEq σ] : AddZeroClass (SortedFinsupp σ R cmp) :=
   fast_instance% DFunLike.coe_injective.addZeroClass _ (by ext; simp) (by intro _ _; ext; simp)
