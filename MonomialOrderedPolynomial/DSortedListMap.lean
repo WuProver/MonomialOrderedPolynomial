@@ -184,7 +184,7 @@ lemma eq_of_mem {l : DSortedListMap α β cmp} {a1 a2} (h : a1.1 = a2.1)
 the value at key `a`, or none if there isn't mapping at `a`.
 -/
 def get? [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) : Option (β a) :=
-    (List.findSome? (fun i ↦ if h : i.1 = a then some (h ▸ i.2 : β a) else none) l.val)
+  (List.findSome? (fun i ↦ if h : i.1 = a then some (h ▸ i.2 : β a) else none) l.val)
 
 lemma single_get? [DecidableEq α] (a : α) (b : β a) (c : α) :
     (single cmp a b).get? c = if h : a = c then some (h ▸ b) else none := by
