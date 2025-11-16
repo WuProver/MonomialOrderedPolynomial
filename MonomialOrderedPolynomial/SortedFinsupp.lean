@@ -194,6 +194,11 @@ lemma toFinsupp_zero [DecidableEq σ] :
     toFinsupp (0 : SortedFinsupp σ R cmp) = 0 := rfl
 
 @[simp]
+lemma toFinsupp_eq_zero_iff [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    l.toFinsupp = 0 ↔ l = 0 := by
+  simp [SortedFinsupp.ext_iff, Finsupp.ext_iff]
+
+@[simp]
 lemma toFinsupp_single [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] :
     toFinsupp (single cmp a b) = Finsupp.single a b := by
   ext x

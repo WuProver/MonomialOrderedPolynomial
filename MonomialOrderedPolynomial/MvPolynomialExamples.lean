@@ -39,21 +39,58 @@ example :
   -- convert set to `Set.image list.get`
   simp only [← Set.range_get_nil, ← Set.range_get_singleton, ← Set.range_get_cons_list]
   -- use index
-  rw [isRemainder_range_fin]
+  rw [isRemainder_range_fin, ← exists_and_right]
+  use [X 0, X 1 ^ 2, X 2 ^ 3, X 3 ^ 4].get
   split_ands
-  · use [X 0, X 1 ^ 2, X 2 ^ 3, X 3 ^ 4].get
-    split_ands
-    · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
-      all_goals decide +kernel-- PIT, proof by reflection
-    · intro i
-      fin_cases i
+  · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
+    all_goals decide +kernel-- PIT, proof by reflection
+  · intro i
+    fin_cases i
+    all_goals {
+      -- simp? [-List.get_eq_getElem, List.get, -degree_mul', -map_add]
+      simp only [List.get, Fin.isValue]
       all_goals {
-        simp [-List.get_eq_getElem, List.get]
-        all_goals {
-          rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
-            SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
-            ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
-          decide +kernel
-        }
+        rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
+          SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
+          ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
+        decide +kernel
       }
+    }
   · simp -- here the remainder is 0, whose support set is empty, so `simp` solves it...
+
+example :
+    lex.IsRemainder (X 0 ^ 2 + X 1 ^ 3 + X 2 ^ 4 + X 3 ^ 5: MvPolynomial (Fin 6) ℚ)
+      {X 3, X 4 + X 5} (X 0 ^ 2 + X 1 ^ 3 + X 2 ^ 4) := by
+  -- convert set to `Set.image list.get`
+  simp only [← Set.range_get_nil, ← Set.range_get_singleton, ← Set.range_get_cons_list]
+  -- use index
+  rw [isRemainder_range_fin, ← exists_and_right]
+  use [X 3 ^ 4, 0].get
+  split_ands
+  · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
+    try grind-- PIT, we will rely on reflection
+  · intro i
+    fin_cases i
+    all_goals {
+      -- simp? [-List.get_eq_getElem, List.get, -degree_mul', -map_add]
+      simp only [List.get, Fin.isValue]
+      all_goals {
+        rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
+          SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
+          ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
+        decide +kernel
+      }
+    }
+  · -- simp_rw [MvPolynomial.SortedRepr.support_eq]
+    rw [Function.Surjective.forall (AddEquiv.surjective (SortedFinsupp.lexAddEquiv compare))]
+    simp only [MvPolynomial.SortedRepr.support_eq, Finset.mem_map_equiv,
+      Fin.isValue, List.length_nil, List.length_cons,
+      EquivLike.coe_symm_apply_apply, List.mem_toFinset]
+    intro x h i
+    fin_cases i
+    all_goals
+      simp only [List.get]
+      rw [← tsub_eq_zero_iff_le, MvPolynomial.SortedRepr.lex_degree_eq]
+      convert_to _ → ¬ SortedFinsupp.toFinsupp _ - SortedFinsupp.toFinsupp x = 0
+      rw [← SortedFinsupp.toFinsupp_tsub, SortedFinsupp.toFinsupp_eq_zero_iff]
+      decide +kernel +revert

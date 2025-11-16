@@ -134,6 +134,10 @@ open MonomialOrder
 variable [WellFoundedGT σ] {p q : MvPolynomial σ R}
   [p' : p.SortedRepr] [q' : q.SortedRepr]
 
+lemma _root_.MvPolynomial.SortedRepr.support_eq :
+    p.support = p.toSortedRepr.repr.support.toFinset.map (SortedFinsupp.lexAddEquiv (σ := σ) (R := Nat) compare) := by
+  sorry
+
 lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq :
     lex.degree p = SortedFinsupp.toFinsupp
       (ofLex (p'.repr.1.1.head?.elim (toLex 0) (·.1))) := sorry
