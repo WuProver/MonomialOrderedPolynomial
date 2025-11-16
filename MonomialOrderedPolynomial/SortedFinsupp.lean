@@ -212,19 +212,21 @@ def mergeWith : SortedFinsupp σ R cmp := DSortedFinsupp.mergeWith mergeFn l₁ 
 
 @[simp]
 lemma mergeWith_apply [DecidableEq σ] (a : σ)
-    (hzero : ∀ b : R, mergeFn a b 0 = b)
-    (hzero' : ∀ b : R, mergeFn a 0 b = b) :
+    (hzero : mergeFn a (l₁ a) 0 = l₁ a)
+    (hzero' : mergeFn a 0 (l₂ a) = l₂ a)
+    (hzero'' : mergeFn a 0 0 = 0) :
     (l₁.mergeWith mergeFn l₂) a = mergeFn a (l₁ a) (l₂ a) :=
-  DSortedFinsupp.mergeWith_apply mergeFn l₁ l₂ a hzero hzero'
+  DSortedFinsupp.mergeWith_apply mergeFn l₁ l₂ a hzero hzero' hzero''
 
 variable (mergeFn : R → R → R) in
 lemma mergeWith_eq_toFinsupp_zipWith [DecidableEq σ] (a : σ)
-    (hzero : ∀ b : R, mergeFn b 0 = b)
-    (hzero' : ∀ b : R, mergeFn 0 b = b) :
+    (hzero : mergeFn (l₁ a) 0 = l₁ a)
+    (hzero' : mergeFn 0 (l₂ a) = l₂ a)
+    (hzero'' : mergeFn 0 0 = 0) :
     l₁.mergeWith (fun _ ↦ mergeFn) l₂ a =
-      (toFinsupp l₁).zipWith mergeFn (hzero 0) (toFinsupp l₂) a := by
+      (toFinsupp l₁).zipWith mergeFn hzero'' (toFinsupp l₂) a := by
   classical
-  simp [Finsupp.zipWith_apply, mergeWith_apply (fun _ ↦ mergeFn) l₁ l₂ a hzero hzero']
+  simp [Finsupp.zipWith_apply, mergeWith_apply (fun _ ↦ mergeFn) l₁ l₂ a hzero hzero' hzero'']
 
 #check Finsupp.zipWith
 
@@ -299,7 +301,7 @@ variable {β₁ β₂ : Type*} [Zero β₁] [Zero β₂]
 
 @[inherit_doc DSortedFinsupp.mapRange]
 def mapRange (f : σ → β₁ → β₂) (hf : ∀ i, f i 0 = 0)
-    [∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) :
+    [inst : ∀ i : σ, ∀ x : β₁, Decidable (f i x = 0)] (l : SortedFinsupp σ β₁ cmp) :
     SortedFinsupp σ β₂ cmp := DSortedFinsupp.mapRange f hf l
 
 @[simp]
@@ -314,16 +316,25 @@ section Sub
 variable [DecidableEq σ] {R : Type*} [AddCommMonoid R] [PartialOrder R]
   [CanonicallyOrderedAdd R] [Sub R] [OrderedSub R] [(a : R) → Decidable (a = 0)]
 
--- inefficient -- the worst time complexit to compute `a - b` is $O(length of a * length of b)$.
--- todo: optimize.
 instance tsub : Sub (SortedFinsupp σ R cmp) where
   sub a b :=
-    a.mapRange (fun i m => m - b i) (by simp)
+    letI : (i : σ) → (x : R) → Decidable ((fun _ x ↦ ((x, 0) : R × R)) i x = 0) :=
+      fun _ a ↦ decidable_of_decidable_of_iff (p := a = 0) (by simp)
+    letI a : SortedFinsupp σ (R × R) cmp := a.mapRange (inst := this) (fun _ x ↦ ⟨x, 0⟩) (by simp)
+    letI : (i : σ) → (x : R) → Decidable ((fun _ x ↦ ((0, x) : R × R)) i x = 0) :=
+      fun _ a ↦ decidable_of_decidable_of_iff (p := a = 0) (by simp)
+    letI b : SortedFinsupp σ (R × R) cmp := b.mapRange (inst := this) (fun _ x ↦ ⟨0, x⟩) (by simp)
+    letI (a : R × R) : Decidable (a = 0) := decidable_of_decidable_of_iff (p := a.1 = 0 ∧ a.2 = 0)
+      (by simp [Prod.eq_iff_fst_eq_snd_eq])
+    letI l := a.mergeWith (fun _ x₁ x₂ ↦ (⟨x₁.1 - x₂.2, x₂.2⟩)) b
+    l.mapRange (fun _ ↦ Prod.fst) (by simp)
 
 lemma tsub_apply (l₁ l₂ : SortedFinsupp σ R cmp) (a : σ) :
     (l₁ - l₂) a = l₁ a - l₂ a := by
-  convert_to (l₁.mapRange _ _) a = _
-  rw [mapRange_apply]
+  convert_to (SortedFinsupp.mapRange _ _ _ : SortedFinsupp σ R cmp) a = _ - _
+  letI (a : R × R) : Decidable (a = 0) := decidable_of_decidable_of_iff (p := a.1 = 0 ∧ a.2 = 0)
+    (by simp [Prod.eq_iff_fst_eq_snd_eq])
+  rw [mapRange_apply, mergeWith_apply] <;> simp
 
 @[simp]
 lemma coe_tsub (l₁ l₂ : SortedFinsupp σ R cmp) : ⇑(l₁ - l₂) = ⇑l₁ - ⇑l₂ := by

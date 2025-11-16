@@ -578,8 +578,9 @@ def mergeWith : DSortedFinsupp σ R cmp :=
 
 @[simp]
 lemma mergeWith_apply [DecidableEq σ] (a : σ)
-    (hzero : ∀ b : R a, mergeFn a b 0 = b)
-    (hzero' : ∀ b : R a, mergeFn a 0 b = b) :
+    (hzero : mergeFn a (l₁ a) 0 = l₁ a)
+    (hzero' : mergeFn a 0 (l₂ a) = l₂ a)
+    (hzero'' : mergeFn a 0 0 = 0):
     (l₁.mergeWith mergeFn l₂ a) = mergeFn a (l₁ a) (l₂ a) := by
   simp [mergeWith]
   nth_rw 1 [apply_def, DSortedListMap.mergeWith_get?]
@@ -587,11 +588,11 @@ lemma mergeWith_apply [DecidableEq σ] (a : σ)
   · expose_names
     rw [← apply_eq_zero_iff_val_get?_eq_none] at heq_1
     apply apply_eq_of_get?_val_eq_some at heq
-    simp [heq_1, heq, hzero]
+    simp [heq_1, ← heq, hzero]
   · expose_names
     rw [← apply_eq_zero_iff_val_get?_eq_none] at heq
     apply apply_eq_of_get?_val_eq_some at heq_1
-    simp [heq_1, heq, hzero']
+    simp [← heq_1, heq, hzero']
   · expose_names
     simp [get?_val_eq_some_iff] at heq heq_1
     rw [heq.1, heq_1.1]
