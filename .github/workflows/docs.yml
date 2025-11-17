@@ -49,6 +49,7 @@ jobs:
 
       - name: cache binary
         run: |
+          mkdir -p home_page/
           commit_id=$(git rev-parse --short HEAD)
           tar -cf "home_page/${commit_id}-cache.tar" .lake/build/{ir,lib}
 
