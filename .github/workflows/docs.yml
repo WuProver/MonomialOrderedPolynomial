@@ -68,7 +68,7 @@ jobs:
             .lake/build/doc/ProofWidgets
             .lake/build/doc/Qq
             .lake/build/doc/Std
-            .lake/build/doc/Mathlibd
+            .lake/build/doc/Mathlib
             .lake/build/doc/*.*
             !.lake/build/doc/declarations/declaration-data-MonomialOrderedPolynomial*
           key: MathlibDoc-${{ hashFiles('lake-manifest.json') }}
