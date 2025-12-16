@@ -246,55 +246,72 @@ where
 
 instance instLinearOrder [DecidableEq σ] {R : Type*} [Zero R] [LinearOrder R]
     [fact : Fact <| ∀ y : R, y ≠ 0 → compare 0 y = .lt] :
-    LinearOrder (Lex (SortedFinsupp σ R cmp)) where
-  compare a b := lex cmp a.1.1 b.1.1
-  __ :=
-    letI : Ord σ := { compare := cmp }
-    letI := (inferInstance : Ord σ).toLE
-    letI := (inferInstance : Ord σ).toLT
-    letI : Std.LawfulOrd σ := {
-      eq_lt_iff_lt := by rfl
-      isLE_iff_le := by rfl
-    }
-    letI : LinearOrder σ := LinearOrder.ofLawfulOrd
-    letI : LinearOrder R := inferInstance
-    LinearOrder.liftWithOrd'
-      (toLex ∘ SortedFinsupp.toFinsupp ∘ ofLex)
-      (β := Lex <| σ →₀ R)
-      (by simp [Equiv.injective])
-      (by
-        intro a b
-        rw [eq_comm]
-        rcases h : compare a b
-        · simp [lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
-          simpa [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
-        · simp at h
-          simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
-        · simp [Std.OrientedCmp.gt_iff_lt, lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
-          simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
-      )
+    LinearOrder (Lex (SortedFinsupp σ R cmp)) :=
+  letI compare' (a b : (Lex (SortedFinsupp σ R cmp))) := lex cmp a.1.1 b.1.1
+  letI toDecidableEq' : DecidableEq (Lex (SortedFinsupp σ R cmp)) := by infer_instance
+  letI : Ord σ := { compare := cmp }
+  letI := (inferInstance : Ord σ).toLE
+  letI := (inferInstance : Ord σ).toLT
+  letI : Std.LawfulOrd σ := {
+    eq_lt_iff_lt := by rfl
+    isLE_iff_le := by rfl
+  }
+  letI : LinearOrder σ := LinearOrder.ofLawfulOrd
+  letI : LinearOrder R := inferInstance
+  letI I := LinearOrder.liftWithOrd'
+    (toLex ∘ SortedFinsupp.toFinsupp ∘ ofLex)
+    (β := Lex <| σ →₀ R)
+    (by simp [Equiv.injective])
+    (by
+      intro a b
+      rw [eq_comm]
+      rcases h : compare a b
+      · simp [lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
+        simpa [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+      · simp at h
+        simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
+      · simp [Std.OrientedCmp.gt_iff_lt, lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
+        simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+    )
+  {
+    __ := I,
+    compare := compare',
+    toDecidableEq := toDecidableEq',
+    compare_eq_compareOfLessAndEq := by
+      -- todo: what does `convert` do?
+      convert I.compare_eq_compareOfLessAndEq
+  }
+
+
 
 instance instLinearOrder' {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Zero R] [LinearOrder R]
     [fact : Fact <| ∀ y : R, y ≠ 0 → compare 0 y = .lt] :
-    LinearOrder (Lex (SortedFinsupp σ R compare)) where
-  compare a b := lex compare a.1.1 b.1.1
-  __ :=
-    LinearOrder.liftWithOrd'
-      (toLex ∘ SortedFinsupp.toFinsupp ∘ ofLex)
-      (β := Lex <| σ →₀ R)
-      (by simp [Equiv.injective])
-      (by
-        intro a b
-        rw [eq_comm]
-        rcases h : compare a b
-        · simp [lex_eq' (cmp := compare), Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
-          simpa! [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
-        · simp at h
-          simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
-        · simp [Std.OrientedCmp.gt_iff_lt, lex_eq' (cmp := compare), Pi.Lex,
-            Std.LawfulLTCmp.eq_lt_iff_lt] at h
-          simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
-      )
+    LinearOrder (Lex (SortedFinsupp σ R compare)) :=
+  letI compare' (a b : (Lex (SortedFinsupp σ R compare))) := lex compare a.1.1 b.1.1
+  letI toDecidableEq' : DecidableEq (Lex (SortedFinsupp σ R compare)) := by infer_instance
+  letI I := LinearOrder.liftWithOrd'
+    (toLex ∘ SortedFinsupp.toFinsupp ∘ ofLex)
+    (β := Lex <| σ →₀ R)
+    (by simp [Equiv.injective])
+    (by
+      intro a b
+      rw [eq_comm]
+      rcases h : compare a b
+      · simp [lex_eq' (cmp := compare), Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
+        simpa! [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+      · simp at h
+        simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
+      · simp [Std.OrientedCmp.gt_iff_lt, lex_eq' (cmp := compare), Pi.Lex,
+          Std.LawfulLTCmp.eq_lt_iff_lt] at h
+        simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+    )
+  {
+    __ := I,
+    compare := compare',
+    toDecidableEq := toDecidableEq',
+    compare_eq_compareOfLessAndEq := by
+      convert I.compare_eq_compareOfLessAndEq
+  }
 
 def lexOrderIsoLexFinsupp {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Zero R] [LinearOrder R]
     [fact : Fact <| ∀ y : R, y ≠ 0 → compare 0 y = .lt] :
@@ -348,3 +365,16 @@ instance [DecidableEq σ] {R : Type*} [AddCommMonoid R] [LinearOrder R]
         simp [hj.1 j' hj']
       · rw [← hj.2, eq_comm]
         exact inst.elim ..
+
+instance
+    {σ : Type*} [DecidableEq σ] [LinearOrder σ]
+    {R : Type*} [Zero R] [LinearOrder R]
+    [fact : Fact <| ∀ y : R, y ≠ 0 → compare 0 y = .lt] :
+    OrderBot <| Lex (SortedFinsupp σ R compare) where
+  bot := 0
+  bot_le := by
+    intro a
+    rw [← compare_le_iff_le]
+    convert_to lex compare [] a.1.1 ≠ _
+    unfold lex
+    split <;> simp_all

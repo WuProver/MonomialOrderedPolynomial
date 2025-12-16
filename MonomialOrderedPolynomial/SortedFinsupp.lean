@@ -116,6 +116,18 @@ def single_support (a : σ) (b : R) [Decidable (b = 0)] :
 lemma support_finite [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     (Function.support l).Finite := by simp [← toFinset_support]
 
+-- todo: backport to underlying structures.
+lemma support_nodup [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    l.support.Nodup := by
+  -- to generalize into a pairwise lemma about subrelation.
+  rw [List.nodup_iff_pairwise_ne, List.pairwise_iff_forall_sublist]
+  have := l.support_pairwise
+  simp [List.pairwise_iff_forall_sublist] at this
+  intro a b h
+  have := this h
+  contrapose! this
+  simp [this, Std.ReflCmp.compare_self]
+
 variable (cmp) in
 def onSupport (f : σ → R) (s : Finset σ)
     (h : ∀ x, x ∈ s ↔ f x ≠ 0) :
@@ -184,10 +196,26 @@ lemma ofFinsupp_symm_coe_zero [DecidableEq σ] :
   ext x
   simp [ofFinsupp, toFinsupp, apply_onSupport]
 
-lemma support_eq_toFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+-- todo: backport to underlying structures.
+lemma support_toFinset_eq_toFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     l.support.toFinset = (toFinsupp l).support := by
   ext x
   simp [mem_support_iff]
+
+-- todo: backport to underlying structures.
+lemma support_eq_toFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+    l.support = (toFinsupp l).support.sort (cmp · · |>.isLE) := by
+  apply List.eq_of_perm_of_sorted (r := (cmp · · |>.isLE))
+  · apply List.perm_of_nodup_nodup_toFinset_eq
+    · exact support_nodup l
+    · simp
+    · simp [support_toFinset_eq_toFinsupp_support]
+  · rw [List.Sorted, ← List.chain'_iff_pairwise, support, DSortedFinsupp.support, DSortedListMap.keys]
+    -- apply List.chain'_map_of_chain'
+    have := l.1.2
+    apply List.chain'_map_of_chain' _ _ this
+    simp_intro ..
+  · simp
 
 @[simp]
 lemma toFinsupp_zero [DecidableEq σ] :
@@ -203,6 +231,10 @@ lemma toFinsupp_single [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] :
     toFinsupp (single cmp a b) = Finsupp.single a b := by
   ext x
   simp [Finsupp.single_apply]
+
+-- lemma coe_coe_eq [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
+--     l.val.val = l.support.map fun x ↦ ⟨x, l x⟩ := by
+--   sorry
 
 end Finsupp
 
@@ -437,7 +469,7 @@ def prod_eq_prod_support
 @[to_additive]
 def prod_eq_toFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
     l.prod g = (toFinsupp l).prod g := by
-  simp [prod_eq_prod_support, support_eq_toFinsupp_support, Finsupp.prod]
+  simp [prod_eq_prod_support, support_toFinset_eq_toFinsupp_support, Finsupp.prod]
 
 -- todo: should be generalized later
 @[to_additive (attr := simp)]
@@ -656,8 +688,8 @@ def embDomain (l : SortedFinsupp σ R cmp) :
   ⟩
 
 -- low priority
-lemma embDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
-    (l.embDomain f₁ hf₁ f₂ hf₂) (f₁ x) = f₂ x (l x) := by sorry
+-- lemma embDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFinsupp σ R cmp) :
+--     (l.embDomain f₁ hf₁ f₂ hf₂) (f₁ x) = f₂ x (l x) := by sorry
 
 
 end embDomain

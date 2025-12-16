@@ -13,27 +13,37 @@ lemma example1 : (X 0 + 1 : MvPolynomial Nat Int) ^ 20 =
 
 set_option profiler true
 
-example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
+lemma example2 : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
   decide +kernel
 
-example : ((X () + 1) ^ 10 : MvPolynomial Unit Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) + 1 := by
+#print axioms example2
+
+lemma example3 : ((X () + 1) ^ 10 : MvPolynomial Unit Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) + 1 := by
   decide +kernel
 
-example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 +X 0  ^ 2) ^ 5) := by
+#print axioms example3
+
+lemma example4 : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 +X 0  ^ 2) ^ 5) := by
   decide +kernel
 
-example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
+#print axioms example4
+
+lemma example5 : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
   decide +kernel
+
+#print axioms example5
 
 open MonomialOrder in
-example :
+lemma example6 :
     lex.degree (X 1 + X 2 : MvPolynomial (Fin 2) Int) ≼[lex]
       lex.degree (X 0 + X 1 ^ 2: MvPolynomial (Fin 2) Int) := by
   rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
     SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le, ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
   decide +kernel
 
-example :
+#print axioms example6
+
+lemma example7 :
     lex.IsRemainder (X 0 ^ 2 + X 1 ^ 3 + X 2 ^ 4 + X 3 ^ 5: MvPolynomial (Fin 4) ℚ)
       {X 0, X 1, X 2, X 3} 0 := by
   -- convert set to `Set.image list.get`
@@ -58,7 +68,9 @@ example :
     }
   · simp -- here the remainder is 0, whose support set is empty, so `simp` solves it...
 
-example :
+#print axioms example7
+
+lemma example8 :
     lex.IsRemainder (X 0 ^ 2 + X 1 ^ 3 + X 2 ^ 4 + X 3 ^ 5: MvPolynomial (Fin 6) ℚ)
       {X 3, X 4 + X 5} (X 0 ^ 2 + X 1 ^ 3 + X 2 ^ 4) := by
   -- convert set to `Set.image list.get`
@@ -94,3 +106,5 @@ example :
       convert_to _ → ¬ SortedFinsupp.toFinsupp _ - SortedFinsupp.toFinsupp x = 0
       rw [← SortedFinsupp.toFinsupp_tsub, SortedFinsupp.toFinsupp_eq_zero_iff]
       decide +kernel +revert
+
+#print axioms example8
