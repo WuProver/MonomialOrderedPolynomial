@@ -69,9 +69,9 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
         · simp [Std.LawfulEqCmp.compare_eq_iff_eq.mp h', Std.ReflCmp.compare_self]
           -- should be generalized to DSortedFinsupp.induction later
           let l₁' : SortedFinsupp σ R cmp :=
-            ⟨⟨m₁, by simp [List.chain'_cons'.mp (heq ▸ l₁.val.2)]⟩, by have := heq ▸ l₁.2; aesop⟩
+            ⟨⟨m₁, by simp [List.isChain_cons.mp (heq ▸ l₁.val.2)]⟩, by have := heq ▸ l₁.2; aesop⟩
           let l₂' : SortedFinsupp σ R cmp :=
-            ⟨⟨m₂, by simp [List.chain'_cons'.mp (heq_1 ▸ l₂.val.2)]⟩, by have := heq_1 ▸ l₂.2; aesop⟩
+            ⟨⟨m₂, by simp [List.isChain_cons.mp (heq_1 ▸ l₂.val.2)]⟩, by have := heq_1 ▸ l₂.2; aesop⟩
           -- shuold be a theorem
           convert_to compare (toLex l₁') (toLex l₂') = .lt ↔ _
           rw [lex_eq]
@@ -267,11 +267,11 @@ instance instLinearOrder [DecidableEq σ] {R : Type*} [Zero R] [LinearOrder R]
       rw [eq_comm]
       rcases h : compare a b
       · simp [lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
-        simpa [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+        simpa [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.Lex.lt_iff]
       · simp at h
         simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
       · simp [Std.OrientedCmp.gt_iff_lt, lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
-        simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+        simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.Lex.lt_iff]
     )
   {
     __ := I,
@@ -298,12 +298,12 @@ instance instLinearOrder' {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Ze
       rw [eq_comm]
       rcases h : compare a b
       · simp [lex_eq' (cmp := compare), Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
-        simpa! [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+        simpa! [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.Lex.lt_iff]
       · simp at h
         simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
       · simp [Std.OrientedCmp.gt_iff_lt, lex_eq' (cmp := compare), Pi.Lex,
           Std.LawfulLTCmp.eq_lt_iff_lt] at h
-        simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.lex_lt_iff]
+        simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.Lex.lt_iff]
     )
   {
     __ := I,
@@ -319,7 +319,7 @@ def lexOrderIsoLexFinsupp {σ} [DecidableEq σ] [LinearOrder σ] {R : Type*} [Ze
   __ := ofLex.trans SortedFinsupp.toFinsupp |>.trans toLex
   map_rel_iff' := by
     intro a b
-    simp [le_iff_lt_or_eq, Finsupp.lex_lt_iff,
+    simp [le_iff_lt_or_eq, Finsupp.Lex.lt_iff,
       ← Std.LawfulCmp.eq_lt_iff_lt (x := a) (cmp := compare), lex_eq', Pi.Lex]
     simp [Std.LawfulCmp.eq_lt_iff_lt]
 

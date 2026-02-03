@@ -38,7 +38,7 @@ a list map, where `α` is the type of keys and `β a` is the type of the value a
 -/
 def DSortedListMap α (β : α → Type*)
     (cmp : α → α → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
-  { l : List ((k : α) × β k) // l.Chain' (fun (a b : (k : α) × β k ) ↦ cmp a.fst b.fst = .lt) }
+  { l : List ((k : α) × β k) // l.IsChain (fun (a b : (k : α) × β k ) ↦ cmp a.fst b.fst = .lt) }
 
 #check Finsupp
 
@@ -68,25 +68,25 @@ instance : Std.TransCmp (α := (k : α) × β k) (cmp ·.1 ·.1) where
   eq_swap := Std.OrientedCmp.eq_swap
   isLE_trans := Std.TransCmp.isLE_trans
 
-instance : IsAntisymm (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
+instance : Std.Antisymm (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
   antisymm _ _ h h' := by
     rw [Std.OrientedCmp.eq_swap (cmp := cmp)] at h
     simp [h'] at h
 
-instance : IsIrrefl (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
+instance : Std.Irrefl (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
   irrefl a := by
     simp [Std.ReflCmp.compare_self]
 
-lemma chain' (l : DSortedListMap α β cmp) : l.val.Chain' (cmp ·.1 ·.1 = .lt) := l.property
+lemma isChain (l : DSortedListMap α β cmp) : l.val.IsChain (cmp ·.1 ·.1 = .lt) := l.property
 
 lemma pairwise (l : DSortedListMap α β cmp) : l.val.Pairwise (cmp ·.1 ·.1 = .lt) :=
-  List.chain'_iff_pairwise.mp l.chain'
+  List.isChain_iff_pairwise.mp l.isChain
 
-lemma eq_iff (l₁ l₂ : DSortedListMap α β cmp) : l₁ = l₂ ↔ l₁.val = l₂.val := Subtype.eq_iff
+lemma eq_iff (l₁ l₂ : DSortedListMap α β cmp) : l₁ = l₂ ↔ l₁.val = l₂.val := Subtype.ext_iff
 
-instance : EmptyCollection <| DSortedListMap α β cmp := ⟨[], List.chain'_nil⟩
+instance : EmptyCollection <| DSortedListMap α β cmp := ⟨[], List.isChain_nil⟩
 
-lemma empty_def : (∅ : DSortedListMap α β cmp) = ⟨[], List.chain'_nil⟩ := rfl
+lemma empty_def : (∅ : DSortedListMap α β cmp) = ⟨[], List.isChain_nil⟩ := rfl
 
 @[simp]
 lemma empty_val : (∅ : DSortedListMap α β cmp).val = [] := rfl
@@ -97,7 +97,7 @@ lemma eq_empty_iff (l : DSortedListMap α β cmp) : l = ∅ ↔ l.val = [] := by
 abbrev cons' (a : α) (b : β a) (l : DSortedListMap α β cmp)
     (h : ∀ p ∈ l.val, cmp a p.1 = .lt) : DSortedListMap α β cmp := ⟨
   ⟨a, b⟩ :: l.val,
-  by simpa [List.chain'_iff_pairwise, l.pairwise]
+  by simpa [List.isChain_iff_pairwise, l.pairwise]
 ⟩
 
 @[elab_as_elim]
@@ -106,17 +106,17 @@ theorem induction {motive : DSortedListMap α β cmp → Prop} (empty : motive �
       (h : ∀ a', a' ∈ s.val → cmp a.1 a'.1 = .lt),
         motive s →
         motive ⟨a :: s.val, by
-          simpa [List.chain'_iff_pairwise, s.pairwise]⟩)
+          simpa [List.isChain_iff_pairwise, s.pairwise]⟩)
     (s : DSortedListMap α β cmp) : motive s := by
   match h : s.val with
   | .nil => rw [← eq_empty_iff] at h; rwa [h]
   | .cons a l' =>
-    have := s.chain'
-    simp [h, List.chain'_iff_pairwise] at this
-    rw [← s.eta s.chain']
+    have := s.isChain
+    simp [h, List.isChain_iff_pairwise] at this
+    rw [← s.eta s.isChain]
     simp_rw [h]
     letI s' : DSortedListMap α β cmp :=
-      ⟨l', by simp [List.chain'_iff_pairwise, this]⟩
+      ⟨l', by simp [List.isChain_iff_pairwise, this]⟩
     apply cons a s' this.1
     apply induction empty cons
 termination_by s.val.length
@@ -128,7 +128,7 @@ theorem induction' {motive : DSortedListMap α β cmp → Prop} (empty : motive 
       (h : ∀ a' b', ⟨a', b'⟩ ∈ s.val → cmp a a' = .lt),
         motive s →
         motive ⟨⟨a, b⟩ :: s.val, by
-          simpa [List.chain'_iff_pairwise, s.pairwise, Sigma.forall]⟩)
+          simpa [List.isChain_iff_pairwise, s.pairwise, Sigma.forall]⟩)
     (s : DSortedListMap α β cmp) : motive s :=
   induction empty (by simpa [Sigma.forall]) s
 
@@ -301,7 +301,7 @@ def instFunLike [DecidableEq α] : DFunLike (DSortedListMap α β cmp) α (Optio
     intro a b h
     rw [a.eq_iff]
     simp [funext_iff] at h
-    apply List.Sorted.eq_of_mem_iff a.pairwise b.pairwise
+    apply List.Pairwise.eq_of_mem_iff a.pairwise b.pairwise
     simp [mem_iff]
     intro x
     specialize h x.1
@@ -403,10 +403,10 @@ abbrev cons'' (a : α) (b : β a) (l : DSortedListMap α β cmp)
     aesop
   )
 
-instance : IsAntisymm (α := α) (cmp · · |>.isLE) where
+instance : Std.Antisymm (α := α) (cmp · · |>.isLE) where
   antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
 
-instance : IsAntisymm (α := α) (cmp · · ≠ .gt) := by
+instance : Std.Antisymm (α := α) (cmp · · ≠ .gt) := by
   simp [Ordering.ne_gt_iff_isLE]
   exact inferInstance
 
@@ -417,13 +417,13 @@ instance : IsTrans (α := α) (cmp · · ≠ .gt) := by
   simp [Ordering.ne_gt_iff_isLE]
   exact inferInstance
 
-instance : IsTotal (α := α) (cmp · · |>.isLE) where
+instance : Std.Total (α := α) (cmp · · |>.isLE) where
   total a b := by
     rw [or_iff_not_imp_left]
     intro h
     simp [Std.OrientedCmp.lt_of_not_isLE h]
 
-instance : IsTotal (α := α) (cmp · · ≠ .gt) := by
+instance : Std.Total (α := α) (cmp · · ≠ .gt) := by
   simp [Ordering.ne_gt_iff_isLE]
   exact inferInstance
 
@@ -433,7 +433,7 @@ def linearOrder [DecidableRel (cmp · · |>.isLE)] : LinearOrder α where
   le_refl _ := Std.ReflCmp.isLE_rfl
   le_trans _ _ _ a b := Std.TransCmp.isLE_trans a b
   le_antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
-  le_total := (inferInstanceAs <| IsTotal (α := α) (cmp · · |>.isLE)).total
+  le_total := (inferInstanceAs <| Std.Total (α := α) (cmp · · |>.isLE)).total
   toDecidableLE := inferInstance
 
 variable (cmp) in
@@ -444,14 +444,14 @@ def onFinset (f : (k : α) → Option <| β k) (s : Finset α) :
     DSortedListMap α β cmp :=
   ⟨s.sort (cmp · · |>.isLE) |>.filterMap fun x ↦ f x |>.map (⟨x, ·⟩),
     by
-      simp [List.chain'_iff_pairwise]
+      simp [List.isChain_iff_pairwise]
       simp [List.pairwise_filterMap]
       simp [List.pairwise_iff_forall_sublist]
       rintro a b h - - - -
       revert a b h
       simp [← List.pairwise_iff_forall_sublist]
       letI := linearOrder cmp
-      convert s.sort_sorted_lt with a b
+      convert List.sortedLT_iff_pairwise.mp s.sortedLT_sort with a b
       refine _root_.trans (b := (cmp a b).isLE ∧ ¬ (cmp b a).isLE) ?_ (Iff.refl _)
       simp [Std.OrientedCmp.gt_iff_lt]
       simp [Ordering.isLE_iff_ne_gt]
@@ -510,10 +510,10 @@ merge `l₁ l₂ : DSortedListMap` with f
 -/
 def mergeWith (l₁ l₂ : DSortedListMap α β cmp) : DSortedListMap α β cmp :=
   ⟨List.mergeWithByFuel l₁.val l₂.val (cmp ·.1 ·.1) (mergeFn' mergeFn), by
-    rw [List.chain'_iff_pairwise, List.mergeWithByFuel_eq]
+    rw [List.isChain_iff_pairwise, List.mergeWithByFuel_eq]
     apply List.mergeWith_pairwise_of_pairwise
-    · rw [← List.chain'_iff_pairwise]; exact l₁.property
-    · rw [← List.chain'_iff_pairwise]; exact l₂.property⟩
+    · rw [← List.isChain_iff_pairwise]; exact l₁.property
+    · rw [← List.isChain_iff_pairwise]; exact l₂.property⟩
 
 lemma mergeWith_def (l₁ l₂ : DSortedListMap α β cmp) :
     (l₁.mergeWith mergeFn l₂).val =
@@ -610,7 +610,7 @@ update values with `f`, and remove those on which `f` is `none`.
 def filterMap (f : (k : α) → (β k) → Option (β₁ k)) (l : DSortedListMap α β cmp) :
     DSortedListMap α β₁ cmp :=
   ⟨l.val.filterMap (fun ⟨a, b⟩ ↦ f a b |>.map (⟨a, ·⟩)), by
-    simp [List.chain'_iff_pairwise, List.pairwise_filterMap]
+    simp [List.isChain_iff_pairwise, List.pairwise_filterMap]
     rw [List.pairwise_iff_get]
     intro i j h hi hi' hj hj'
     exact List.pairwise_iff_get.mp l.pairwise i j h

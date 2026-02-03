@@ -1,7 +1,7 @@
 import MonomialOrderedPolynomial.SortedAddMonoidAlgebra
 import MonomialOrderedPolynomial.MonomialOrder
 import MonomialOrderedPolynomial.Finsupp
-import Groebner.Defs
+import Groebner.Groebner
 
 namespace SortedAddMonoidAlgebra
 
@@ -17,6 +17,10 @@ noncomputable def algEquivMvPolynomial :
 class _root_.MvPolynomial.SortedRepr (p : MvPolynomial σ R) where
   repr : SortedAddMonoidAlgebra R (Lex <| SortedFinsupp σ Nat compare) (compare · · |>.swap)
   eq : algEquivMvPolynomial repr = p
+
+def _root_.MvPolynomial.SortedRepr.repr_eq {p : MvPolynomial σ R} [inst : p.SortedRepr] :
+    inst.repr = algEquivMvPolynomial.symm p := by
+  rw [← algEquivMvPolynomial.injective.eq_iff, inst.eq, algEquivMvPolynomial.apply_symm_apply]
 
 def _root_.MvPolynomial.toSortedRepr (p : MvPolynomial σ R) [inst : p.SortedRepr] := inst
 
@@ -65,6 +69,7 @@ lemma _root_.MvPolynomial.SortedRepr.coeff_eq (p : MvPolynomial σ R) [inst : p.
     p.coeff c = inst.repr (SortedFinsupp.lexAddEquiv compare |>.symm c) := by
   simp [coeff, ← inst.eq, algEquivMvPolynomial]
   rw (config := {transparency := .default}) [AddMonoidAlgebra.domCongr_apply]
+  rfl
 
 lemma _root_.MvPolynomial.SortedRepr.support_eq (p : MvPolynomial σ R) [inst : p.SortedRepr]  :
     p.support = p.toSortedRepr.repr.support.toFinset.map (SortedFinsupp.lexAddEquiv (σ := σ) (R := Nat) compare) := by
@@ -146,7 +151,7 @@ variable {p q : MvPolynomial σ R}
 
 variable [WellFoundedGT σ]
 
-instance {α} [LinearOrder α] : IsTotal (α := α) GE.ge where
+instance {α} [LinearOrder α] : Std.Total (α := α) GE.ge where
   total := by simp [LinearOrder.le_total]
 
 -- lemma _root_.MvPolynomial.SortedRepr.repr_support_eq :
@@ -154,8 +159,8 @@ instance {α} [LinearOrder α] : IsTotal (α := α) GE.ge where
 --     ((p.support.map (lex (σ := σ) |>.toSyn).toEmbedding).sort GE.ge).map
 --     (SortedFinsupp.lexAddEquiv compare).symm := sorry
 
-lemma _root_.Finset.map_sort_ge_head?_getD_bot (α : Type*) [LinearOrder α] [OrderBot α]
-    (s : List α) (hs : s.Sorted GE.ge) : s.head?.getD ⊥ = s.toFinset.sup id := by
+lemma _root_.Finset.map_pairwise_ge_head?_getD_bot (α : Type*) [LinearOrder α] [OrderBot α]
+    (s : List α) (hs : s.Pairwise GE.ge) : s.head?.getD ⊥ = s.toFinset.sup id := by
   cases s
   · simp
   · simp
@@ -164,9 +169,9 @@ lemma _root_.Finset.map_sort_ge_head?_getD_bot (α : Type*) [LinearOrder α] [Or
 
 lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq :
     lex.degree p = ofLex (SortedFinsupp.lexOrderIsoLexFinsupp (p'.repr.support.head?.getD ⊥)) := by
-  rw [Finset.map_sort_ge_head?_getD_bot, degree, MvPolynomial.SortedRepr.support_eq]
+  rw [Finset.map_pairwise_ge_head?_getD_bot, degree, MvPolynomial.SortedRepr.support_eq]
   · simp; rfl
-  rw [List.Sorted, List.pairwise_iff_forall_sublist]
+  rw [List.pairwise_iff_forall_sublist]
   have := (SortedRepr.repr p).support_pairwise
   simp [List.pairwise_iff_forall_sublist] at this
   intro a b h
@@ -174,6 +179,20 @@ lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq :
   rw [compare_gt_iff_gt] at this
   apply le_of_lt at this
   exact this
+
+lemma _root_.MvPolynomial.SortedRepr.lex_withBotDegree_eq :
+    lex.withBotDegree p =
+      p'.repr.support.head?.map (ofLex ∘ SortedFinsupp.lexOrderIsoLexFinsupp) := by
+  by_cases hp : p = 0
+  · simp [hp, SortedRepr.repr_eq]
+    rfl
+  suffices SortedFinsupp.support (SortedRepr.repr p) ≠ [] by
+    rw [List.head?_eq_some_head this, lex.withBotDegree_eq_coe_degree_iff _ |>.mpr hp,
+      MvPolynomial.SortedRepr.lex_degree_eq, List.head?_eq_some_head this]
+    rfl
+  rw [← List.toFinset_nonempty_iff, SortedFinsupp.support_toFinset_eq_toFinsupp_support]
+  rw [SortedRepr.repr_eq]
+  simp [SortedRepr.repr_eq, algEquivMvPolynomial.symm_apply_eq, hp]
 
 -- todo: optimization
 lemma _root_.MvPolynomial.SortedRepr.lex_leadingCoeff_eq :
@@ -191,6 +210,12 @@ lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq' :
     lex.toSyn (lex.degree p) =
       SortedFinsupp.lexOrderIsoLexFinsupp (p'.repr.support.head?.getD ⊥) :=
   MvPolynomial.SortedRepr.lex_degree_eq
+
+lemma _root_.MvPolynomial.SortedRepr.lex_withBotDegree_eq' :
+    lex.toWithBotSyn (lex.withBotDegree p) =
+      WithBot.map SortedFinsupp.lexOrderIsoLexFinsupp p'.repr.support.head? := by
+  convert MvPolynomial.SortedRepr.lex_withBotDegree_eq (σ := σ)
+  simp [toWithBotSyn, show WithBot.map (⇑lex.toSyn) = id from WithBot.map_id]
 
 instance : (lex.degree p).SortedRepr where
   repr := ofLex <| p'.repr.support.head?.getD ⊥

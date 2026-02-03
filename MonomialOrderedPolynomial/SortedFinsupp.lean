@@ -205,17 +205,19 @@ lemma support_toFinset_eq_toFinsupp_support [DecidableEq σ] (l : SortedFinsupp 
 -- todo: backport to underlying structures.
 lemma support_eq_toFinsupp_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     l.support = (toFinsupp l).support.sort (cmp · · |>.isLE) := by
-  apply List.eq_of_perm_of_sorted (r := (cmp · · |>.isLE))
+  apply List.Perm.eq_of_pairwise (le := (cmp · · |>.isLE))
+  · rintro a b - - h1 h2
+    exact Std.LawfulEqCmp.eq_of_compare <| Std.OrientedCmp.isLE_antisymm h1 h2
+  · rw [← List.isChain_iff_pairwise, support, DSortedFinsupp.support, DSortedListMap.keys]
+    -- apply List.isChain_map_of_isChain
+    have := l.1.2
+    apply List.isChain_map_of_isChain _ _ this
+    simp_intro ..
+  · simp
   · apply List.perm_of_nodup_nodup_toFinset_eq
     · exact support_nodup l
     · simp
     · simp [support_toFinset_eq_toFinsupp_support]
-  · rw [List.Sorted, ← List.chain'_iff_pairwise, support, DSortedFinsupp.support, DSortedListMap.keys]
-    -- apply List.chain'_map_of_chain'
-    have := l.1.2
-    apply List.chain'_map_of_chain' _ _ this
-    simp_intro ..
-  · simp
 
 @[simp]
 lemma toFinsupp_zero [DecidableEq σ] :
@@ -570,8 +572,8 @@ def mapDomain (l : SortedFinsupp σ R cmp) :
   ⟨
     ⟨l.val.val.map (fun a ↦ ⟨f a.1, a.2⟩),
       by
-        rw [List.chain'_iff_pairwise, List.pairwise_map]
-        simp [← hf, ← List.chain'_iff_pairwise]
+        rw [List.isChain_iff_pairwise, List.pairwise_map]
+        simp [← hf, ← List.isChain_iff_pairwise]
         exact l.val.2⟩,
     (by
       have := l.2
@@ -667,9 +669,9 @@ def embDomain (l : SortedFinsupp σ R cmp) :
       by
         have := hf₁ -- write it here so that mapDomainRange will have arguments `hf₂` and `hf₂`
         have := hf₂
-        rw [List.chain'_iff_pairwise, List.pairwise_filterMap]
+        rw [List.isChain_iff_pairwise, List.pairwise_filterMap]
         have orig_sorted : List.Pairwise (λ a b => cmp a.1 b.1 = .lt) l.val.val := by
-          rw [← List.chain'_iff_pairwise]
+          rw [← List.isChain_iff_pairwise]
           exact l.val.2
         apply List.Pairwise.imp
         · intro x y h z hz z1 hz2
@@ -700,15 +702,15 @@ end embDomain
 -- variable [∀ x : M, ∀ s : R, Decidable (s • x = 0)]
 
 
--- def chain'_mulMon' (k : R) (l : List (σ × R)) (h : l.Chain' (cmp ·.1 ·.1 = .lt)) : (mulMon' k l).Chain' (cmp ·.1 ·.1 = .lt) := by
+-- def isChain_mulMon' (k : R) (l : List (σ × R)) (h : l.IsChain (cmp ·.1 ·.1 = .lt)) : (mulMon' k l).IsChain (cmp ·.1 ·.1 = .lt) := by
 --   induction l with
 --   | nil => simp [mulMon']
 --   | cons head tail h' =>
---     simp [mulMon', List.chain'_cons'] at *
+--     simp [mulMon', List.isChain_cons'] at *
 --     sorry
 
 -- def mulMon (k : R) (l : SortedFinsupp σ R cmp) : SortedFinsupp σ R cmp := ⟨mulMon' k l.val, by
---   exact chain'_mulMon' k l.val l.property
+--   exact isChain_mulMon' k l.val l.property
 --   sorry
 -- ⟩
 

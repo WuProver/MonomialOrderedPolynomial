@@ -1,6 +1,6 @@
 import MonomialOrderedPolynomial.MvPolynomial
-import Groebner.List
-import Groebner.Basic
+import Groebner.Groebner
+import Groebner.ToMathlib.List
 
 open MvPolynomial MonomialOrder
 
@@ -8,8 +8,6 @@ lemma example1 : (X 0 + 1 : MvPolynomial Nat Int) ^ 20 =
     (X 0 ^ 2 + X 0 + X 0 + 1 : MvPolynomial Nat Int) ^ 10 := by
   rw [MvPolynomial.SortedRepr.eq_iff']
   decide +kernel
-
-#print axioms example1
 
 set_option profiler true
 
@@ -41,7 +39,25 @@ lemma example6 :
     SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le, ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
   decide +kernel
 
-#print axioms example6
+lemma withBotDegree_le_of_repr_le {σ R} [LinearOrder σ] [CommSemiring R]
+    [DecidableEq R] [WellFoundedGT σ]
+    {p q r : MvPolynomial σ R} [inst_p : p.SortedRepr]
+    [inst_q : q.SortedRepr] [inst_r : r.SortedRepr] :
+    (show WithBot <| Lex (SortedFinsupp σ ℕ compare) from inst_p.repr.support.head?)
+    + (show WithBot <| Lex (SortedFinsupp σ ℕ compare) from inst_q.repr.support.head?)
+      ≤ inst_r.repr.support.head? →
+    lex.toWithBotSyn (lex.withBotDegree p) +
+    lex.toWithBotSyn (lex.withBotDegree q) ≤ lex.toWithBotSyn (lex.withBotDegree r)  := by
+  intro h
+  rw [MvPolynomial.SortedRepr.lex_withBotDegree_eq',
+    MvPolynomial.SortedRepr.lex_withBotDegree_eq',
+    MvPolynomial.SortedRepr.lex_withBotDegree_eq'
+    -- SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
+    -- ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)
+  ]
+  rwa [← WithBot.map_add', WithBot.map_le_iff]
+  · simp
+  simp [SortedFinsupp.lexOrderIsoLexFinsupp]
 
 lemma example7 :
     lex.IsRemainder (X 0 ^ 2 + X 1 ^ 3 + X 2 ^ 4 + X 3 ^ 5: MvPolynomial (Fin 4) ℚ)
@@ -49,7 +65,9 @@ lemma example7 :
   -- convert set to `Set.image list.get`
   simp only [← Set.range_get_nil, ← Set.range_get_singleton, ← Set.range_get_cons_list]
   -- use index
-  rw [isRemainder_range_fin, ← exists_and_right]
+  rw [IsRemainder.isRemainder_range_fintype, ← exists_and_right]
+  /- todo: optimization: it is possible to provide their computable representation instead of
+  synthesized from `MvPolynomial`. -/
   use [X 0, X 1 ^ 2, X 2 ^ 3, X 3 ^ 4].get
   split_ands
   · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
@@ -59,12 +77,8 @@ lemma example7 :
     all_goals {
       -- simp? [-List.get_eq_getElem, List.get, -degree_mul', -map_add]
       simp only [List.get, Fin.isValue]
-      all_goals {
-        rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
-          SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
-          ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
-        decide +kernel
-      }
+      all_goals
+        exact withBotDegree_le_of_repr_le <| by decide +kernel
     }
   · simp -- here the remainder is 0, whose support set is empty, so `simp` solves it...
 
@@ -76,7 +90,7 @@ lemma example8 :
   -- convert set to `Set.image list.get`
   simp only [← Set.range_get_nil, ← Set.range_get_singleton, ← Set.range_get_cons_list]
   -- use index
-  rw [isRemainder_range_fin, ← exists_and_right]
+  rw [IsRemainder.isRemainder_range_fintype, ← exists_and_right]
   use [X 3 ^ 4, 0].get
   split_ands
   · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
@@ -87,10 +101,7 @@ lemma example8 :
       -- simp? [-List.get_eq_getElem, List.get, -degree_mul', -map_add]
       simp only [List.get, Fin.isValue]
       all_goals {
-        rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
-          SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
-          ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
-        decide +kernel
+        exact withBotDegree_le_of_repr_le <| by decide +kernel
       }
     }
   · -- simp_rw [MvPolynomial.SortedRepr.support_eq]

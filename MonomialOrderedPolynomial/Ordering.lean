@@ -29,13 +29,13 @@ instance {G} {cmp : G → G → Ordering} [Add G] [LinearOrder G]
     rcases h : cmp i j
     · rw [Std.LawfulCmp.eq_lt_iff_lt] at h
       rw [eq_comm, Std.LawfulCmp.eq_lt_iff_lt (cmp := cmp)]
-      exact add_lt_add_left h a
+      exact add_lt_add_right h a
     · simp at h
       rw [eq_comm, h]
       simp
     · rw [eq_comm, Std.LawfulLTCmp.eq_gt_iff_gt]
       rw [Std.LawfulLTCmp.eq_gt_iff_gt] at h
-      exact add_lt_add_left h a
+      exact add_lt_add_right h a
 
 instance {G} {cmp : G → G → Ordering} [Add G]
     [fact : Fact <| ∀ (a i j : G), cmp i j = cmp (a + i) (a + j)] :

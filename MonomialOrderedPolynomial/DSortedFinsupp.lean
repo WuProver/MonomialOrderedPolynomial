@@ -59,10 +59,10 @@ instance [DecidableEq σ] [∀ a : σ, DecidableEq (R a)] : DecidableEq (DSorted
 -- @[inline]
 -- abbrev val.val (l : DSortedFinsupp σ R cmp) := l.val.val
 
-lemma chain' (l : DSortedFinsupp σ R cmp) : l.val.val.Chain' (cmp ·.1 ·.1 = .lt) := l.val.2
+lemma isChain (l : DSortedFinsupp σ R cmp) : l.val.val.IsChain (cmp ·.1 ·.1 = .lt) := l.val.2
 
 lemma pairwise (l : DSortedFinsupp σ R cmp) : l.val.val.Pairwise (cmp ·.1 ·.1 = .lt) :=
-  List.chain'_iff_pairwise.mp l.chain'
+  List.isChain_iff_pairwise.mp l.isChain
 
 lemma ne_zero {l : DSortedFinsupp σ R cmp} {i : Sigma R} (h : i ∈ l.val.val) : i.2 ≠ 0 := l.2 i h
 
@@ -76,12 +76,12 @@ lemma val_get?_ne_some_zero [DecidableEq σ] {l : DSortedFinsupp σ R cmp} (a : 
   by_contra h
   exact l.ne_zero_of_val_get?_eq_some h rfl
 
-lemma eq_iff (l₁ l₂ : DSortedFinsupp σ R cmp) : l₁ = l₂ ↔ l₁.val = l₂.val := Subtype.eq_iff
+lemma eq_iff (l₁ l₂ : DSortedFinsupp σ R cmp) : l₁ = l₂ ↔ l₁.val = l₂.val := Subtype.ext_iff
 
 instance : Zero (DSortedFinsupp σ R cmp) where
-  zero := ⟨⟨[], List.chain'_nil⟩, by simp⟩
+  zero := ⟨⟨[], List.isChain_nil⟩, by simp⟩
 
-lemma zero_def : (0 : DSortedFinsupp σ R cmp) = ⟨⟨[], List.chain'_nil⟩, by simp⟩ := rfl
+lemma zero_def : (0 : DSortedFinsupp σ R cmp) = ⟨⟨[], List.isChain_nil⟩, by simp⟩ := rfl
 
 lemma eq_zero_iff (l : DSortedFinsupp σ R cmp) : l = 0 ↔ l.val = ∅ := by
   rw [l.eq_iff]
@@ -101,17 +101,17 @@ abbrev mk' (val : DSortedListMap σ R cmp) (h : open Classical in ∀ a, val.get
 --       (h : ∀ a', a' ∈ s.val → cmp a.1 a'.1 = .lt) (h' : a.2 ≠ 0),
 --         motive s →
 --         motive ⟨a :: s.val, by
---           simp [List.chain'_iff_pairwise, s.pairwise, h'] at *; exact ⟨h, fun _ _ ↦ ne_zero'⟩⟩)
+--           simp [List.isChain_iff_pairwise, s.pairwise, h'] at *; exact ⟨h, fun _ _ ↦ ne_zero'⟩⟩)
 --     (s : DSortedFinsupp σ R cmp) : motive s := by
 --   match h : s.val with
 --   | .nil => rw [← eq_zero_iff] at h; rwa [h]
 --   | .cons a l' =>
 --     have := s.2
---     simp [-Prod.forall, h, List.chain'_iff_pairwise] at this
+--     simp [-Prod.forall, h, List.isChain_iff_pairwise] at this
 --     rw [show s = ⟨s.1, s.2⟩ from rfl]
 --     simp_rw [h]
 --     letI s' : DSortedFinsupp σ R cmp :=
---       ⟨l', by simp [-Prod.forall, List.chain'_iff_pairwise, this]; exact this.2.2⟩
+--       ⟨l', by simp [-Prod.forall, List.isChain_iff_pairwise, this]; exact this.2.2⟩
 --     apply cons a s' this.1.1 this.2.1
 --     apply induction zero cons
 -- termination_by s.val.length
@@ -123,7 +123,7 @@ abbrev mk' (val : DSortedListMap σ R cmp) (h : open Classical in ∀ a, val.get
 --       (h : ∀ a' b', (a', b') ∈ s.val → cmp a a' = .lt) (h' : b ≠ 0),
 --         motive s →
 --         motive ⟨(a, b) :: s.val, by
---           simp [List.chain'_iff_pairwise, s.pairwise, h']; exact ⟨h, fun _ _ ↦ ne_zero'⟩⟩)
+--           simp [List.isChain_iff_pairwise, s.pairwise, h']; exact ⟨h, fun _ _ ↦ ne_zero'⟩⟩)
 --     (s : DSortedFinsupp σ R cmp) : motive s :=
 --   induction zero (by simpa) s
 
@@ -410,7 +410,7 @@ lemma cons_apply_eq₁ [DecidableEq σ] (a : Sigma R) (l : DSortedFinsupp σ R c
   obtain ⟨tail, hy⟩ := h
   convert cons_apply_eq (a := a) (l := tail) ..
   · simp [← hy]
-  · exact hy ▸ l.chain'
+  · exact hy ▸ l.isChain
   · convert hy ▸ l.2
 
 @[simp]
@@ -455,10 +455,10 @@ lemma get?_eq_zero_of_cmp_eq_lt [DecidableEq σ] (l : DSortedFinsupp σ R cmp) {
 
 section DFinsupp
 
--- instance : IsAntisymm (α := σ) (cmp · · |>.isLE) where
+-- instance : Std.Antisymm (α := σ) (cmp · · |>.isLE) where
 --   antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
 
--- instance : IsAntisymm (α := σ) (cmp · · ≠ .gt) := by
+-- instance : Std.Antisymm (α := σ) (cmp · · ≠ .gt) := by
 --   simp [Ordering.ne_gt_iff_isLE]
 --   exact inferInstance
 
@@ -469,13 +469,13 @@ section DFinsupp
 --   simp [Ordering.ne_gt_iff_isLE]
 --   exact inferInstance
 
--- instance : IsTotal (α := σ) (cmp · · |>.isLE) where
+-- instance : Std.Total (α := σ) (cmp · · |>.isLE) where
 --   total a b := by
 --     rw [or_iff_not_imp_left]
 --     intro h
 --     simp [Std.OrientedCmp.lt_of_not_isLE h]
 
--- instance : IsTotal (α := σ) (cmp · · ≠ .gt) := by
+-- instance : Std.Total (α := σ) (cmp · · ≠ .gt) := by
 --   simp [Ordering.ne_gt_iff_isLE]
 --   exact inferInstance
 
@@ -485,7 +485,7 @@ section DFinsupp
 --   le_refl _ := Std.ReflCmp.isLE_rfl
 --   le_trans _ _ _ a b := Std.TransCmp.isLE_trans a b
 --   le_antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
---   le_total := (inferInstanceAs <| IsTotal (α := σ) (cmp · · |>.isLE)).total
+--   le_total := (inferInstanceAs <| Std.Total (α := σ) (cmp · · |>.isLE)).total
 --   toDecidableLE := inferInstance
 
 variable (cmp) in

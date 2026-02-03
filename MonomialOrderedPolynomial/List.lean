@@ -73,7 +73,7 @@ lemma mergeWith_left_nil : mergeWith [] l cmp mergeFn = l := by
 @[simp]
 lemma mergeWith_right_nil : mergeWith l [] cmp mergeFn = l := by
   unfold mergeWith
-  split; rfl; rfl; simp at *
+  rfl
 
 /--
 Do the same thing as mergeWith, but prove termination with a natural number fuel so that it can be
@@ -259,7 +259,7 @@ lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → 
   · exact h₂
   split
   · expose_names
-    rw [← List.chain'_iff_pairwise, chain'_cons', List.chain'_iff_pairwise]
+    rw [← List.isChain_iff_pairwise, isChain_cons, List.isChain_iff_pairwise]
     split_ands
     · intro y hy
       apply mem_of_mem_head? at hy
@@ -275,7 +275,7 @@ lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → 
     · rw [pairwise_cons] at h₁
       exact mergeWith_pairwise_of_pairwise h₁.2 h₂ ..
   · expose_names
-    rw [← List.chain'_iff_pairwise, chain'_cons', List.chain'_iff_pairwise]
+    rw [← List.isChain_iff_pairwise, isChain_cons, List.isChain_iff_pairwise]
     split_ands
     · intro y hy
       apply mem_of_mem_head? at hy
@@ -295,7 +295,7 @@ lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → 
     have := mergeWith_pairwise_of_pairwise h₁.2 h₂.2 mergeFn
     split
     · exact this
-    · rw [← List.chain'_iff_pairwise, List.chain'_cons', List.chain'_iff_pairwise]
+    · rw [← List.isChain_iff_pairwise, List.isChain_cons, List.isChain_iff_pairwise]
       refine ⟨?_, this⟩
       intro y hy
       apply mem_of_mem_head? at hy
@@ -316,10 +316,10 @@ lemma mergeWith_pairwise_of_pairwise {l₁ l₂ : List α} {cmp : α → α → 
 termination_by l₁.length + l₂.length
 
 lemma mergeWith_sorted_of_sorted {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
-    (h₁ : l₁.Sorted (cmp · · = .lt)) (h₂ : l₂.Sorted (cmp · · = .lt))
+    (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
     (mergeFn : (a : α) → (b : α) → (cmp a b = .eq) → Option α)
     [Fact <| ∀ a b : α, (h : cmp a b = Ordering.eq) → ∀ a' ∈ mergeFn a b h , cmp a a' = .eq] :
-    mergeWith l₁ l₂ cmp mergeFn |>.Sorted (cmp · · = .lt) :=
+    mergeWith l₁ l₂ cmp mergeFn |>.Pairwise (cmp · · = .lt) :=
   mergeWith_pairwise_of_pairwise h₁ h₂ mergeFn
 
 theorem Pairwise.eq_or_rel_of_mem {α} {l : List α} {R : α → α → Prop} (h : l.Pairwise R) {a b : α} (h1 : a ∈ l)
@@ -406,7 +406,7 @@ lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Orde
           · simp [Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₁.1 a' ha']
           · simp [Std.TransCmp.gt_of_eq_of_gt haa₁ <| Std.OrientedCmp.gt_of_lt heq]
           · have := Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₂.1 a' ha'
-            simp [Std.TransCmp.gt_of_gt_of_gt this <| Std.OrientedCmp.gt_of_lt heq]
+            simp [Std.TransCmp.gt_trans this <| Std.OrientedCmp.gt_of_lt heq]
         · intro h'
           by_contra haa₁
           simp [*, Std.TransCmp.lt_of_eq_of_lt haa₁ heq] at h'
@@ -437,7 +437,7 @@ lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Orde
           rcases ha with (haa₁ | ⟨a', ha', haa'⟩) | ⟨a', ha', haa'⟩
           · simp [Std.TransCmp.gt_of_eq_of_gt haa₁ <| Std.OrientedCmp.gt_of_lt heq]
           · have := Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₁.1 a' ha'
-            simp [Std.TransCmp.gt_of_gt_of_gt this <| Std.OrientedCmp.gt_of_lt heq]
+            simp [Std.TransCmp.gt_trans this <| Std.OrientedCmp.gt_of_lt heq]
           · simp [Std.TransCmp.gt_of_eq_of_gt haa' <| Std.OrientedCmp.gt_of_lt <| h₂.1 a' ha']
         · intro h'
           by_contra haa₂

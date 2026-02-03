@@ -5,3 +5,4 @@ import MonomialOrderedPolynomial.SortedFinsupp
 import MonomialOrderedPolynomial.SortedAddMonoidAlgebra
 import MonomialOrderedPolynomial.Polynomial
 import MonomialOrderedPolynomial.MvPolynomial
+import MonomialOrderedPolynomial.MvPolynomialExamples
