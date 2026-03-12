@@ -34,9 +34,11 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
   unfold lex
   split
   · expose_names
+    set_option backward.isDefEq.respectTransparency false in
     simp [show l₁ = 0 by rwa [DSortedFinsupp.eq_iff, DSortedListMap.eq_iff],
       show l₂ = 0 by rwa [DSortedFinsupp.eq_iff, DSortedListMap.eq_iff], Pi.Lex]
   · expose_names
+    set_option backward.isDefEq.respectTransparency false in
     simp [show l₁ = 0 by rwa [DSortedFinsupp.eq_iff, DSortedListMap.eq_iff], Pi.Lex,
       eq_comm (a := (0 : R)), DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys l₂,
       DSortedListMap.keys, heq_1]
@@ -55,6 +57,7 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
       rw [ne_eq, DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys, heq_1]
       simp
   · expose_names
+    set_option backward.isDefEq.respectTransparency false in
     simp [show l₂ = 0 by rwa [DSortedFinsupp.eq_iff, DSortedListMap.eq_iff], Pi.Lex,
       DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys l₁, DSortedListMap.keys, heq]
     intro x' h
@@ -77,14 +80,17 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
           rw [lex_eq]
           simp [Pi.Lex]
           have hl₁' {j} : l₁ j = if j = pw₁.1 then pw₁.2 else l₁' j := by
+            set_option backward.isDefEq.respectTransparency false in
             rw [DSortedFinsupp.cons_apply₁ (h := (show m₁ = l₁'.val.val from rfl) ▸ heq)]
             simp
           simp at heq heq_1
           have hl₂' {j} : l₂ j = if j = pw₁.1 then pw₁.2 else l₂' j := by
+            set_option backward.isDefEq.respectTransparency false in
             rw [DSortedFinsupp.cons_apply₁ (h := (show m₂ = l₂'.val.val from rfl) ▸ heq_1)]
             simp
             simp [Std.LawfulEqCmp.compare_eq_iff_eq.mp h, Std.LawfulEqCmp.compare_eq_iff_eq.mp h']
           have hl₁'2 : l₁' pw₁.1 = 0 := by
+            set_option backward.isDefEq.respectTransparency false in
             rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys]
             simp
             intro _ h'
@@ -92,6 +98,7 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
             have := this.1 _ h'
             simp [Std.ReflCmp.compare_self] at this
           have hl₂'2 : l₂' pw₁.1 = 0 := by
+            set_option backward.isDefEq.respectTransparency false in
             rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys]
             simp
             intro _ h'
@@ -164,6 +171,7 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
         use pw₂.1
         split_ands
         · intro i h'
+          set_option backward.isDefEq.respectTransparency false in
           simp [l₂.cons_apply_eq_zero_of_lt₁ (by simp [heq_1]) h',
             l₁.cons_apply_eq_zero_of_lt₁ (by simp [heq]) (Std.TransCmp.lt_trans h' h)]
         · convert fact.elim _ _
@@ -171,7 +179,8 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
             · simp [heq]
               rfl
             · exact h
-          · simp [l₂.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys, heq_1]
+          · set_option backward.isDefEq.respectTransparency false in
+            simp [l₂.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys, heq_1]
       · intro ⟨i, hi⟩
         by_contra! h'
         simp [Ordering.ne_lt_iff_isGE, Ordering.isGE_iff_eq_gt_or_eq_eq, h,
@@ -230,6 +239,7 @@ where
 
 instance : Std.LawfulEqOrd (Lex (SortedFinsupp σ R cmp)) where
   eq_of_compare {_ _} := by
+    set_option backward.isDefEq.respectTransparency false in
     rw [Subtype.ext_iff, Subtype.ext_iff]
     exact eq_of_compare' _ _
 where
@@ -267,10 +277,12 @@ instance instLinearOrder [DecidableEq σ] {R : Type*} [Zero R] [LinearOrder R]
       rw [eq_comm]
       rcases h : compare a b
       · simp [lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
+        set_option backward.isDefEq.respectTransparency false in
         simpa [Std.LawfulCmp.eq_lt_iff_lt, Finsupp.Lex.lt_iff]
       · simp at h
         simpa [Std.LawfulEqCmp.compare_eq_iff_eq]
       · simp [Std.OrientedCmp.gt_iff_lt, lex_eq', Pi.Lex, Std.LawfulLTCmp.eq_lt_iff_lt] at h
+        set_option backward.isDefEq.respectTransparency false in
         simpa [Std.OrientedCmp.gt_iff_lt, Std.LawfulCmp.eq_lt_iff_lt, Finsupp.Lex.lt_iff]
     )
   {

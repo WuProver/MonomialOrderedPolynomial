@@ -70,6 +70,7 @@ lemma single_apply [DecidableEq σ] (a : σ) (b : R) [Decidable (b = 0)] (c : σ
     (single cmp a b) c = if a = c then b else 0 := by
   simp [single]
   -- why `simp [DSortedFinsupp.single_apply]` doesn't work???
+  set_option backward.isDefEq.respectTransparency false in
   rw [DSortedFinsupp.single_apply]
   simp
 
@@ -597,6 +598,7 @@ lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFin
   -- ugly proof. should be rewritten later.
   by_cases h : l x = 0
   · simp [h, mapDomain]
+    set_option backward.isDefEq.respectTransparency false in
     rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys] at *
     -- rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys] at h
     simp [Function.Injective.ne_iff this] at *
@@ -604,6 +606,7 @@ lemma mapDomain_apply [DecidableEq σ] [DecidableEq σ'] (x : σ) (l : SortedFin
     subst h''
     exact h b h'
   · simp [mapDomain]
+    set_option backward.isDefEq.respectTransparency false in
     rw [eq_comm, DSortedFinsupp.apply_eq_iff_of_apply_ne_zero h,
       DSortedListMap.get?_eq_some_iff_mem_val', DSortedFinsupp.apply_def, DSortedListMap.get?,
       List.findSome?_map]
@@ -619,6 +622,7 @@ lemma mapDomain_apply_eq_zero_of_notin_range [DecidableEq σ] [DecidableEq σ']
     (x' : σ') (hf' : ¬ x' ∈ Set.range f) (l : SortedFinsupp σ R cmp) :
     l.mapDomain f hf x' = 0 := by
   simp at hf'
+  set_option backward.isDefEq.respectTransparency false in
   rw [DSortedFinsupp.apply_eq_zero_iff_not_mem_val_keys, DSortedListMap.keys, mapDomain]
   simp [hf']
 

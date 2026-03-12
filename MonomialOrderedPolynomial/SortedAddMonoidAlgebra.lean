@@ -162,6 +162,7 @@ lemma mul_def : l₁ * l₂ =
 
 lemma mul_apply (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) (x : G) :
     (l₁ * l₂) x = l₁.sum fun a₁ b₁ => l₂.sum fun a₂ b₂ => if a₁ + a₂ = x then b₁ * b₂ else 0 := by
+  set_option backward.isDefEq.respectTransparency false in
   simp [mul_def, l₁.sum_apply', smul_def, SortedFinsupp.mapDomain_eq]
   congr
   ext x' y'
@@ -218,11 +219,13 @@ instance instSemiring : Semiring (SortedAddMonoidAlgebra R G cmp) where
   one := single cmp 0 1
   one_mul := by
     convert_to ∀ (a : SortedAddMonoidAlgebra R G cmp), single cmp 0 (1 : R) * a = a
+    set_option backward.isDefEq.respectTransparency false in
     simp [ext_iff, mul_apply, single]
     simp [SortedFinsupp.sum_eq_sum_support, SortedFinsupp.mem_support_iff]
     simp_intro ..
   mul_one := by
     convert_to ∀ (a : SortedAddMonoidAlgebra R G cmp), a * single cmp 0 (1 : R) = a
+    set_option backward.isDefEq.respectTransparency false in
     simp [ext_iff, mul_apply, single]
     simp [SortedFinsupp.sum_eq_sum_support, SortedFinsupp.mem_support_iff]
     simp_intro ..
@@ -238,17 +241,21 @@ instance {R} [CommRing R] [DecidableEq R] :
   zsmul n l := l.mapRange (fun _ ↦ (n * ·)) (by simp)
   neg_add_cancel _ := by
     ext
+    set_option backward.isDefEq.respectTransparency false in
     rw [add_apply, zero_apply, SortedFinsupp.mapRange_apply, neg_add_cancel]
   zsmul_zero' _ := by
     ext
+    set_option backward.isDefEq.respectTransparency false in
     rw [SortedFinsupp.mapRange_apply, zero_apply]
     simp
   zsmul_succ' _ _ := by
     ext
     simp
+    set_option backward.isDefEq.respectTransparency false in
     rw [SortedFinsupp.mapRange_apply, SortedFinsupp.mapRange_apply, add_mul, one_mul]
   zsmul_neg' _ _ := by
     ext
+    set_option backward.isDefEq.respectTransparency false in
     rw [SortedFinsupp.mapRange_apply, SortedFinsupp.mapRange_apply]
     simp
     ring
@@ -262,6 +269,7 @@ def singleZeroRingHom {R} [DecidableEq R] [Semiring R] :
       ext
       simp [singleAddHom, mul_apply, single]
       -- why `simp` and `simp_rw` doesn't work here?
+      set_option backward.isDefEq.respectTransparency false in
       rw [SortedFinsupp.single_apply]
     }
 
@@ -285,7 +293,8 @@ instance : Algebra M (SortedAddMonoidAlgebra R G cmp) where
       SortedFinsupp.sum_eq_sum_support, Algebra.smul_def]
     split_ifs with h
     · simp [h]
-    · simp [SortedFinsupp.mem_support_iff]
+    · set_option backward.isDefEq.respectTransparency false in
+      simp [SortedFinsupp.mem_support_iff]
       simp_intro _
 
 def algEquivAddMonoidAlgebra [DecidableEq G] :

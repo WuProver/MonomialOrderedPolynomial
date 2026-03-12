@@ -127,9 +127,8 @@ instance {R} [CommRing R] {p : MvPolynomial σ R} {n : Int} [p.PolyRepr] :
     (n • p).PolyRepr where
   tree := .mul (.const n) p.toRepr.tree
   tree_eq := by
-    rw [TreeRepr.toMvPolynomial]
-    rw [TreeRepr.toMvPolynomial]
-    rw [p.toRepr.tree_eq]
+    rw [TreeRepr.toMvPolynomial, TreeRepr.toMvPolynomial, p.toRepr.tree_eq]
+    set_option backward.isDefEq.respectTransparency false in
     simp
 
 instance : (0 : MvPolynomial σ R).PolyRepr where

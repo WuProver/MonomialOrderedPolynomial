@@ -27,7 +27,7 @@ def TreeRepr.toSortedAddMonoidAlgebra :
   | pow p n => p.toSortedAddMonoidAlgebra ^ n
   | ref p => p.toSortedAddMonoidAlgebra
 
-def algEquivPolynomial :
+noncomputable def algEquivPolynomial :
     (SortedAddMonoidAlgebra R Nat (compare · · |>.swap)) ≃ₐ[R] (Polynomial R) :=
   AlgEquiv.trans SortedAddMonoidAlgebra.algEquivAddMonoidAlgebra (Polynomial.toFinsuppIsoAlg R).symm
 

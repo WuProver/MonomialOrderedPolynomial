@@ -74,6 +74,7 @@ lemma _root_.MvPolynomial.SortedRepr.coeff_eq (p : MvPolynomial σ R) [inst : p.
 lemma _root_.MvPolynomial.SortedRepr.support_eq (p : MvPolynomial σ R) [inst : p.SortedRepr]  :
     p.support = p.toSortedRepr.repr.support.toFinset.map (SortedFinsupp.lexAddEquiv (σ := σ) (R := Nat) compare) := by
   ext x
+  set_option backward.isDefEq.respectTransparency false in
   simp [MvPolynomial.SortedRepr.coeff_eq, SortedFinsupp.mem_support_iff]
 
 instance (p q : MvPolynomial σ R) [p.SortedRepr] [q.SortedRepr] : (p * q).SortedRepr where
@@ -112,6 +113,7 @@ instance {R} [CommRing R] [DecidableEq R] (p : MvPolynomial σ R) [p.SortedRepr]
     (n • p).SortedRepr where
   repr := n • p.toSortedRepr.repr
   eq := by
+    set_option backward.isDefEq.respectTransparency false in
     simp [p.toSortedRepr.eq]
 
 instance : (0 : MvPolynomial σ R).SortedRepr where
@@ -170,7 +172,7 @@ lemma _root_.Finset.map_pairwise_ge_head?_getD_bot (α : Type*) [LinearOrder α]
 lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq :
     lex.degree p = ofLex (SortedFinsupp.lexOrderIsoLexFinsupp (p'.repr.support.head?.getD ⊥)) := by
   rw [Finset.map_pairwise_ge_head?_getD_bot, degree, MvPolynomial.SortedRepr.support_eq]
-  · simp; rfl
+  · set_option backward.isDefEq.respectTransparency false in simp; rfl
   rw [List.pairwise_iff_forall_sublist]
   have := (SortedRepr.repr p).support_pairwise
   simp [List.pairwise_iff_forall_sublist] at this
@@ -192,7 +194,8 @@ lemma _root_.MvPolynomial.SortedRepr.lex_withBotDegree_eq :
     rfl
   rw [← List.toFinset_nonempty_iff, SortedFinsupp.support_toFinset_eq_toFinsupp_support]
   rw [SortedRepr.repr_eq]
-  simp [SortedRepr.repr_eq, algEquivMvPolynomial.symm_apply_eq, hp]
+  set_option backward.isDefEq.respectTransparency false in
+  simp [algEquivMvPolynomial.symm_apply_eq, hp]
 
 -- todo: optimization
 lemma _root_.MvPolynomial.SortedRepr.lex_leadingCoeff_eq :
@@ -223,7 +226,7 @@ instance : (lex.degree p).SortedRepr where
     simp [p'.lex_degree_eq]
     rfl
 
-instance {R} [CommRing R] [DecidableEq R] [WellFoundedGT σ] {p q : MvPolynomial σ R}
+noncomputable instance {R} [CommRing R] [DecidableEq R] [WellFoundedGT σ] {p q : MvPolynomial σ R}
   [p' : p.SortedRepr] [q' : q.SortedRepr] : (lex.sPolynomial p q).SortedRepr where
   repr :=
     ((monomial (lex.degree q - lex.degree p)) (q'.repr (q'.repr.support.head?.getD ⊥)) * p -

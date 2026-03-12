@@ -94,6 +94,7 @@ def LinearOrder.ofLawfulCmp {R : Type*} (cmp : R → R → Ordering) [LT R] [LE 
     LinearOrder R := {
   PartialOrder.ofLawfulCmp cmp with
   le_total a b := by
+    set_option backward.isDefEq.respectTransparency false in
     simp [← Std.LawfulCmp.isLE_iff_le (cmp := cmp),
       ← Std.OrientedCmp.isGE_iff_isLE (a := a)]
     rcases cmp a b <;> simp
@@ -142,6 +143,5 @@ def LinearOrder.ofLawfulOrd {R : Type*} [LT R] [LE R] [Ord R]
 instance (priority := low) LinearOrder.toLawfulOrd {R : Type*} [LinearOrder R] : Std.LawfulOrd R :=
   {}
 
-set_option trace.Meta.synthInstance true
-#synth LinearOrder Rat
-#synth Std.LawfulOrd Rat
+-- #synth LinearOrder Rat
+-- #synth Std.LawfulOrd Rat

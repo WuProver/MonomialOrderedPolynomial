@@ -35,6 +35,7 @@ open MonomialOrder in
 lemma example6 :
     lex.degree (X 1 + X 2 : MvPolynomial (Fin 2) Int) ≼[lex]
       lex.degree (X 0 + X 1 ^ 2: MvPolynomial (Fin 2) Int) := by
+  set_option backward.isDefEq.respectTransparency false in
   rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
     SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le, ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
   decide +kernel
@@ -55,6 +56,7 @@ lemma withBotDegree_le_of_repr_le {σ R} [LinearOrder σ] [CommSemiring R]
     -- SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le,
     -- ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)
   ]
+  set_option backward.isDefEq.respectTransparency false in
   rwa [← WithBot.map_add', WithBot.map_le_iff]
   · simp
   simp [SortedFinsupp.lexOrderIsoLexFinsupp]
@@ -70,7 +72,8 @@ lemma example7 :
   synthesized from `MvPolynomial`. -/
   use [X 0, X 1 ^ 2, X 2 ^ 3, X 3 ^ 4].get
   split_ands
-  · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
+  · set_option backward.isDefEq.respectTransparency false in
+    simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
     all_goals decide +kernel-- PIT, proof by reflection
   · intro i
     fin_cases i
@@ -93,8 +96,9 @@ lemma example8 :
   rw [IsRemainder.isRemainder_range_fintype, ← exists_and_right]
   use [X 3 ^ 4, 0].get
   split_ands
-  · simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
-    try grind-- PIT, we will rely on reflection
+  · set_option backward.isDefEq.respectTransparency false in
+    simp [Fin.univ_succ, -List.get_eq_getElem, List.get] -- convert sum to add
+    all_goals decide +kernel-- PIT, proof by reflection
   · intro i
     fin_cases i
     all_goals {

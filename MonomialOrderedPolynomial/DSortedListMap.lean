@@ -92,6 +92,7 @@ lemma empty_def : (∅ : DSortedListMap α β cmp) = ⟨[], List.isChain_nil⟩ 
 lemma empty_val : (∅ : DSortedListMap α β cmp).val = [] := rfl
 
 lemma eq_empty_iff (l : DSortedListMap α β cmp) : l = ∅ ↔ l.val = [] := by
+  set_option backward.isDefEq.respectTransparency false in
   rw [empty_def, Subtype.ext_iff]
 
 abbrev cons' (a : α) (b : β a) (l : DSortedListMap α β cmp)
