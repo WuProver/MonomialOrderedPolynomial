@@ -11,7 +11,6 @@ variable {G : Type*}
 def SortedAddMonoidAlgebra (R : Type*) (G : Type*) [Semiring R] (cmp : G → G → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   SortedFinsupp G R cmp
-
 namespace SortedAddMonoidAlgebra
 
 variable {cmp : G → G → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -21,10 +20,10 @@ section Basic
 variable {R : Type*} [Semiring R]
 
 instance [DecidableEq G] [DecidableEq R] : DecidableEq (SortedAddMonoidAlgebra R G cmp) :=
-  fast_instance% inferInstanceAs <| DecidableEq (SortedFinsupp G R cmp)
+  inferInstanceAs <| DecidableEq (SortedFinsupp G R cmp)
 
 instance : Zero (SortedAddMonoidAlgebra R G cmp) :=
-  fast_instance% inferInstanceAs <| Zero (SortedFinsupp G R cmp)
+  inferInstanceAs% Zero (SortedFinsupp G R cmp)
 
 instance instFunLike [DecidableEq G] : FunLike (SortedAddMonoidAlgebra R G cmp) G R :=
   fast_instance% inferInstanceAs <| FunLike (SortedFinsupp G R cmp) G R

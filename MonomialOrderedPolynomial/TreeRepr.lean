@@ -56,6 +56,7 @@ class PolyRepr (p : MvPolynomial σ R) where
 
 section PolyRepr
 
+@[implicit_reducible]
 def toRepr [p_repr : p.PolyRepr] := p_repr
 
 instance {c} : (C c : MvPolynomial σ R).PolyRepr where
@@ -168,6 +169,7 @@ class PolyRepr (p : Polynomial R) where
   tree : TreeRepr Unit R
   tree_eq : tree.toPolynomial = p
 
+@[implicit_reducible]
 def toRepr [p_repr : p.PolyRepr] := p_repr
 
 instance {c} : (C c : Polynomial R).PolyRepr where

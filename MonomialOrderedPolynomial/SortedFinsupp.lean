@@ -41,11 +41,11 @@ instance [DecidableEq σ] [DecidableEq R] : DecidableEq (SortedFinsupp σ R cmp)
   inferInstanceAs <| DecidableEq <| DSortedFinsupp σ (fun _ ↦ R) cmp
 
 instance : Zero (SortedFinsupp σ R cmp) :=
-  inferInstanceAs <| Zero <| DSortedFinsupp σ (fun _ ↦ R) cmp
+  inferInstanceAs% Zero <| DSortedFinsupp σ (fun _ ↦ R) cmp
 
 @[inline]
 instance instFunLike [DecidableEq σ] : FunLike (SortedFinsupp σ R cmp) σ R :=
-  inferInstanceAs <| FunLike (DSortedFinsupp σ (fun _ ↦ R) cmp) σ R
+  inferInstanceAs% FunLike (DSortedFinsupp σ (fun _ ↦ R) cmp) σ R
 
 lemma ext_iff [DecidableEq σ] {l1 l2 : SortedFinsupp σ R cmp} :
     l1 = l2 ↔ ∀ s : σ, l1 s = l2 s := DSortedFinsupp.ext_iff
@@ -276,7 +276,7 @@ section Add
 
 variable {R : Type*} [AddZeroClass R] [∀ a : R, Decidable (a = 0)]
 
-instance instAdd : Add (SortedFinsupp σ R cmp) := DSortedFinsupp.instAdd
+instance instAdd : Add (SortedFinsupp σ R cmp) := fast_instance% DSortedFinsupp.instAdd
 
 @[simp]
 lemma add_apply [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) (x : σ) :
@@ -452,7 +452,7 @@ section AddCommMonoid
 variable {R} [AddCommMonoid R] [∀ a : R, Decidable (a = 0)]
 
 instance instAddCommMonoid [DecidableEq σ] : AddCommMonoid (SortedFinsupp σ R cmp) :=
-  DFunLike.coe_injective.addCommMonoid _ coe_zero coe_add (by simp [coe_nat_smul])
+  fast_instance% DFunLike.coe_injective.addCommMonoid _ coe_zero coe_add (by simp [coe_nat_smul])
 
 end AddCommMonoid
 

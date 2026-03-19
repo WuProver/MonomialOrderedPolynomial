@@ -40,8 +40,6 @@ def DSortedListMap α (β : α → Type*)
     (cmp : α → α → Ordering) [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
   { l : List ((k : α) × β k) // l.IsChain (fun (a b : (k : α) × β k ) ↦ cmp a.fst b.fst = .lt) }
 
-#check Finsupp
-
 namespace DSortedListMap
 
 variable {α : Type*} {β : α → Type*}
@@ -296,6 +294,7 @@ lemma find?_eq_get?_map [DecidableEq α] (l : DSortedListMap α β cmp) (a : α)
       simp at heq
       simpa [heq]
 
+@[implicit_reducible]
 def instFunLike [DecidableEq α] : DFunLike (DSortedListMap α β cmp) α (Option <| β ·) where
   coe := get?
   coe_injective' := by
@@ -429,6 +428,7 @@ instance : Std.Total (α := α) (cmp · · ≠ .gt) := by
   exact inferInstance
 
 variable (cmp) in
+@[implicit_reducible]
 def linearOrder [DecidableRel (cmp · · |>.isLE)] : LinearOrder α where
   le := (cmp · · |>.isLE)
   le_refl _ := Std.ReflCmp.isLE_rfl

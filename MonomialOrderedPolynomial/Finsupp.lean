@@ -13,6 +13,7 @@ class _root_.Finsupp.SortedRepr (f : σ →₀ R) where
   repr : SortedFinsupp σ R compare
   eq : repr.toFinsupp = f
 
+@[implicit_reducible]
 def _root_.Finsupp.toSortedRepr (f : σ →₀ R) [inst : f.SortedRepr] :
     Finsupp.SortedRepr f := inst
 

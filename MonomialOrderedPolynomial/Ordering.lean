@@ -44,6 +44,7 @@ instance {G} {cmp : G → G → Ordering} [Add G]
     simp
     exact fact.elim
 
+@[implicit_reducible]
 def PartialOrder.ofLawfulCmp {R : Type*} (cmp : R → R → Ordering) [LT R] [LE R]
     [Std.LawfulCmp cmp] :
     PartialOrder R where
@@ -61,10 +62,12 @@ def PartialOrder.ofLawfulCmp {R : Type*} (cmp : R → R → Ordering) [LT R] [LE
       Std.OrientedCmp.gt_iff_lt]
     simp_intro ..
 
+@[implicit_reducible]
 def PartialOrder.ofLawfulOrd {R : Type*} [LT R] [LE R] [Ord R]
     [Std.LawfulOrd R] : PartialOrder R :=
   PartialOrder.ofLawfulCmp compare
 
+@[implicit_reducible]
 -- open Classical in
 def LinearOrder.ofLawfulCmp {R : Type*} (cmp : R → R → Ordering) [LT R] [LE R]
     [inst : Std.LawfulCmp cmp]
@@ -121,6 +124,7 @@ def LinearOrder.ofLawfulCmp {R : Type*} (cmp : R → R → Ordering) [LT R] [LE 
   --     · rfl
 }
 
+@[implicit_reducible]
 def LinearOrder.ofLawfulOrd {R : Type*} [LT R] [LE R] [Ord R]
     [Std.LawfulOrd R]
     (instDecidableLE : DecidableLE R := by
