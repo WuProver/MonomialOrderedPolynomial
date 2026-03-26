@@ -223,9 +223,7 @@ a function mapping `a` to `b` and others to zero.
 -/
 def single (x : σ) (y : R x) [Decidable (y = 0)] : DSortedFinsupp σ R cmp :=
   if h : y = 0 then 0 else
-    mk' (DSortedListMap.single cmp x y) (by
-      simp [DSortedListMap.single_get?]
-      aesop)
+    mk' (DSortedListMap.single cmp x y) (by grind [DSortedListMap.single_get?])
 
 lemma single_apply [DecidableEq σ] (a : σ) (b : R a) [Decidable (b = 0)] (c : σ) :
     (single cmp a b) c = if h : a = c then h ▸ b else 0 := by
@@ -309,6 +307,11 @@ theorem get?_val_eq_some_iff [DecidableEq σ] {l : DSortedFinsupp σ R cmp} {x :
     apply Option.eq_some_get_of_getD_ne_dflt' h1 at h2
     exact h2
 
+@[simp]
+theorem get_val_eq_apply [DecidableEq σ] {l : DSortedFinsupp σ R cmp} {x : σ}
+    (h) : l.val.get x h = l x := by
+  simpa [apply_def, l.val.get_eq_get?_get] using Option.get_eq_getD ..
+
 -- theorem apply_eq_iff_of_apply_ne_zero' [DecidableEq σ] {l : DSortedFinsupp σ R cmp} {x : σ} (y : R)
 --     (h : y ≠ 0) : l x = y ↔ (x, y) ∈ l.val := by
 --   constructor
@@ -353,6 +356,15 @@ lemma mem_support_iff [DecidableEq σ] (l : DSortedFinsupp σ R cmp) (a : σ) :
 
 -- lemma support_finite [DecidableEq σ] (l : DSortedFinsupp σ R cmp) :
 --     (Function.support l).Finite := by simp [← toFinset_support]
+
+@[simp] def single_support (a : σ) (b : R a) [Decidable (b = 0)] :
+    (single cmp a b).support = if b = 0 then [] else [a] := by
+  split_ifs
+  · simp [*, single]
+  · simp [single, support, *]
+
+lemma support_nodup (l : DSortedFinsupp σ R cmp) :
+    l.support.Nodup := l.val.keys_nodup
 
 end Basic
 
@@ -552,6 +564,10 @@ variable (l₁ l₂ : DSortedFinsupp σ R cmp)
 
 #check Finsupp.zipWith_apply
 
+abbrev mergeWith.go (l₁ l₂ : List (Sigma R)) : List (Sigma R) :=
+  DSortedListMap.mergeWith.go (cmp := cmp)
+    (let a := mergeFn · · ·; if a = 0 then none else some a) l₁ l₂
+
 /--
 merge `l₁ l₂ : DSortedFinsupp` with f.
 -/
@@ -575,6 +591,11 @@ def mergeWith : DSortedFinsupp σ R cmp :=
         simp [ha'] at ha
       · simp at ha
   ⟩
+
+lemma mergeWith_def_go : l₁.mergeWith mergeFn l₂ =
+  ⟨⟨mergeWith.go mergeFn l₁.val.val l₂.val.val,
+    l₁.mergeWith mergeFn l₂ |>.val.prop⟩,
+    l₁.mergeWith mergeFn l₂ |>.prop⟩ := rfl
 
 @[simp]
 lemma mergeWith_apply [DecidableEq σ] (a : σ)
@@ -631,7 +652,9 @@ def addEquivDFinsupp [DecidableEq σ] : DSortedFinsupp σ R cmp ≃+ (Π₀ k : 
 private def example2 : DSortedFinsupp Int (fun _ ↦ Int) compare :=
   ⟨show DSortedListMap Int (fun _ ↦ Int) compare from ⟨[⟨1, 5⟩, ⟨3, 4⟩], by decide⟩, by decide⟩
 
-#reduce example1 + example2
+instance : AddZeroClass (DSortedFinsupp σ R cmp) where
+  zero_add l := by classical ext; simp
+  add_zero l := by classical ext; simp
 
 end Add
 
@@ -667,34 +690,68 @@ lemma mapRange_apply [DecidableEq σ] (hf : ∀ i, f i 0 = 0) (l : DSortedFinsup
 
 end mapRange
 
+section foldl
+
+variable {γ} (f : γ → (a : σ) → R a → γ) (init : γ) (l : DSortedFinsupp σ R cmp)
+
+def foldl : γ := l.val.foldl f init
+
+lemma foldl_eq_foldl_support [DecidableEq σ] :
+    l.foldl f init = l.support.foldl (fun g a ↦ f g a (l a)) init := by
+  simp [foldl, support, l.val.foldl_eq_foldl_keys]
+
+end foldl
+
+section foldr
+
+variable {γ} (f : (a : σ) → R a → γ → γ) (init : γ) (l : DSortedFinsupp σ R cmp)
+
+def foldr : γ := l.val.foldr f init
+
+lemma foldr_eq_foldr_keys [DecidableEq σ] :
+    l.foldr f init = l.support.foldr (fun a ↦ f a (l a)) init := by
+  simp [foldr, support, l.val.foldr_eq_foldr_keys]
+
+end foldr
+
 section SumProd
 
 variable {N : Type*} [CommMonoid N] [DecidableEq σ]
 
+variable {σ'} {R' : σ' → Type*} [∀ k : σ', AddZeroClass (R' k)]
+variable [∀ k : σ', ∀ a : R' k, Decidable (a = 0)]
+variable {cmp' : σ' → σ' → Ordering} [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+variable (f : σ → σ') (hf : ∀ i j, cmp i j = cmp' (f i) (f j))
+
 @[to_additive]
 def prod [∀ i : σ, DecidableEq (R i)] (l : DSortedFinsupp σ R cmp)
     (g : (k : σ) → R k → N) : N :=
-  ∏ a ∈ l.val.val.toFinset, g a.1 a.2
+  l.val.val.map (fun a ↦ g a.1 a.2) |>.prod
 
-@[simp]
-theorem _root_.List.toFinset_map {α β} [DecidableEq α] [DecidableEq β] {f : α ↪ β} (s : List α) :
-    (s.map f).toFinset = s.toFinset.map f := by
-  simp [← Finset.coe_inj]
-  ext x
-  simp
+-- variable {R' : σ' → Type*} [∀ k : σ', AddZeroClass (R' k)]
+--   [∀ k : σ', ∀ a : R' k, Decidable (a = 0)] in
+-- def sum' [∀ i : σ, DecidableEq (R i)] (l : DSortedFinsupp σ R cmp)
+--     (g : (k : σ) → R k → List (Sigma R')) :
+--     DSortedFinsupp σ' R' cmp' :=
+--   ⟨⟨l.val.val.foldr
+--     (fun a ↦ mergeWith.go (R := R') (cmp := cmp') (fun _ ↦ HAdd.hAdd) (g a.1 a.2)) [],
+--     -- by
+--     --   convert (l.val.val.foldr (fun a i ↦ g a.1 a.2 + i) 0).val.prop
+--     --   simp [add_def, zero_def, mergeWith_def_go]
+--       sorry
+--     ⟩, sorry⟩
 
-@[simp]
-theorem _root_.List.coe_toFinset_map {α β} [DecidableEq α] [DecidableEq β] {f : α → β}
-    (s : List α) :
-    (s.map f).toFinset = f '' s.toFinset := by
-  ext x
-  simp
+@[to_additive]
+lemma prod_def [∀ i : σ, DecidableEq (R i)] (l : DSortedFinsupp σ R cmp)
+    (g : (k : σ) → R k → N) :
+    l.prod g = ∏ a ∈ l.val.val.toFinset, g a.1 a.2 := by
+  rw [prod, List.prod_toFinset _ l.val.pairwise.nodup]
 
 @[to_additive]
 def prod_eq_prod_support [∀ i : σ, DecidableEq (R i)]
     (l : DSortedFinsupp σ R cmp) (g : (k : σ) → R k → N) :
     l.prod g = ∏ a ∈ l.support.toFinset, g a (l a) := by
-  unfold prod
+  rw [prod_def]
   have := Finset.prod_map l.support.toFinset
     (⟨fun x ↦ show Sigma R from ⟨x, l x⟩, by simp [Function.Injective]⟩)
     (fun a ↦ g a.1 a.2)

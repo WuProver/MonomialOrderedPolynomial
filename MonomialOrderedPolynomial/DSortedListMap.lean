@@ -50,7 +50,6 @@ section Basic
 instance [DecidableEq α] [∀ a : α, DecidableEq (β a)] : DecidableEq (DSortedListMap α β cmp) :=
   Subtype.instDecidableEq
 
-@[inline]
 abbrev toList (l : DSortedListMap α β cmp) := l.val
 
 variable (cmp) in
@@ -72,6 +71,10 @@ instance : Std.Antisymm (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
     simp [h'] at h
 
 instance : Std.Irrefl (α := (k : α) × β k) (cmp ·.1 ·.1 = .lt) where
+  irrefl a := by
+    simp [Std.ReflCmp.compare_self]
+
+instance : Std.Irrefl (α := α) (cmp · · = .lt) where
   irrefl a := by
     simp [Std.ReflCmp.compare_self]
 
@@ -162,6 +165,7 @@ lemma mem_iff' (l : DSortedListMap α β cmp) (a : α) (b : β a) [∀ x, Decida
     ⟨a, b⟩ ∈ l.val ↔ l.val.find? (·.1 = a) = some ⟨a, b⟩ :=
   l.find?_left_eq_some_iff' ⟨a, b⟩ |>.symm
 
+@[grind .]
 lemma eq_of_mem' {l : DSortedListMap α β cmp} {a b1 b2}
     (h1 : ⟨a, b1⟩ ∈ l.val) (h2 : ⟨a, b2⟩ ∈ l.val) : b1 = b2 := by
   classical
@@ -169,6 +173,7 @@ lemma eq_of_mem' {l : DSortedListMap α β cmp} {a b1 b2}
   simp [h1] at h2
   exact h2
 
+@[grind .]
 lemma eq_of_mem {l : DSortedListMap α β cmp} {a1 a2} (h : a1.1 = a2.1)
     (h1 : a1 ∈ l.val) (h2 : a2 ∈ l.val) : a1 = a2 := by
   classical
@@ -341,6 +346,10 @@ theorem get?_eq_none_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α
     · exact h''.symm
     · simp
 
+theorem get?_ne_none_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
+    l.get? a ≠ none ↔ ∃ b, ⟨a, b⟩ ∈ l.val := by
+  simp [get?_eq_none_iff']
+
 lemma get?_eq_none_of_cmp_eq_lt [DecidableEq α] (l : DSortedListMap α β cmp) {i a}
     (h : l.val.head? = some a) (h' : cmp i a.1 = .lt) : l.get? i = none := by
   simp [get?_eq_none_iff]
@@ -359,6 +368,13 @@ theorem get?_eq_some_iff_mem_val' [DecidableEq α] (l : DSortedListMap α β cmp
 
 theorem get?_eq_some_iff_mem_val [DecidableEq α] (l : DSortedListMap α β cmp) (a : (k : α) × β k) :
     l.get? a.1 = some a.2 ↔ a ∈ l.val := get?_eq_some_iff_mem_val' l a.1 a.2
+
+@[simp]
+theorem prod_get?_get_mem_val [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (h) :
+    ⟨a, l.get? a |>.get h⟩ ∈ l.val := by
+  rw [Option.isSome_iff_exists] at h
+  obtain ⟨b, hb⟩ := h
+  simp [hb, get?_eq_some_iff_mem_val' .. |>.mp hb]
 
 theorem get?_eq_some_iff_find?_eq_some [DecidableEq α] (l : DSortedListMap α β cmp)
     (a : α) (b : β a) : l.get? a = some b ↔ l.val.find? (·.1 = a) = some ⟨a, b⟩ := by
@@ -387,10 +403,27 @@ keys of `a : DSortedListMap`, sorted w.r.t. `cmp`.
 def keys (l : DSortedListMap α β cmp) : List α := l.val.map (·.1)
 
 @[simp]
-def keys_zero : (∅ : DSortedListMap α β cmp).keys = ∅ := rfl
+lemma keys_zero : (∅ : DSortedListMap α β cmp).keys = ∅ := rfl
 
 lemma keys_pairwise (l : DSortedListMap α β cmp) : l.keys.Pairwise (cmp · · = .lt) :=
   List.pairwise_map.mpr l.pairwise
+
+lemma keys_nodup (l : DSortedListMap α β cmp) : l.keys.Nodup :=
+  l.keys_pairwise.nodup
+
+@[simp]
+lemma keys_cons (a : Sigma β) (l : DSortedListMap α β cmp) (h) :
+    keys (α := α) (β := β) (cmp := cmp) ⟨a :: l.val, h⟩ = a.1 :: l.keys := by
+  simp [keys]
+
+@[simp]
+lemma keys_cons' (a : Sigma β) (l) (h) :
+    keys (α := α) (β := β) (cmp := cmp) ⟨a :: l, h⟩ =
+      a.1 :: keys ⟨l, h.of_cons⟩ := by
+  simp [keys]
+
+@[simp] def single_keys (a : α) (b : β a) :
+    (single cmp a b).keys = [a] := rfl
 
 lemma mem_keys_iff [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) :
     a ∈ l.keys ↔ l.get? a ≠ none := by
@@ -459,7 +492,7 @@ def onFinset (f : (k : α) → Option <| β k) (s : Finset α) :
       simp_intro ..
   ⟩
 
-def get?_onFinset [DecidableEq α] (f : (k : α) → Option <| β k) (s) (x) :
+lemma get?_onFinset [DecidableEq α] (f : (k : α) → Option <| β k) (s) (x) :
     (onFinset cmp f s).get? x = if x ∈ s then f x else none := by
   split_ifs with hx
   · by_cases hx' : f x = none
@@ -476,7 +509,7 @@ def get?_onFinset [DecidableEq α] (f : (k : α) → Option <| β k) (s) (x) :
     rw [h'] at h
     simp [h] at hx
 
-def get?_onFinset' [DecidableEq α] {f : (k : α) → Option <| β k} {s}
+lemma get?_onFinset' [DecidableEq α] {f : (k : α) → Option <| β k} {s}
     (hf : ∀ x, f x ≠ none → x ∈ s) :
     (onFinset cmp f s).get? = f := by
   funext x
@@ -486,13 +519,50 @@ def get?_onFinset' [DecidableEq α] {f : (k : α) → Option <| β k} {s}
   simp [h] at h'
   exact h'.symm
 
+-- todo: generalize
+def get [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (ha : a ∈ l.keys) : β a :=
+    (List.findSome? (fun i ↦ if h : i.1 = a then some (h ▸ i.2) else none) l.val).get <| by
+  classical
+  simp [← get?_ne_none_iff, mem_keys_iff .. |>.mp ha]
+
+lemma get_eq_get?_get [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (ha : a ∈ l.keys) :
+    l.get a ha = (l.get? a).get
+      (l.get? a |>.isSome_iff_ne_none.mpr <| mem_keys_iff .. |>.mp ha) := rfl
+
+lemma some_get_eq_get? [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (ha : a ∈ l.keys) :
+    some (l.get a ha) = l.get? a := by
+  simp [get_eq_get?_get]
+
+@[simp]
+theorem prod_get_mem_val [DecidableEq α] (l : DSortedListMap α β cmp) (a : α) (h) :
+    ⟨a, l.get a h⟩ ∈ l.val := by
+  simp [get_eq_get?_get]
+
+lemma val_eq_map_keys [DecidableEq α] (l : DSortedListMap α β cmp) :
+    l.val = l.keys.attach.map fun x ↦ ⟨x, l.get x.val x.prop⟩ := by
+  induction l using induction' with
+  | empty => simp
+  | cons a b l h hl =>
+    conv in List.map _ _=>
+      simp
+    rw! [keys_cons', l.eta]
+    simp [get_eq_get?_get, cons_get?]
+    nth_rw 1 [hl]
+    simp
+    intro a' h'
+    split_ifs with h''
+    · specialize h a' (l.get a' h') (by simp)
+      simp [h'', Std.ReflCmp.compare_self] at h
+    simp [get_eq_get?_get]
+
 end Basic
 
 section mergeWith
 
 variable (mergeFn : (a : α) → β a → β a → Option (β a))
 
-def mergeFn' (a : (k : α) × β k) (b : (k : α) × β k) (h : cmp a.1 b.1 = .eq) :
+@[inline]
+abbrev mergeFn' (a : (k : α) × β k) (b : (k : α) × β k) (h : cmp a.1 b.1 = .eq) :
     Option ((k : α) × β k) :=
   mergeFn a.1 a.2 ((Std.LawfulEqCmp.eq_of_compare h).symm ▸ b.2) |>.map (⟨a.1, ·⟩)
 
@@ -506,11 +576,15 @@ instance : Fact <|
     simp [- Sigma.eta] at ha'
     exact Std.ReflCmp.cmp_eq_of_eq ha'.2.1
 
+abbrev mergeWith.go (l₁ l₂ : List (Sigma β)) : List (Sigma β) :=
+  List.mergeWithByFuel l₁ l₂ (cmp ·.1 ·.1) (mergeFn' mergeFn)
+
 /--
 merge `l₁ l₂ : DSortedListMap` with f
 -/
 def mergeWith (l₁ l₂ : DSortedListMap α β cmp) : DSortedListMap α β cmp :=
-  ⟨List.mergeWithByFuel l₁.val l₂.val (cmp ·.1 ·.1) (mergeFn' mergeFn), by
+  ⟨mergeWith.go mergeFn l₁.val l₂.val, by
+    unfold mergeWith.go
     rw [List.isChain_iff_pairwise, List.mergeWithByFuel_eq]
     apply List.mergeWith_pairwise_of_pairwise
     · rw [← List.isChain_iff_pairwise]; exact l₁.property
@@ -572,16 +646,13 @@ lemma mergeWith_get? [DecidableEq α] (l₁ l₂ : DSortedListMap α β cmp) (x 
       use x, y₁
       simp [heq]
       use x, y₂
-      simp [heq_1, mergeFn', h]
+      simp [heq_1, h]
     · simp [get?_eq_some_iff_mem_val',
         mergeWith_def, List.mem_mergeWith_iff l₁.pairwise l₂.pairwise,
         Std.LawfulEqCmp.compare_eq_iff_eq]
       simp [show ∃ y, ⟨x, y⟩ ∈ l₁.val from ⟨y₁, heq⟩,
         show ∃ y, ⟨x, y⟩ ∈ l₂.val from ⟨y₂, heq_1⟩]
-      intro x₁ hx₁ hxx₁ x₂ hx₂ hxx₂
-      have := eq_of_mem hxx₁ heq hx₁
-      simp [← eq_of_mem hxx₁ heq hx₁, ← eq_of_mem hxx₂ heq_1 hx₂]
-      simp [mergeFn', h]
+      grind
   · expose_names
     simp [get?_eq_none_iff] at heq heq_1
     simp [get?_eq_none_iff',
@@ -605,12 +676,15 @@ section filterMap
 
 variable {β₁ : α → Type*}
 
+abbrev filterMap.go (f : (k : α) → (β k) → Option (β₁ k)) (l : List (Sigma β)) :
+    List (Sigma β₁) := l.filterMap (fun ⟨a, b⟩ ↦ f a b |>.map (⟨a, ·⟩))
+
 /--
 update values with `f`, and remove those on which `f` is `none`.
 -/
 def filterMap (f : (k : α) → (β k) → Option (β₁ k)) (l : DSortedListMap α β cmp) :
     DSortedListMap α β₁ cmp :=
-  ⟨l.val.filterMap (fun ⟨a, b⟩ ↦ f a b |>.map (⟨a, ·⟩)), by
+  ⟨filterMap.go f l.val, by
     simp [List.isChain_iff_pairwise, List.pairwise_filterMap]
     rw [List.pairwise_iff_get]
     intro i j h hi hi' hj hj'
@@ -640,6 +714,91 @@ lemma filterMap_get? [DecidableEq α] (f : (k : α) → (β k) → Option (β₁
       simp [h, hf]
 
 end filterMap
+
+section map
+
+variable {α'} {β' : α' → Type*} {cmp' : α' → α' → Ordering}
+variable [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+variable {f : (i : α) → α'} (f' : (i : α) → β i → β' (f i))
+variable (hf : ∀ i j, cmp i j = cmp' (f i) (f j))
+
+abbrev map.go (l : List (Sigma β)) : List (Sigma β') :=
+  l.map (fun a ↦ ⟨f a.1, f' a.1 a.2⟩)
+
+def map (l : DSortedListMap α β cmp) : DSortedListMap α' β' cmp' :=
+  ⟨map.go f' l.val,
+    by
+      rw [List.isChain_iff_pairwise, List.pairwise_map]
+      simp [← hf, ← List.isChain_iff_pairwise]
+      exact l.2⟩
+
+lemma map_val (l : DSortedListMap α β cmp) :
+    (l.map f' hf).val = map.go f' l.val := rfl
+
+lemma map_keys (l : DSortedListMap α β cmp) :
+    (l.map f' hf).keys = l.keys.map f := by
+  simp [map, keys]
+
+lemma mem_map_keys (l : DSortedListMap α β cmp) (x) :
+    f x ∈ (l.map f' hf).keys ↔ x ∈ l.keys := by
+  rw [map_keys, l.keys.mem_map_of_injective]
+  intro i j h
+  simpa using Eq.trans (hf i j) (Std.ReflCmp.cmp_eq_of_eq h)
+
+lemma mem_map_keys' (l : DSortedListMap α β cmp) (x') :
+    x' ∈ (l.map f' hf).keys ↔
+      ∃ x, x ∈ l.keys ∧ f x = x' := by
+  rw [map_keys, l.keys.mem_map]
+
+@[simp]
+lemma map_apply [DecidableEq α] [DecidableEq α'] (x : α) (l : DSortedListMap α β cmp) :
+    (l.map f' hf).get? (f x) = (l.get? x).map (f' x) := by
+  by_cases hx : x ∈ l.keys
+  · rw [mem_keys_iff, l.get?_ne_none_iff] at hx
+    obtain ⟨y, hy⟩ := hx
+    have := l.map_val f' hf
+    unfold map.go at this
+    have := this ▸ List.mem_map_of_mem hy
+    simp [get?_eq_of_mem hy, get?_eq_of_mem this]
+  rwa [l.mem_keys_iff x |>.not_left.mp hx, Option.map_none,
+    ← mem_keys_iff .. |>.not_left, map_keys,
+    l.keys.mem_map_of_injective]
+  intro i j h
+  simpa using Eq.trans (hf i j) (Std.ReflCmp.cmp_eq_of_eq h)
+
+@[simp]
+lemma mapKey_apply_eq_zero_of_notin_range [DecidableEq α] [DecidableEq α']
+    (x' : α') (hf' : ¬ x' ∈ Set.range f) (l : DSortedListMap α β cmp) :
+    (l.map f' hf).get? x' = none := by
+  simp only [Set.mem_range, not_exists] at hf'
+  simp [← mem_keys_iff .. |>.not_left, map_keys, l.keys.mem_map, hf']
+
+end map
+
+section foldl
+
+variable {γ} (f : γ → (a : α) → β a → γ) (init : γ) (l : DSortedListMap α β cmp)
+
+def foldl : γ := l.val.foldl (fun g a ↦ f g a.1 a.2) init
+
+lemma foldl_eq_foldl_keys [DecidableEq α] :
+    l.foldl f init = l.keys.attach.foldl (fun g a ↦ f g a.val (l.get a.val a.prop)) init := by
+  simp [foldl, l.val_eq_map_keys, List.foldl_map]
+
+end foldl
+
+section foldr
+
+variable {γ} (f : (a : α) → β a → γ → γ) (init : γ) (l : DSortedListMap α β cmp)
+
+def foldr : γ := l.val.foldr (fun a ↦ f a.1 a.2) init
+
+lemma foldr_eq_foldr_keys [DecidableEq α] :
+    l.foldr f init = l.keys.attach.foldr (fun a ↦ f a.val (l.get a.val a.prop)) init := by
+  simp [foldr, l.val_eq_map_keys, List.foldr_map]
+
+end foldr
+
 
 -- #check Std.TreeMap.map
 

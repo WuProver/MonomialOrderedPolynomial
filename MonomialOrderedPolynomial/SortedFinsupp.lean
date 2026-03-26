@@ -102,7 +102,7 @@ lemma toFinset_support [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
   ext x
   simp [mem_support_iff]
 
--- todo: should be generalized to DSortedFinsupp
+-- todo: should be generalized to DSortedFinsupp. done
 @[simp]
 def single_support (a : σ) (b : R) [Decidable (b = 0)] :
     (single cmp a b).support = if b = 0 then [] else [a] := by
@@ -117,7 +117,7 @@ def single_support (a : σ) (b : R) [Decidable (b = 0)] :
 lemma support_finite [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     (Function.support l).Finite := by simp [← toFinset_support]
 
--- todo: backport to underlying structures.
+-- todo: backport to underlying structures. done
 lemma support_nodup [DecidableEq σ] (l : SortedFinsupp σ R cmp) :
     l.support.Nodup := by
   -- to generalize into a pairwise lemma about subrelation.
@@ -458,25 +458,25 @@ end AddCommMonoid
 
 section SumProd
 
-variable {N R : Type*} [CommMonoid N] [DecidableEq σ] [Zero R] [DecidableEq R]
+variable {N R : Type*} [CommMonoid N] [Zero R] [DecidableEq R]
 
 @[to_additive]
 def prod (l : SortedFinsupp σ R cmp)
     (g : σ → R → N) : N := DSortedFinsupp.prod l g
 
 @[to_additive]
-def prod_eq_prod_support
+def prod_eq_prod_support [DecidableEq σ]
     (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
     l.prod g = ∏ a ∈ l.support.toFinset, g a (l a) := DSortedFinsupp.prod_eq_prod_support ..
 
 @[to_additive]
-def prod_eq_toFinsupp_prod (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
+def prod_eq_toFinsupp_prod [DecidableEq σ] (l : SortedFinsupp σ R cmp) (g : σ → R → N) :
     l.prod g = (toFinsupp l).prod g := by
   simp [prod_eq_prod_support, support_toFinset_eq_toFinsupp_support, Finsupp.prod]
 
 -- todo: should be generalized later
 @[to_additive (attr := simp)]
-def single_prod (g : σ → R → N)
+lemma single_prod (g : σ → R → N)
     (hg : ∀ i : σ, g i 0 = 1)
     (a : σ) (b : R) :
     (single cmp a b).prod g = g a b := by
@@ -485,8 +485,6 @@ def single_prod (g : σ → R → N)
   split_ifs
   · simp [*]
   · simp
-
-#check single_sum
 
 -- todo: should be generalized to `DSortedFinsupp` later
 @[simp]
@@ -507,10 +505,11 @@ lemma prod_apply
     (l : SortedFinsupp σ R cmp) (g : σ → R → R')
     {F} [FunLike F R' R''] [MonoidHomClass F R' R''] (f : F) :
     f (l.prod g) = l.prod (f <| g · ·) := by
+  classical
   simp only [prod_eq_prod_support, map_prod]
 
 variable (cmp) in
-def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)]
+def addMonoidHom (R) [AddCommMonoid R] [(a : R) → Decidable (a = 0)] [DecidableEq σ]
     (x : σ) :
     AddMonoidHom (SortedFinsupp σ R cmp) R where
   toFun l := l x
@@ -660,8 +659,6 @@ variable {R' : Type*} [Zero R']
 variable {σ' R} [Zero R] {cmp' : σ' → σ' → Ordering} [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
 variable (f₁ : σ → σ') (hf₁ : ∀ i j, cmp i j = cmp' (f₁ i) (f₁ j))
 variable (f₂ : σ → R → R') (hf₂ : ∀ i, f₂ i 0 = 0) [∀ i : σ, ∀ x : R, Decidable (f₂ i x = 0)]
-
-#check Function.comp
 
 -- do the same work as the composition of `mapDomain` and `mapRange`, but should be faster.
 -- low priority.

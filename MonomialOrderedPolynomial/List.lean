@@ -625,4 +625,23 @@ lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ord
   · simp at heq heq_1
     simp [not_exists_and.mpr heq, not_exists_and.mpr heq_1]
 
+lemma unzip_injective {α β} :
+    Function.Injective (List.unzip (α := α) (β := β)) := by
+  intro l j h
+  rw [← l.zip_unzip, ← j.zip_unzip, h]
+
+@[simp]
+theorem toFinset_map {α β} [DecidableEq α] [DecidableEq β] {f : α ↪ β} (s : List α) :
+    (s.map f).toFinset = s.toFinset.map f := by
+  simp [← Finset.coe_inj]
+  ext x
+  simp
+
+@[simp]
+theorem coe_toFinset_map {α β} [DecidableEq α] [DecidableEq β] {f : α → β}
+    (s : List α) :
+    (s.map f).toFinset = f '' s.toFinset := by
+  ext x
+  simp
+
 end
