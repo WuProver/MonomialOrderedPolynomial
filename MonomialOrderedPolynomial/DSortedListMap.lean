@@ -467,7 +467,7 @@ def linearOrder [DecidableRel (cmp · · |>.isLE)] : LinearOrder α where
   le_refl _ := Std.ReflCmp.isLE_rfl
   le_trans _ _ _ a b := Std.TransCmp.isLE_trans a b
   le_antisymm _ _ h h' := Std.LawfulEqCmp.eq_of_compare (Std.OrientedCmp.isLE_antisymm h h')
-  le_total := (inferInstanceAs <| Std.Total (α := α) (cmp · · |>.isLE)).total
+  le_total := (inferInstance : Std.Total (α := α) (cmp · · |>.isLE)).total
   toDecidableLE := inferInstance
 
 variable (cmp) in
