@@ -152,7 +152,7 @@ Equality:
 ```lean
 open MvPolynomial in
 example : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0 * X 1 + X 0 ^ 2) ^ 5) := by
-  rw [MvPolynomial.PolyRepr.eq_iff'] -- this line is optional
+  rw [MvPolynomial.SortedRepr.eq_iff'] -- this line is optional
   decide +kernel
 ```
 
@@ -160,9 +160,29 @@ Disequality:
 ```lean
 open MvPolynomial in
 example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
-  rw [ne_eq, MvPolynomial.PolyRepr.eq_iff'] -- this line is optional
+  rw [ne_eq, MvPolynomial.SortedRepr.eq_iff'] -- this line is optional
   decide +kernel
 ```
+
+Extracting degrees and comparing them, w.r.t. lexicographic order:
+```lean
+example :
+    lex.degree (X 1 + X 2 : MvPolynomial (Fin 3) Int) ≼[lex]
+      lex.degree (X 0 + X 1 ^ 2: MvPolynomial (Fin 3    ) Int) := by
+  rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
+    SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le, ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
+  decide +kernel
+```
+
+Extracting leading coefficient:
+```lean
+example :
+    lex.leadingCoeff (3 * X 1 + X 2 : MvPolynomial (Fin 3) Int) = 3 := by
+  rw [MvPolynomial.SortedRepr.lex_leadingCoeff_eq]
+  decide +kernel
+```
+
+
 
 ## WIP
 
