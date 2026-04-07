@@ -9,6 +9,12 @@ lemma example1 : (X 0 + 1 : MvPolynomial Nat Int) ^ 20 =
   rw [MvPolynomial.SortedRepr.eq_iff']
   decide +kernel
 
+open MvPolynomial in
+example :
+    (X 0 (R := ℚ)) + X 1 ≠ 2 * X 0 + 2 * X 1 := by
+  rw [ne_eq, MvPolynomial.SortedRepr.eq_iff']
+  decide +kernel
+
 set_option profiler true
 
 lemma example2 : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
@@ -33,8 +39,8 @@ lemma example5 : ((X 0 + X 1) ^ 10 : MvPolynomial Nat Nat) = ((X 1 ^ 2 + 2 * X 0
 
 open MonomialOrder in
 lemma example6 :
-    lex.degree (X 1 + X 2 : MvPolynomial (Fin 2) Int) ≼[lex]
-      lex.degree (X 0 + X 1 ^ 2: MvPolynomial (Fin 2) Int) := by
+    lex.degree (X 1 + X 2 : MvPolynomial (Fin 3) Int) ≼[lex]
+      lex.degree (X 0 + X 1 ^ 2: MvPolynomial (Fin 3) Int) := by
   set_option backward.isDefEq.respectTransparency false in
   rw [MvPolynomial.SortedRepr.lex_degree_eq', MvPolynomial.SortedRepr.lex_degree_eq',
     SortedFinsupp.lexOrderIsoLexFinsupp.le_iff_le, ← Std.LawfulLECmp.isLE_iff_le (cmp := compare)]
