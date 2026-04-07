@@ -166,12 +166,13 @@ example : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 
 
 ## WIP
 
-1. clean up code;
+1. clean up code, including refactoring and moving examples to tests;
 2. support more monomial orders;
-3. refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it much faster;
+3. ~~refactor `SortedFinsupp` to replace dependent sum type `Sigma` (used as key-value pair) with independent `Prod`, to make it much faster;~~ (The improvement seems slight.)
 4. faster algorithm;
 5. a user-friendly way to interact with exponents and monomial order of `MvPolynomial`;
-6. prove equalities via homomorphism from computable structures (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them.
+6. prove equalities via homomorphism from computable structures (such as `ℕ`, `ℤ`, `ℚ`, and `ZMod n`) to incomputable ones, and prove disequalities via embedding into them;
+7. operations about Wu's method (formalized in <https://github.com/WuProver/lean_characteristic_set>).
 
 ## Thanks
 
