@@ -116,6 +116,15 @@ instance {R} [CommRing R] [DecidableEq R] (p : MvPolynomial σ R) [p.SortedRepr]
     set_option backward.isDefEq.respectTransparency false in
     simp [p.toSortedRepr.eq]
 
+instance {R} [CommRing R] [DecidableEq R] (p : MvPolynomial σ R) [p.SortedRepr] (a : R) :
+    (a • p).SortedRepr where
+  repr := a • p.toSortedRepr.repr
+  eq := by
+    rw [Algebra.smul_def
+        (A := SortedAddMonoidAlgebra R (Lex (SortedFinsupp σ ℕ compare)) (compare · · |>.swap)),
+      Algebra.smul_def]
+    simp [p.toSortedRepr.eq]
+
 instance : (0 : MvPolynomial σ R).SortedRepr where
   repr := 0
   eq := rfl

@@ -15,6 +15,14 @@ example :
   rw [ne_eq, MvPolynomial.SortedRepr.eq_iff']
   decide +kernel
 
+set_option trace.profiler true in
+example :
+    letI X := (MvPolynomial.X 0 (R := ℚ)) -- the first variable
+    letI Y := (MvPolynomial.X 1 (R := ℚ)) -- the second variable
+    ((1 / 2 : ℚ) • X + Y) ^ 20 = ((1 / 4 : ℚ) • X ^ 2 + X * Y + Y ^ 2) ^ 10 := by
+  rw [MvPolynomial.SortedRepr.eq_iff']
+  decide +kernel
+
 set_option profiler true
 
 lemma example2 : ((X 0 + X 1 + 1) ^ 10 : MvPolynomial Nat Nat) ≠ ((X 1 ^ 2 + 2 * X 1 +1) ^ 5) := by
