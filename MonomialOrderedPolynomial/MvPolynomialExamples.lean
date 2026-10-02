@@ -132,7 +132,7 @@ lemma example8 :
     all_goals
       simp only [List.get]
       rw [← tsub_eq_zero_iff_le, MvPolynomial.SortedRepr.lex_degree_eq]
-      convert_to _ → ¬ SortedFinsupp.toFinsupp _ - SortedFinsupp.toFinsupp x = 0
+      change _ → ¬ SortedFinsupp.toFinsupp _ - SortedFinsupp.toFinsupp x = 0
       rw [← SortedFinsupp.toFinsupp_tsub, SortedFinsupp.toFinsupp_eq_zero_iff]
       decide +kernel +revert
 

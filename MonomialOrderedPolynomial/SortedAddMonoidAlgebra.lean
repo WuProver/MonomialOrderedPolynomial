@@ -96,46 +96,45 @@ lemma smul_apply [DecidableEq G] {M} [Zero M] [SMulWithZero M R] [∀ y : R, Dec
     (s • l) x = s • (l x) := SortedFinsupp.smul_apply ..
 
 def toAddMonoidAlgebra [DecidableEq G] : Equiv (SortedAddMonoidAlgebra R G cmp) (AddMonoidAlgebra R G) :=
-  SortedFinsupp.toFinsupp
+  SortedFinsupp.toFinsupp.trans AddMonoidAlgebra.coeffEquiv.symm
 
 variable (cmp) in
 def ofAddMonoidAlgebra [DecidableEq G] : Equiv (AddMonoidAlgebra R G) (SortedAddMonoidAlgebra R G cmp) :=
-  SortedFinsupp.ofFinsupp cmp
+  AddMonoidAlgebra.coeffEquiv.trans (SortedFinsupp.ofFinsupp cmp)
 
 @[simp]
 lemma toAddMonoidAlgebra_ofAddMonoidAlgebra [DecidableEq G] (l : SortedAddMonoidAlgebra R G cmp) :
-    ofAddMonoidAlgebra cmp l.toAddMonoidAlgebra = l := SortedFinsupp.toFinsupp_ofFinsupp l
+    ofAddMonoidAlgebra cmp l.toAddMonoidAlgebra = l := toAddMonoidAlgebra.left_inv l
 
 variable (cmp) in
 @[simp]
 lemma ofAddMonoidAlgebra_toAddMonoidAlgebra [DecidableEq G] (l : AddMonoidAlgebra R G) :
-    (ofAddMonoidAlgebra cmp l).toAddMonoidAlgebra = l := SortedFinsupp.ofFinsupp_toFinsupp cmp l
+    (ofAddMonoidAlgebra cmp l).toAddMonoidAlgebra = l := toAddMonoidAlgebra.right_inv l
 
 @[simps]
 def addEquivAddMonoidAlgebra [(a : R) → Decidable (a = 0)] [DecidableEq G] :
     AddEquiv (SortedAddMonoidAlgebra R G cmp) (AddMonoidAlgebra R G) :=
-  { SortedFinsupp.addEquivFinsupp with
-    toFun := toAddMonoidAlgebra
-    invFun := ofAddMonoidAlgebra cmp
-  }
+  { toAddMonoidAlgebra with
+    map_add' := fun l₁ l₂ ↦ AddMonoidAlgebra.coeff_injective
+      (SortedFinsupp.toFinsupp_add l₁ l₂) }
 
 @[simp]
 lemma toAddMonoidAlgebra_add [DecidableEq G] [(a : R) → Decidable (a = 0)]
     (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) :
     toAddMonoidAlgebra (l₁ + l₂) = toAddMonoidAlgebra l₁ + toAddMonoidAlgebra l₂ :=
-  SortedFinsupp.toFinsupp_add ..
+  addEquivAddMonoidAlgebra.map_add ..
 
 variable (cmp) in
 @[simp]
 lemma ofAddMonoidAlgebra_add [DecidableEq G] [(a : R) → Decidable (a = 0)]
     (l₁ l₂ : AddMonoidAlgebra R G) :
     ofAddMonoidAlgebra cmp (l₁ + l₂) = ofAddMonoidAlgebra cmp l₁ + ofAddMonoidAlgebra cmp l₂ :=
-  SortedFinsupp.ofFinsupp_add ..
+  addEquivAddMonoidAlgebra.symm.map_add ..
 
 @[simp]
 lemma toAddMonoidAlgebra_coe [(a : R) → Decidable (a = 0)] [DecidableEq G]
     (l : SortedAddMonoidAlgebra R G cmp) :
-  ⇑(toAddMonoidAlgebra l) = ⇑l := SortedFinsupp.toFinsupp_coe l
+  ⇑(toAddMonoidAlgebra l).coeff = ⇑l := SortedFinsupp.toFinsupp_coe l
 
 lemma toAddMonoidAlgebra_zero [(a : R) → Decidable (a = 0)] [DecidableEq G] :
     toAddMonoidAlgebra (0 : SortedAddMonoidAlgebra R G cmp) = 0 := rfl
@@ -165,10 +164,7 @@ lemma mul_apply (l₁ l₂ : SortedAddMonoidAlgebra R G cmp) (x : G) :
   simp [mul_def, l₁.sum_apply', smul_def, SortedFinsupp.mapDomain_eq]
   congr
   ext x' y'
-  have (f : G →₀ R) : f = (SkewMonoidAlgebra.ofFinsupp f).toFinsupp := rfl
-  rw [this (SortedFinsupp.toFinsupp _), ← SkewMonoidAlgebra.toFinsupp_mapDomain,
-    SkewMonoidAlgebra.mapDomain_apply, SkewMonoidAlgebra.toFinsupp_sum',
-    ← SortedFinsupp.sum_eq_toFinsupp_sum]
+  rw [Finsupp.mapDomain_apply, ← SortedFinsupp.sum_eq_toFinsupp_sum]
   have :=
     SortedFinsupp.sum_apply (cmp := cmp) (σ := G) (R := R) (f := Finsupp.applyAddHom (M := R) x)
   simp only [Finsupp.applyAddHom_apply] at this
@@ -243,20 +239,21 @@ instance {R} [CommRing R] [DecidableEq R] :
     set_option backward.isDefEq.respectTransparency false in
     rw [add_apply, zero_apply, SortedFinsupp.mapRange_apply, neg_add_cancel]
   zsmul_zero' _ := by
-    ext
-    set_option backward.isDefEq.respectTransparency false in
-    rw [SortedFinsupp.mapRange_apply, zero_apply]
-    simp
-  zsmul_succ' _ _ := by
-    ext
-    simp
-    set_option backward.isDefEq.respectTransparency false in
-    rw [SortedFinsupp.mapRange_apply, SortedFinsupp.mapRange_apply, add_mul, one_mul]
+    apply SortedFinsupp.ext
+    intro x
+    simp [HSMul.hSMul, SMul.smul, ZSMul.zsmul, SortedFinsupp.mapRange_apply]
+  zsmul_succ' n l := by
+    change (SortedFinsupp.mapRange (fun _ (r : R) ↦ ((n.succ : ℤ) : R) * r)
+      (by simp) l : SortedFinsupp G R cmp) =
+      SortedFinsupp.mapRange (fun _ (r : R) ↦ ((n : ℤ) : R) * r) (by simp) l +
+        (show SortedFinsupp G R cmp from l)
+    apply SortedFinsupp.ext
+    intro x
+    simp [SortedFinsupp.mapRange_apply, SortedFinsupp.add_apply, add_mul]
   zsmul_neg' _ _ := by
-    ext
-    set_option backward.isDefEq.respectTransparency false in
-    rw [SortedFinsupp.mapRange_apply, SortedFinsupp.mapRange_apply]
-    simp
+    apply SortedFinsupp.ext
+    intro x
+    simp [HSMul.hSMul, SMul.smul, ZSMul.zsmul, SortedFinsupp.mapRange_apply]
     ring
 
 #check AddMonoidAlgebra.singleZeroAlgHom
@@ -300,11 +297,10 @@ def algEquivAddMonoidAlgebra [DecidableEq G] :
     (SortedAddMonoidAlgebra R G cmp) ≃ₐ[M] (AddMonoidAlgebra R G) := {
     ringEquivAddMonoidAlgebra with
     commutes' r := by
-      simp [ringEquivAddMonoidAlgebra]
       ext x
-      simp [AddMonoidAlgebra.single_apply]
-      convert_to (single cmp 0 (algebraMap M R r) : SortedAddMonoidAlgebra R G cmp) x = _
-      simp
+      change (single cmp 0 (algebraMap M R r)) x =
+        (AddMonoidAlgebra.single 0 (algebraMap M R r)).coeff x
+      simp [AddMonoidAlgebra.coeff_single, Finsupp.single_apply]
   }
 
 #check AddMonoidAlgebra.mul_apply

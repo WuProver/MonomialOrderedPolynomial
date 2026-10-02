@@ -302,7 +302,7 @@ lemma find?_eq_get?_map [DecidableEq α] (l : DSortedListMap α β cmp) (a : α)
 @[implicit_reducible]
 def instFunLike [DecidableEq α] : DFunLike (DSortedListMap α β cmp) α (Option <| β ·) where
   coe := get?
-  coe_injective' := by
+  coe_injective := by
     intro a b h
     rw [a.eq_iff]
     simp [funext_iff] at h
@@ -490,6 +490,7 @@ def onFinset (f : (k : α) → Option <| β k) (s : Finset α) :
       simp [Std.OrientedCmp.gt_iff_lt]
       simp [Ordering.isLE_iff_ne_gt]
       simp_intro ..
+      rfl
   ⟩
 
 lemma get?_onFinset [DecidableEq α] (f : (k : α) → Option <| β k) (s) (x) :

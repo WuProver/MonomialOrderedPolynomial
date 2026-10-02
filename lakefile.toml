@@ -6,11 +6,7 @@ defaultTargets = ["MonomialOrderedPolynomial"]
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 autoImplicit = false
-
-#[[require]]
-#name = "mathlib"
-#scope = "leanprover-community"
-#rev = "v4.24.0-rc1"
+backward.isDefEq.respectTransparency = false
 
 [[require]]
 name = "lean4export"
@@ -19,8 +15,8 @@ scope = "leanprover"
 [[require]]
 name = "groebner"
 scope = "WuProver"
-rev = "v4.29.0-rc8"
+git = "https://github.com/WuProver/groebner_proj"
+rev = "a34921b6a211a8242c3aaf39759a6d48c6b67e67"
 
 [[lean_lib]]
 name = "MonomialOrderedPolynomial"
-
