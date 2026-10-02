@@ -36,19 +36,19 @@ lemma TreeRepr.algEquivPolynomial_apply (p : TreeRepr Unit R) :
   match p with
   | const c =>
     simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toPolynomial, algEquivPolynomial]
-    convert_to (Polynomial.toFinsuppIsoAlg R).symm (Finsupp.single 0 c) = _
+    convert_to (Polynomial.toFinsuppIsoAlg R).symm (AddMonoidAlgebra.single 0 c) = _
     · rw [AlgEquiv.symm_apply_eq]
       simp [algEquivAddMonoidAlgebra, ringEquivAddMonoidAlgebra]
       ext
-      simp [Finsupp.single_apply]
+      simp [Finsupp.single_apply, SortedAddMonoidAlgebra.single, SortedFinsupp.single_apply]
     · simp [AlgEquiv.symm_apply_eq]
   | var _ =>
     simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toPolynomial, algEquivPolynomial]
-    convert_to (Polynomial.toFinsuppIsoAlg R).symm (Finsupp.single 1 1) = _
+    convert_to (Polynomial.toFinsuppIsoAlg R).symm (AddMonoidAlgebra.single 1 1) = _
     · rw [AlgEquiv.symm_apply_eq]
       simp [algEquivAddMonoidAlgebra, ringEquivAddMonoidAlgebra]
       ext
-      simp [Finsupp.single_apply]
+      simp [Finsupp.single_apply, SortedAddMonoidAlgebra.single, SortedFinsupp.single_apply]
     · simp [AlgEquiv.symm_apply_eq]
   | add p q => simp [TreeRepr.toSortedAddMonoidAlgebra, TreeRepr.toPolynomial,
     TreeRepr.algEquivPolynomial_apply p, TreeRepr.algEquivPolynomial_apply q]

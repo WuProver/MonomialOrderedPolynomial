@@ -183,7 +183,7 @@ lemma _root_.Option.eq_some_of_getD_ne_dflt {α} {dflt : α} {a : Option α} (h 
 
 instance instDFunLike [DecidableEq σ] : DFunLike (DSortedFinsupp σ R cmp) σ R where
   coe l a := (l.val.get? a).getD 0
-  coe_injective' := by
+  coe_injective := by
     intro a b h
     rw [a.eq_iff]
     simp [funext_iff] at h

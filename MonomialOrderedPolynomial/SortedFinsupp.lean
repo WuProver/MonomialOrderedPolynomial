@@ -642,7 +642,7 @@ lemma toFinsupp_mapDomain [DecidableEq σ] [DecidableEq σ']
   by_cases h : x' ∈ Set.range f
   · simp at h
     obtain ⟨x, h⟩ := h
-    simp [← h, Finsupp.mapDomain_apply this]
+    simp [← h, Finsupp.mapDomain_apply_of_injective this]
   · simp [mapDomain_apply_eq_zero_of_notin_range (hf' := h), Finsupp.mapDomain_notin_range (h := h)]
 
 lemma mapDomain_eq [DecidableEq σ] [DecidableEq σ'] {R} [AddCommMonoid R]

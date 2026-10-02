@@ -30,7 +30,8 @@ lemma _root_.Ordering.then_of_ne_eq (o o' : Ordering) (h : o ≠ .eq) : o.then o
 lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
     compare (toLex l₁) (toLex l₂) = .lt ↔
       Pi.Lex (cmp · · = .lt) (compare · · = .lt) l₁ l₂ := by
-  convert_to lex cmp l₁.val.val l₂.val.val = .lt ↔ _
+  change lex cmp l₁.val.val l₂.val.val = .lt ↔
+    Pi.Lex (cmp · · = .lt) (compare · · = .lt) l₁ l₂
   unfold lex
   split
   · expose_names
@@ -76,7 +77,8 @@ lemma lex_eq [DecidableEq σ] (l₁ l₂ : SortedFinsupp σ R cmp) :
           let l₂' : SortedFinsupp σ R cmp :=
             ⟨⟨m₂, by simp [List.isChain_cons.mp (heq_1 ▸ l₂.val.2)]⟩, by have := heq_1 ▸ l₂.2; aesop⟩
           -- shuold be a theorem
-          convert_to compare (toLex l₁') (toLex l₂') = .lt ↔ _
+          change compare (toLex l₁') (toLex l₂') = .lt ↔
+            Pi.Lex (cmp · · = .lt) (compare · · = .lt) l₁ l₂
           rw [lex_eq]
           simp [Pi.Lex]
           have hl₁' {j} : l₁ j = if j = pw₁.1 then pw₁.2 else l₁' j := by

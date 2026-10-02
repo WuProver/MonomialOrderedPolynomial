@@ -29,46 +29,37 @@ open MvPolynomial
 instance {c} : (C c : MvPolynomial σ R).SortedRepr where
   repr := SortedAddMonoidAlgebra.single _ 0 c
   eq := by
-    convert_to
-      (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
-        (SortedFinsupp.toFinsupp (.single _ (0 : SortedFinsupp σ Nat compare) c))
-        = MvPolynomial.C c
+    simp [algEquivMvPolynomial, algEquivAddMonoidAlgebra, ringEquivAddMonoidAlgebra,
+      addEquivAddMonoidAlgebra, toAddMonoidAlgebra, single, AddMonoidAlgebra.coeffEquiv]
+    rw (config := { transparency := .default }) [SortedFinsupp.toFinsupp_single]
     simp
     rfl
 
 instance {v} : (X v : MvPolynomial σ R).SortedRepr where
   repr := SortedAddMonoidAlgebra.single _ (SortedFinsupp.single _ v 1) 1
   eq := by
-    convert_to
-      (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
-        (SortedFinsupp.toFinsupp
-          (.single _ (.single _ v 1 : SortedFinsupp σ Nat compare) 1))
-        = MvPolynomial.X v
+    simp [algEquivMvPolynomial, algEquivAddMonoidAlgebra, ringEquivAddMonoidAlgebra,
+      addEquivAddMonoidAlgebra, toAddMonoidAlgebra, single, AddMonoidAlgebra.coeffEquiv]
+    rw (config := { transparency := .default }) [SortedFinsupp.toFinsupp_single]
     simp
-    convert_to
-      AddMonoidAlgebra.single
-        (SortedFinsupp.toFinsupp <| SortedFinsupp.single _ v (1 : Nat)) (1 : R) =
-      MvPolynomial.X v
-    simp
+    change AddMonoidAlgebra.single
+      (SortedFinsupp.toFinsupp (SortedFinsupp.single compare v (1 : ℕ))) (1 : R) = X v
+    rw [SortedFinsupp.toFinsupp_single]
     rfl
 
 instance {c : R} {s : σ →₀ ℕ} [inst : s.SortedRepr] :
     (MvPolynomial.monomial s c).SortedRepr where
   repr := SortedAddMonoidAlgebra.single _ inst.repr c
   eq := by
-    convert_to
-      (AddMonoidAlgebra.domCongr R R (SortedFinsupp.lexAddEquiv compare))
-        (SortedFinsupp.toFinsupp
-          (.single _ inst.repr c))
-        = MvPolynomial.monomial _ _
+    simp [algEquivMvPolynomial, algEquivAddMonoidAlgebra, ringEquivAddMonoidAlgebra,
+      addEquivAddMonoidAlgebra, toAddMonoidAlgebra, single, AddMonoidAlgebra.coeffEquiv]
+    rw (config := { transparency := .default }) [SortedFinsupp.toFinsupp_single]
     simp
-    congr
-    exact inst.eq
+    exact congrArg (fun e ↦ MvPolynomial.monomial e c) inst.eq
 
 lemma _root_.MvPolynomial.SortedRepr.coeff_eq (p : MvPolynomial σ R) [inst : p.SortedRepr] (c : σ →₀ ℕ) :
     p.coeff c = inst.repr (SortedFinsupp.lexAddEquiv compare |>.symm c) := by
-  simp [coeff, ← inst.eq, algEquivMvPolynomial]
-  rw (config := {transparency := .default}) [AddMonoidAlgebra.domCongr_apply]
+  simp [← inst.eq, algEquivMvPolynomial]
   rfl
 
 lemma _root_.MvPolynomial.SortedRepr.support_eq (p : MvPolynomial σ R) [inst : p.SortedRepr]  :
@@ -210,13 +201,12 @@ lemma _root_.MvPolynomial.SortedRepr.lex_withBotDegree_eq :
 lemma _root_.MvPolynomial.SortedRepr.lex_leadingCoeff_eq :
     lex.leadingCoeff p = p'.repr (p'.repr.support.head?.getD ⊥) := by
   classical
-  simp [leadingCoeff, MvPolynomial.SortedRepr.lex_degree_eq,
-    MvPolynomial.SortedRepr.coeff_eq]
-  congr
-  convert_to (SortedFinsupp.lexAddEquiv compare).symm (SortedFinsupp.lexAddEquiv compare _) = _
-  · intro _
-    exact Classical.decEq ..
-  exact AddEquiv.symm_apply_apply (SortedFinsupp.lexAddEquiv compare) ((SortedFinsupp.support (SortedRepr.repr p)).head?.getD ⊥)
+  rw [leadingCoeff, MvPolynomial.SortedRepr.coeff_eq,
+    MvPolynomial.SortedRepr.lex_degree_eq]
+  change p'.repr ((SortedFinsupp.lexAddEquiv compare).symm
+    ((SortedFinsupp.lexAddEquiv compare) _)) = _
+  rw [AddEquiv.symm_apply_apply]
+  rfl
 
 lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq' :
     lex.toSyn (lex.degree p) =
@@ -226,8 +216,9 @@ lemma _root_.MvPolynomial.SortedRepr.lex_degree_eq' :
 lemma _root_.MvPolynomial.SortedRepr.lex_withBotDegree_eq' :
     lex.toWithBotSyn (lex.withBotDegree p) =
       WithBot.map SortedFinsupp.lexOrderIsoLexFinsupp p'.repr.support.head? := by
-  convert MvPolynomial.SortedRepr.lex_withBotDegree_eq (σ := σ)
-  simp [toWithBotSyn, show WithBot.map (⇑lex.toSyn) = id from WithBot.map_id]
+  rw [toWithBotSyn_apply, MvPolynomial.SortedRepr.lex_withBotDegree_eq]
+  simp only [WithBot.map, Option.map_map]
+  rfl
 
 instance : (lex.degree p).SortedRepr where
   repr := ofLex <| p'.repr.support.head?.getD ⊥
@@ -236,10 +227,11 @@ instance : (lex.degree p).SortedRepr where
     rfl
 
 noncomputable instance {R} [CommRing R] [DecidableEq R] [WellFoundedGT σ] {p q : MvPolynomial σ R}
-  [p' : p.SortedRepr] [q' : q.SortedRepr] : (lex.sPolynomial p q).SortedRepr where
-  repr :=
-    ((monomial (lex.degree q - lex.degree p)) (q'.repr (q'.repr.support.head?.getD ⊥)) * p -
-      (monomial (lex.degree p - lex.degree q)) (p'.repr (p'.repr.support.head?.getD ⊥)) * q).toSortedRepr.repr
-  eq := by
-    rw [SortedRepr.eq, ← SortedRepr.lex_leadingCoeff_eq, ← SortedRepr.lex_leadingCoeff_eq]
-    rfl
+  [p' : p.SortedRepr] [q' : q.SortedRepr] : (lex.sPolynomial p q).SortedRepr := by
+  let r : MvPolynomial.SortedRepr
+      ((monomial (lex.degree q - lex.degree p) (q'.repr (q'.repr.support.head?.getD ⊥))) * p -
+        (monomial (lex.degree p - lex.degree q) (p'.repr (p'.repr.support.head?.getD ⊥))) * q) :=
+    inferInstance
+  refine ⟨r.repr, ?_⟩
+  rw [r.eq, ← SortedRepr.lex_leadingCoeff_eq, ← SortedRepr.lex_leadingCoeff_eq]
+  rfl

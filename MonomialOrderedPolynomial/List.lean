@@ -60,10 +60,7 @@ def mergeWith (l₁ l₂ : List α) (cmp : α → α → Ordering)
       | some a => a :: mergeWith l₁' l₂' cmp mergeFn
 termination_by l₁.length + l₂.length
 decreasing_by
-  · simp
-  · simp
-  · simp
-    linarith
+  all_goals simp_all only [List.length_cons]; omega
 
 @[simp]
 lemma mergeWith_left_nil : mergeWith [] l cmp mergeFn = l := by
@@ -512,7 +509,8 @@ lemma mem_mergeWith_iff {a : α} {l₁ l₂ : List α} {cmp : α → α → Orde
           simp [ha heq_1, mem_mergeWith_iff h₁.2 h₂.2]
 
 lemma _root_.Transitive.ofTransCmp (cmp : α → α → Ordering) [Std.TransCmp cmp] :
-    Transitive (cmp · · = .eq) := fun _ _ _ => Std.TransCmp.eq_trans
+    ∀ ⦃a b c⦄, cmp a b = .eq → cmp b c = .eq → cmp a c = .eq :=
+  fun _ _ _ => Std.TransCmp.eq_trans
 
 lemma _root_.Equivalence.ofTransCmp (cmp : α → α → Ordering) [Std.TransCmp cmp] :
     Equivalence (cmp · · = .eq) where
@@ -561,8 +559,8 @@ lemma find?_right_eq_some_iff_of_pairwise' {l : List α} {cmp : α → α → Or
 lemma find?_left_eq_some_iff_of_pairwise' {l : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h : l.Pairwise (cmp · · = .lt)) (a b : α) :
     (l.find? (cmp · a = .eq)) = some b ↔ b ∈ l ∧ cmp a b = .eq := by
-  convert find?_right_eq_some_iff_of_pairwise' h a b using 5
-  exact Std.OrientedCmp.eq_comm
+  simpa only [Std.OrientedCmp.eq_comm (cmp := cmp)] using
+    find?_right_eq_some_iff_of_pairwise' h a b
 
 lemma mem_mergeWith_iff' {a : α} {l₁ l₂ : List α} {cmp : α → α → Ordering} [Std.TransCmp cmp]
     (h₁ : l₁.Pairwise (cmp · · = .lt)) (h₂ : l₂.Pairwise (cmp · · = .lt))
